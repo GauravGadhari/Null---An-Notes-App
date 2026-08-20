@@ -1,0 +1,1343 @@
+name: null_notes
+description: "Null — Minimalist Notes Application"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.12.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.4
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  remove_alpha_ios: true
+  image_path: "assets/icon/app_icon.png"
+  min_sdk_android: 21
+  adaptive_icon_background: "assets/icon/app_icon_background.png"
+  adaptive_icon_foreground: "assets/icon/app_icon_foreground.png"
+  web:
+    generate: true
+    image_path: "assets/icon/app_icon.png"
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/icon/
+
+  fonts:
+    - family: Agitha
+      fonts:
+        - asset: assets/fonts/02_trial_personal_use/creative_packs/agitha-font/Agitha-4no8p.ttf
+          weight: 400
+        - asset: assets/fonts/02_trial_personal_use/creative_packs/agitha-font/Agitha-ov52d.otf
+          weight: 400
+    - family: Aloevera
+      fonts:
+        - asset: assets/fonts/02_trial_personal_use/creative_packs/aloevera-font/Aloevera-OVoWO.ttf
+          weight: 400
+    - family: Avifan
+      fonts:
+        - asset: assets/fonts/02_trial_personal_use/creative_packs/avifan-font/AvifandemoRegular-E4GXj.otf
+          weight: 400
+    - family: BasementGrotesque
+      fonts:
+        - asset: assets/fonts/03_proprietary_restricted/BasementGrotesque/BasementGrotesque-Black_v1.202.otf
+          weight: 900
+    - family: Beatrice
+      fonts:
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceDeckTRIAL-Bold-BF64829e8e9ca08.otf
+          weight: 700
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceDeckTRIAL-Bold-BF64829e916f5e9.ttf
+          weight: 700
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceDeckTRIAL-BoldItalic-BF64829e9186236.otf
+          weight: 700
+          style: italic
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceDeckTRIAL-BoldItalic-BF64829e918c7cd.ttf
+          weight: 700
+          style: italic
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceDeckTRIAL-Extrabold-BF64829e8ed31e6.otf
+          weight: 800
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceDeckTRIAL-Extrabold-BF64829e919604b.ttf
+          weight: 800
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceDeckTRIAL-ExtraboldItalic-BF64829e917393c.otf
+          weight: 800
+          style: italic
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceDeckTRIAL-ExtraboldItalic-BF64829e9175b11.ttf
+          weight: 800
+          style: italic
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceDeckTRIAL-Light-BF64829e8e6b5e8.otf
+          weight: 300
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceDeckTRIAL-Light-BF64829e9192d32.ttf
+          weight: 300
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceDeckTRIAL-LightItalic-BF64829e8e77d46.otf
+          weight: 300
+          style: italic
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceDeckTRIAL-LightItalic-BF64829e9185d72.ttf
+          weight: 300
+          style: italic
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceDeckTRIAL-Medium-BF64829e8e8d71a.otf
+          weight: 500
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceDeckTRIAL-Medium-BF64829e9193070.ttf
+          weight: 500
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceDeckTRIAL-MediumItalic-BF64829e9176a56.ttf
+          weight: 500
+          style: italic
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceDeckTRIAL-MediumItalic-BF64829e917eb6c.otf
+          weight: 500
+          style: italic
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceDeckTRIAL-Regular-BF64829e8e41476.otf
+          weight: 400
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceDeckTRIAL-Regular-BF64829e9182459.ttf
+          weight: 400
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceDeckTRIAL-RegularItalic-BF64829e917f76b.otf
+          weight: 400
+          style: italic
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceDeckTRIAL-RegularItalic-BF64829e9193ab8.ttf
+          weight: 400
+          style: italic
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceDeckTRIAL-Semibold-BF64829e8dec396.otf
+          weight: 600
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceDeckTRIAL-Semibold-BF64829e917c775.ttf
+          weight: 600
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceDeckTRIAL-SemiboldItalic-BF64829e8e0e6b3.otf
+          weight: 600
+          style: italic
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceDeckTRIAL-SemiboldItalic-BF64829e9164864.ttf
+          weight: 600
+          style: italic
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceDeckTRIAL-Thin-BF64829e8e21d70.otf
+          weight: 100
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceDeckTRIAL-Thin-BF64829e916c302.ttf
+          weight: 100
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceDeckTRIAL-ThinItalic-BF64829e913b5ae.otf
+          weight: 100
+          style: italic
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceDeckTRIAL-ThinItalic-BF64829e914aa28.ttf
+          weight: 100
+          style: italic
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceDisplayTRIAL-Black-BF64829e8dc400a.otf
+          weight: 400
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceDisplayTRIAL-Black-BF64829e9159b86.ttf
+          weight: 900
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceDisplayTRIAL-BlackItalic-BF64829e9107d80.otf
+          weight: 900
+          style: italic
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceDisplayTRIAL-BlackItalic-BF64829e913ae5d.ttf
+          weight: 900
+          style: italic
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceDisplayTRIAL-Bold-BF64829e8d7b173.otf
+          weight: 700
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceDisplayTRIAL-Bold-BF64829e90ed6b1.ttf
+          weight: 700
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceDisplayTRIAL-BoldItalic-BF64829e912b37f.otf
+          weight: 700
+          style: italic
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceDisplayTRIAL-BoldItalic-BF64829e91380e8.ttf
+          weight: 700
+          style: italic
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceDisplayTRIAL-Extrabold-BF64829e8d3ee44.otf
+          weight: 800
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceDisplayTRIAL-Extrabold-BF64829e91256f4.ttf
+          weight: 800
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceDisplayTRIAL-ExtraboldItalic-BF64829e8d522ad.otf
+          weight: 800
+          style: italic
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceDisplayTRIAL-ExtraboldItalic-BF64829e90ead8b.ttf
+          weight: 800
+          style: italic
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceDisplayTRIAL-Light-BF64829e8d63557.otf
+          weight: 300
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceDisplayTRIAL-Light-BF64829e9108eaf.ttf
+          weight: 300
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceDisplayTRIAL-LightItalic-BF64829e90a06f5.otf
+          weight: 300
+          style: italic
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceDisplayTRIAL-LightItalic-BF64829e90f08ba.ttf
+          weight: 300
+          style: italic
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceDisplayTRIAL-Medium-BF64829e8d3123e.otf
+          weight: 500
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceDisplayTRIAL-Medium-BF64829e908b04d.ttf
+          weight: 500
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceDisplayTRIAL-MediumItalic-BF64829e90cf63d.otf
+          weight: 500
+          style: italic
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceDisplayTRIAL-MediumItalic-BF64829e91091f6.ttf
+          weight: 500
+          style: italic
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceDisplayTRIAL-Regular-BF64829e8d35fac.otf
+          weight: 400
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceDisplayTRIAL-Regular-BF64829e90aea53.ttf
+          weight: 400
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceDisplayTRIAL-RegularItalic-BF64829e9088366.otf
+          weight: 400
+          style: italic
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceDisplayTRIAL-RegularItalic-BF64829e90ca345.ttf
+          weight: 400
+          style: italic
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceDisplayTRIAL-Semibold-BF64829e8cd8b7f.otf
+          weight: 600
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceDisplayTRIAL-Semibold-BF64829e90a55c8.ttf
+          weight: 600
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceDisplayTRIAL-SemiboldItalic-BF64829e8cf0c68.otf
+          weight: 600
+          style: italic
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceDisplayTRIAL-SemiboldItalic-BF64829e908e295.ttf
+          weight: 600
+          style: italic
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceDisplayTRIAL-Thin-BF64829e8c9169f.otf
+          weight: 100
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceDisplayTRIAL-Thin-BF64829e9087c66.ttf
+          weight: 100
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceDisplayTRIAL-ThinItalic-BF64829e908b991.ttf
+          weight: 100
+          style: italic
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceDisplayTRIAL-ThinItalic-BF64829e90a90c2.otf
+          weight: 100
+          style: italic
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceHeadlineTRIAL-Bold-BF64829e8cbc444.otf
+          weight: 700
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceHeadlineTRIAL-Bold-BF64829e90889c0.ttf
+          weight: 700
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceHeadlineTRIAL-BoldItalic-BF64829e903973d.otf
+          weight: 700
+          style: italic
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceHeadlineTRIAL-BoldItalic-BF64829e90725f9.ttf
+          weight: 700
+          style: italic
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceHeadlineTRIAL-Extrabold-BF64829e8c6ab67.otf
+          weight: 800
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceHeadlineTRIAL-Extrabold-BF64829e909806d.ttf
+          weight: 800
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceHeadlineTRIAL-ExtraboldItalic-BF64829e906bd91.otf
+          weight: 800
+          style: italic
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceHeadlineTRIAL-ExtraboldItalic-BF64829e90ab219.ttf
+          weight: 800
+          style: italic
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceHeadlineTRIAL-Light-BF64829e8c315af.otf
+          weight: 300
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceHeadlineTRIAL-Light-BF64829e908ecf4.ttf
+          weight: 300
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceHeadlineTRIAL-LightItalic-BF64829e9065d70.otf
+          weight: 300
+          style: italic
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceHeadlineTRIAL-LightItalic-BF64829e90798a8.ttf
+          weight: 300
+          style: italic
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceHeadlineTRIAL-Medium-BF64829e8c4b24f.otf
+          weight: 500
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceHeadlineTRIAL-Medium-BF64829e9033603.ttf
+          weight: 500
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceHeadlineTRIAL-MediumItalic-BF64829e9035a13.ttf
+          weight: 500
+          style: italic
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceHeadlineTRIAL-MediumItalic-BF64829e90363ea.otf
+          weight: 500
+          style: italic
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceHeadlineTRIAL-Regular-BF64829e8c11cf2.otf
+          weight: 400
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceHeadlineTRIAL-Regular-BF64829e9035d0c.ttf
+          weight: 400
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceHeadlineTRIAL-RegularItalic-BF64829e90333b1.otf
+          weight: 400
+          style: italic
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceHeadlineTRIAL-RegularItalic-BF64829e905d044.ttf
+          weight: 400
+          style: italic
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceHeadlineTRIAL-Semibold-BF64829e8bd4153.otf
+          weight: 600
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceHeadlineTRIAL-Semibold-BF64829e9063f29.ttf
+          weight: 600
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceHeadlineTRIAL-SemiboldItalic-BF64829e8fdb83c.otf
+          weight: 600
+          style: italic
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceHeadlineTRIAL-SemiboldItalic-BF64829e905b891.ttf
+          weight: 600
+          style: italic
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceHeadlineTRIAL-Thin-BF64829e8b89a7b.otf
+          weight: 100
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceHeadlineTRIAL-Thin-BF64829e90570ed.ttf
+          weight: 100
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceHeadlineTRIAL-ThinItalic-BF64829e8fd8988.ttf
+          weight: 100
+          style: italic
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceHeadlineTRIAL-ThinItalic-BF64829e903bd54.otf
+          weight: 100
+          style: italic
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceTRIAL-Bold-BF64829e8b48b16.otf
+          weight: 700
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceTRIAL-Bold-BF64829e8fd7dc6.ttf
+          weight: 700
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceTRIAL-BoldItalic-BF64829e8b4c698.otf
+          weight: 700
+          style: italic
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceTRIAL-BoldItalic-BF64829e9014b3a.ttf
+          weight: 700
+          style: italic
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceTRIAL-Extrabold-BF64829e8b6b9f2.otf
+          weight: 800
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceTRIAL-Extrabold-BF64829e902d6f1.ttf
+          weight: 800
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceTRIAL-ExtraboldItalic-BF64829e8b00fa7.otf
+          weight: 800
+          style: italic
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceTRIAL-ExtraboldItalic-BF64829e90112c4.ttf
+          weight: 800
+          style: italic
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceTRIAL-Light-BF64829e8b17e87.otf
+          weight: 300
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceTRIAL-Light-BF64829e8f87d4e.ttf
+          weight: 300
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceTRIAL-LightItalic-BF64829e8b29cae.otf
+          weight: 300
+          style: italic
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceTRIAL-LightItalic-BF64829e8fd96c6.ttf
+          weight: 300
+          style: italic
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceTRIAL-Medium-BF64829e8ac35f2.otf
+          weight: 500
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceTRIAL-Medium-BF64829e8f63463.ttf
+          weight: 500
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceTRIAL-MediumItalic-BF64829e8adc249.otf
+          weight: 500
+          style: italic
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceTRIAL-MediumItalic-BF64829e8f58376.ttf
+          weight: 500
+          style: italic
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceTRIAL-Regular-BF64829e8a62240.otf
+          weight: 400
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceTRIAL-Regular-BF64829e8f591fb.ttf
+          weight: 400
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceTRIAL-RegularItalic-BF64829e8a730a3.otf
+          weight: 400
+          style: italic
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceTRIAL-RegularItalic-BF64829e8a78ca8.ttf
+          weight: 400
+          style: italic
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceTRIAL-Semibold-BF64829e8a9fb34.otf
+          weight: 600
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceTRIAL-Semibold-BF64829e8f17d4c.ttf
+          weight: 600
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceTRIAL-SemiboldItalic-BF64829e8ab2203.otf
+          weight: 600
+          style: italic
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceTRIAL-SemiboldItalic-BF64829e8ed91f7.ttf
+          weight: 600
+          style: italic
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceTRIAL-Thin-BF64829e89d34f8.otf
+          weight: 100
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceTRIAL-Thin-BF64829e8b08524.ttf
+          weight: 100
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceTRIAL-ThinItalic-BF64829e8d22ad1.otf
+          weight: 100
+          style: italic
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/Beatrice-Trial/BeatriceTRIAL-ThinItalic-BF64829e8d5d50c.ttf
+          weight: 100
+          style: italic
+    - family: BeautyMountains
+      fonts:
+        - asset: assets/fonts/02_trial_personal_use/creative_packs/beauty-mountains-font/BeautyMountainsPersonalUse-od7z.ttf
+          weight: 400
+    - family: BebasNeue
+      fonts:
+        - asset: assets/fonts/01_open_source_commercial_safe/Bebas_Neue/BebasNeue Bold.otf
+          weight: 700
+        - asset: assets/fonts/01_open_source_commercial_safe/Bebas_Neue/BebasNeue Book.otf
+          weight: 400
+        - asset: assets/fonts/01_open_source_commercial_safe/Bebas_Neue/BebasNeue Light.otf
+          weight: 300
+        - asset: assets/fonts/01_open_source_commercial_safe/Bebas_Neue/BebasNeue Regular.otf
+          weight: 400
+        - asset: assets/fonts/01_open_source_commercial_safe/Bebas_Neue/BebasNeue Thin.otf
+          weight: 100
+        - asset: assets/fonts/01_open_source_commercial_safe/Bebas_Neue/TTF's/BebasNeue Bold.ttf
+          weight: 700
+        - asset: assets/fonts/01_open_source_commercial_safe/Bebas_Neue/TTF's/BebasNeue Book.ttf
+          weight: 400
+        - asset: assets/fonts/01_open_source_commercial_safe/Bebas_Neue/TTF's/BebasNeue Light.ttf
+          weight: 300
+        - asset: assets/fonts/01_open_source_commercial_safe/Bebas_Neue/TTF's/BebasNeue Regular.ttf
+          weight: 400
+        - asset: assets/fonts/01_open_source_commercial_safe/Bebas_Neue/TTF's/BebasNeue Thin.ttf
+          weight: 100
+    - family: CandyCane
+      fonts:
+        - asset: assets/fonts/02_trial_personal_use/creative_packs/candy-cane-font/CandyCanePersonalUseRegular-WyaPv.ttf
+          weight: 400
+    - family: ComicSansMS
+      fonts:
+        - asset: assets/fonts/02_trial_personal_use/creative_packs/comic-sans-ms-font-family/COMIC.TTF
+          weight: 400
+        - asset: assets/fonts/02_trial_personal_use/creative_packs/comic-sans-ms-font-family/ComicSansMS3.ttf
+          weight: 400
+        - asset: assets/fonts/02_trial_personal_use/creative_packs/comic-sans-ms-font-family/comici.ttf
+          weight: 400
+        - asset: assets/fonts/02_trial_personal_use/creative_packs/comic-sans-ms-font-family/comicz.ttf
+          weight: 400
+        - asset: assets/fonts/02_trial_personal_use/creative_packs/comic-sans-ms-font-family/design.graffiti.comicsansms.ttf
+          weight: 400
+        - asset: assets/fonts/02_trial_personal_use/creative_packs/comic-sans-ms-font-family/design.graffiti.comicsansmsgras.ttf
+          weight: 400
+    - family: Coolvetica
+      fonts:
+        - asset: assets/fonts/03_proprietary_restricted/coolvetica/Coolvetica Hv Comp.otf
+          weight: 400
+        - asset: assets/fonts/03_proprietary_restricted/coolvetica/Coolvetica Rg Cond.otf
+          weight: 400
+        - asset: assets/fonts/03_proprietary_restricted/coolvetica/Coolvetica Rg Cram.otf
+          weight: 400
+        - asset: assets/fonts/03_proprietary_restricted/coolvetica/Coolvetica Rg It.otf
+          weight: 400
+          style: italic
+        - asset: assets/fonts/03_proprietary_restricted/coolvetica/Coolvetica Rg.otf
+          weight: 400
+    - family: EdwardianScript
+      fonts:
+        - asset: assets/fonts/03_proprietary_restricted/Edwardian Script ITC/edwardianscriptitc.ttf
+          weight: 400
+    - family: EuropaNova
+      fonts:
+        - asset: assets/fonts/03_proprietary_restricted/Europa nova/EuropaNuovaBold.ttf
+          weight: 700
+        - asset: assets/fonts/03_proprietary_restricted/Europa nova/EuropaNuovaBoldItalic.ttf
+          weight: 700
+          style: italic
+        - asset: assets/fonts/03_proprietary_restricted/Europa nova/EuropaNuovaExtraBold.ttf
+          weight: 800
+        - asset: assets/fonts/03_proprietary_restricted/Europa nova/EuropaNuovaExtraBoldItalic.ttf
+          weight: 800
+          style: italic
+        - asset: assets/fonts/03_proprietary_restricted/Europa nova/EuropaNuovaItalic.ttf
+          weight: 400
+          style: italic
+        - asset: assets/fonts/03_proprietary_restricted/Europa nova/EuropaNuovaRegular.ttf
+          weight: 400
+    - family: Feyra
+      fonts:
+        - asset: assets/fonts/02_trial_personal_use/creative_packs/feyra-font/Feyra-MA5jB.ttf
+          weight: 400
+        - asset: assets/fonts/02_trial_personal_use/creative_packs/feyra-font/Feyra-rvJP8.otf
+          weight: 400
+    - family: ForeverFreedom
+      fonts:
+        - asset: assets/fonts/03_proprietary_restricted/Forever Freedom Font Family/Forever Freedom Italic.otf
+          weight: 400
+          style: italic
+        - asset: assets/fonts/03_proprietary_restricted/Forever Freedom Font Family/Forever Freedom Italic.ttf
+          weight: 400
+          style: italic
+        - asset: assets/fonts/03_proprietary_restricted/Forever Freedom Font Family/Forever Freedom Outline Italic.otf
+          weight: 400
+          style: italic
+        - asset: assets/fonts/03_proprietary_restricted/Forever Freedom Font Family/Forever Freedom Outline Italic.ttf
+          weight: 400
+          style: italic
+        - asset: assets/fonts/03_proprietary_restricted/Forever Freedom Font Family/Forever Freedom Outline.otf
+          weight: 400
+        - asset: assets/fonts/03_proprietary_restricted/Forever Freedom Font Family/Forever Freedom Outline.ttf
+          weight: 400
+        - asset: assets/fonts/03_proprietary_restricted/Forever Freedom Font Family/Forever Freedom Regular.otf
+          weight: 400
+        - asset: assets/fonts/03_proprietary_restricted/Forever Freedom Font Family/Forever Freedom Regular.ttf
+          weight: 400
+    - family: Futura
+      fonts:
+        - asset: assets/fonts/03_proprietary_restricted/futura/Futura Bold Italic font.ttf
+          weight: 700
+          style: italic
+        - asset: assets/fonts/03_proprietary_restricted/futura/Futura Bold font.ttf
+          weight: 700
+        - asset: assets/fonts/03_proprietary_restricted/futura/Futura Book Italic font.ttf
+          weight: 400
+          style: italic
+        - asset: assets/fonts/03_proprietary_restricted/futura/Futura Book font.ttf
+          weight: 400
+        - asset: assets/fonts/03_proprietary_restricted/futura/Futura Extra Black font.ttf
+          weight: 900
+        - asset: assets/fonts/03_proprietary_restricted/futura/Futura Heavy Italic font.ttf
+          weight: 800
+          style: italic
+        - asset: assets/fonts/03_proprietary_restricted/futura/Futura Heavy font.ttf
+          weight: 800
+        - asset: assets/fonts/03_proprietary_restricted/futura/Futura Light Italic font.ttf
+          weight: 300
+          style: italic
+        - asset: assets/fonts/03_proprietary_restricted/futura/Futura Light font.ttf
+          weight: 300
+        - asset: assets/fonts/03_proprietary_restricted/futura/Futura Medium Italic font.ttf
+          weight: 500
+          style: italic
+        - asset: assets/fonts/03_proprietary_restricted/futura/Futura XBlk BT.ttf
+          weight: 900
+        - asset: assets/fonts/03_proprietary_restricted/futura/Futura-CondensedLight.otf
+          weight: 300
+        - asset: assets/fonts/03_proprietary_restricted/futura/futur.ttf
+          weight: 400
+        - asset: assets/fonts/03_proprietary_restricted/futura/futura light bt.ttf
+          weight: 300
+        - asset: assets/fonts/03_proprietary_restricted/futura/futura medium bt.ttf
+          weight: 500
+        - asset: assets/fonts/03_proprietary_restricted/futura/futura medium condensed bt.ttf
+          weight: 500
+        - asset: assets/fonts/03_proprietary_restricted/futura/tt0205m_.ttf
+          weight: 400
+        - asset: assets/fonts/03_proprietary_restricted/futura/unicode.futurab.ttf
+          weight: 400
+        - asset: assets/fonts/03_proprietary_restricted/futura/unicode.futurabb.ttf
+          weight: 400
+    - family: Glasskin
+      fonts:
+        - asset: assets/fonts/02_trial_personal_use/creative_packs/glasskin-font/Glasskin-lxY1d.otf
+          weight: 400
+        - asset: assets/fonts/02_trial_personal_use/creative_packs/glasskin-font/Glasskin-nAMBg.ttf
+          weight: 400
+    - family: Gotham
+      fonts:
+        - asset: assets/fonts/03_proprietary_restricted/Gotham-Font/Gotham-Black.otf
+          weight: 900
+        - asset: assets/fonts/03_proprietary_restricted/Gotham-Font/Gotham-Bold.otf
+          weight: 700
+        - asset: assets/fonts/03_proprietary_restricted/Gotham-Font/Gotham-BookItalic.otf
+          weight: 400
+          style: italic
+        - asset: assets/fonts/03_proprietary_restricted/Gotham-Font/Gotham-Light.otf
+          weight: 300
+        - asset: assets/fonts/03_proprietary_restricted/Gotham-Font/Gotham-Thin.otf
+          weight: 100
+        - asset: assets/fonts/03_proprietary_restricted/Gotham-Font/Gotham-ThinItalic.otf
+          weight: 100
+          style: italic
+        - asset: assets/fonts/03_proprietary_restricted/Gotham-Font/Gotham-UltraItalic.otf
+          weight: 400
+          style: italic
+        - asset: assets/fonts/03_proprietary_restricted/Gotham-Font/Gotham-XLight.otf
+          weight: 300
+        - asset: assets/fonts/03_proprietary_restricted/Gotham-Font/Gotham-XLightItalic.otf
+          weight: 300
+          style: italic
+        - asset: assets/fonts/03_proprietary_restricted/Gotham-Font/GothamBold.ttf
+          weight: 700
+        - asset: assets/fonts/03_proprietary_restricted/Gotham-Font/GothamBoldItalic.ttf
+          weight: 700
+          style: italic
+        - asset: assets/fonts/03_proprietary_restricted/Gotham-Font/GothamBook.ttf
+          weight: 400
+        - asset: assets/fonts/03_proprietary_restricted/Gotham-Font/GothamBookItalic.ttf
+          weight: 400
+          style: italic
+        - asset: assets/fonts/03_proprietary_restricted/Gotham-Font/GothamLight.ttf
+          weight: 300
+        - asset: assets/fonts/03_proprietary_restricted/Gotham-Font/GothamLightItalic.ttf
+          weight: 300
+          style: italic
+        - asset: assets/fonts/03_proprietary_restricted/Gotham-Font/GothamMedium.ttf
+          weight: 500
+        - asset: assets/fonts/03_proprietary_restricted/Gotham-Font/GothamMediumItalic.ttf
+          weight: 500
+          style: italic
+        - asset: assets/fonts/03_proprietary_restricted/Gotham-Font/GothamMedium_1.ttf
+          weight: 500
+    - family: GrestalScript
+      fonts:
+        - asset: assets/fonts/02_trial_personal_use/creative_packs/grestal-script-font/GrestalScriptDemoRegular-dBYX.ttf
+          weight: 400
+    - family: HelloChristmas
+      fonts:
+        - asset: assets/fonts/02_trial_personal_use/creative_packs/hello-christmas-font/HelloChristmas-1Ge70.ttf
+          weight: 400
+        - asset: assets/fonts/02_trial_personal_use/creative_packs/hello-christmas-font/HelloChristmas-nRjqV.otf
+          weight: 400
+    - family: Helvetica
+      fonts:
+        - asset: assets/fonts/03_proprietary_restricted/helvetica-255/Helvetica-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/03_proprietary_restricted/helvetica-255/Helvetica-BoldOblique.ttf
+          weight: 700
+          style: italic
+        - asset: assets/fonts/03_proprietary_restricted/helvetica-255/Helvetica-Oblique.ttf
+          weight: 400
+          style: italic
+        - asset: assets/fonts/03_proprietary_restricted/helvetica-255/Helvetica.ttf
+          weight: 400
+        - asset: assets/fonts/03_proprietary_restricted/helvetica-255/helvetica-compressed-5871d14b6903a.otf
+          weight: 400
+        - asset: assets/fonts/03_proprietary_restricted/helvetica-255/helvetica-light-587ebe5a59211.ttf
+          weight: 300
+        - asset: assets/fonts/03_proprietary_restricted/helvetica-255/helvetica-rounded-bold-5871d05ead8de.otf
+          weight: 700
+    - family: Impact
+      fonts:
+        - asset: assets/fonts/03_proprietary_restricted/impact/Impacted.ttf
+          weight: 400
+        - asset: assets/fonts/03_proprietary_restricted/impact/impact.ttf
+          weight: 400
+        - asset: assets/fonts/03_proprietary_restricted/impact/unicode.impact.ttf
+          weight: 400
+    - family: Inter
+      fonts:
+        - asset: assets/fonts/01_open_source_commercial_safe/Inter/inter-black/inter-black.ttf
+          weight: 900
+    - family: Kaftan
+      fonts:
+        - asset: assets/fonts/02_trial_personal_use/editorial_trials/kaftan-trial.otf
+          weight: 400
+    - family: Lato
+      fonts:
+        - asset: assets/fonts/01_open_source_commercial_safe/Lato/Lato-Black.ttf
+          weight: 900
+        - asset: assets/fonts/01_open_source_commercial_safe/Lato/Lato-BlackItalic.ttf
+          weight: 900
+          style: italic
+        - asset: assets/fonts/01_open_source_commercial_safe/Lato/Lato-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/01_open_source_commercial_safe/Lato/Lato-BoldItalic.ttf
+          weight: 700
+          style: italic
+        - asset: assets/fonts/01_open_source_commercial_safe/Lato/Lato-Italic.ttf
+          weight: 400
+          style: italic
+        - asset: assets/fonts/01_open_source_commercial_safe/Lato/Lato-Light.ttf
+          weight: 300
+        - asset: assets/fonts/01_open_source_commercial_safe/Lato/Lato-LightItalic.ttf
+          weight: 300
+          style: italic
+        - asset: assets/fonts/01_open_source_commercial_safe/Lato/Lato-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/01_open_source_commercial_safe/Lato/Lato-Thin.ttf
+          weight: 100
+        - asset: assets/fonts/01_open_source_commercial_safe/Lato/Lato-ThinItalic.ttf
+          weight: 100
+          style: italic
+    - family: LemonMilk
+      fonts:
+        - asset: assets/fonts/03_proprietary_restricted/lemon_milk/LEMONMILK-Bold.otf
+          weight: 700
+        - asset: assets/fonts/03_proprietary_restricted/lemon_milk/LEMONMILK-BoldItalic.otf
+          weight: 700
+          style: italic
+        - asset: assets/fonts/03_proprietary_restricted/lemon_milk/LEMONMILK-Light.otf
+          weight: 300
+        - asset: assets/fonts/03_proprietary_restricted/lemon_milk/LEMONMILK-LightItalic.otf
+          weight: 300
+          style: italic
+        - asset: assets/fonts/03_proprietary_restricted/lemon_milk/LEMONMILK-Medium.otf
+          weight: 500
+        - asset: assets/fonts/03_proprietary_restricted/lemon_milk/LEMONMILK-MediumItalic.otf
+          weight: 500
+          style: italic
+        - asset: assets/fonts/03_proprietary_restricted/lemon_milk/LEMONMILK-Regular.otf
+          weight: 400
+        - asset: assets/fonts/03_proprietary_restricted/lemon_milk/LEMONMILK-RegularItalic.otf
+          weight: 400
+          style: italic
+    - family: Lobster
+      fonts:
+        - asset: assets/fonts/01_open_source_commercial_safe/Lobster/Lobster-Regular.ttf
+          weight: 400
+    - family: Maison
+      fonts:
+        - asset: assets/fonts/02_trial_personal_use/creative_packs/maison-font/Maison-MAvKp.ttf
+          weight: 400
+        - asset: assets/fonts/02_trial_personal_use/creative_packs/maison-font/Maison-rvlMx.otf
+          weight: 400
+    - family: Melanin
+      fonts:
+        - asset: assets/fonts/02_trial_personal_use/creative_packs/melanin-font/Melanin-R9xZA.otf
+          weight: 400
+    - family: Monoton
+      fonts:
+        - asset: assets/fonts/01_open_source_commercial_safe/Monoton/Monoton-Regular.ttf
+          weight: 400
+    - family: Montserrat
+      fonts:
+        - asset: assets/fonts/01_open_source_commercial_safe/Montserrat/Montserrat-Black.otf
+          weight: 900
+        - asset: assets/fonts/01_open_source_commercial_safe/Montserrat/Montserrat-BlackItalic.otf
+          weight: 900
+          style: italic
+        - asset: assets/fonts/01_open_source_commercial_safe/Montserrat/Montserrat-Bold.otf
+          weight: 700
+        - asset: assets/fonts/01_open_source_commercial_safe/Montserrat/Montserrat-BoldItalic.otf
+          weight: 700
+          style: italic
+        - asset: assets/fonts/01_open_source_commercial_safe/Montserrat/Montserrat-ExtraBold.otf
+          weight: 800
+        - asset: assets/fonts/01_open_source_commercial_safe/Montserrat/Montserrat-ExtraBoldItalic.otf
+          weight: 800
+          style: italic
+        - asset: assets/fonts/01_open_source_commercial_safe/Montserrat/Montserrat-ExtraLight.otf
+          weight: 200
+        - asset: assets/fonts/01_open_source_commercial_safe/Montserrat/Montserrat-ExtraLightItalic.otf
+          weight: 200
+          style: italic
+        - asset: assets/fonts/01_open_source_commercial_safe/Montserrat/Montserrat-Italic-VariableFont_wght.ttf
+          weight: 400
+          style: italic
+        - asset: assets/fonts/01_open_source_commercial_safe/Montserrat/Montserrat-Italic.otf
+          weight: 400
+          style: italic
+        - asset: assets/fonts/01_open_source_commercial_safe/Montserrat/Montserrat-Light.otf
+          weight: 300
+        - asset: assets/fonts/01_open_source_commercial_safe/Montserrat/Montserrat-LightItalic.otf
+          weight: 300
+          style: italic
+        - asset: assets/fonts/01_open_source_commercial_safe/Montserrat/Montserrat-Medium.otf
+          weight: 500
+        - asset: assets/fonts/01_open_source_commercial_safe/Montserrat/Montserrat-MediumItalic.otf
+          weight: 500
+          style: italic
+        - asset: assets/fonts/01_open_source_commercial_safe/Montserrat/Montserrat-Regular.otf
+          weight: 400
+        - asset: assets/fonts/01_open_source_commercial_safe/Montserrat/Montserrat-SemiBold.otf
+          weight: 600
+        - asset: assets/fonts/01_open_source_commercial_safe/Montserrat/Montserrat-SemiBoldItalic.otf
+          weight: 600
+          style: italic
+        - asset: assets/fonts/01_open_source_commercial_safe/Montserrat/Montserrat-Thin.otf
+          weight: 100
+        - asset: assets/fonts/01_open_source_commercial_safe/Montserrat/Montserrat-ThinItalic.otf
+          weight: 100
+          style: italic
+        - asset: assets/fonts/01_open_source_commercial_safe/Montserrat/Montserrat-VariableFont_wght.ttf
+          weight: 400
+        - asset: assets/fonts/01_open_source_commercial_safe/Montserrat/static/Montserrat-Black.ttf
+          weight: 900
+        - asset: assets/fonts/01_open_source_commercial_safe/Montserrat/static/Montserrat-BlackItalic.ttf
+          weight: 900
+          style: italic
+        - asset: assets/fonts/01_open_source_commercial_safe/Montserrat/static/Montserrat-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/01_open_source_commercial_safe/Montserrat/static/Montserrat-BoldItalic.ttf
+          weight: 700
+          style: italic
+        - asset: assets/fonts/01_open_source_commercial_safe/Montserrat/static/Montserrat-ExtraBold.ttf
+          weight: 800
+        - asset: assets/fonts/01_open_source_commercial_safe/Montserrat/static/Montserrat-ExtraBoldItalic.ttf
+          weight: 800
+          style: italic
+        - asset: assets/fonts/01_open_source_commercial_safe/Montserrat/static/Montserrat-ExtraLight.ttf
+          weight: 200
+        - asset: assets/fonts/01_open_source_commercial_safe/Montserrat/static/Montserrat-ExtraLightItalic.ttf
+          weight: 200
+          style: italic
+        - asset: assets/fonts/01_open_source_commercial_safe/Montserrat/static/Montserrat-Italic.ttf
+          weight: 400
+          style: italic
+        - asset: assets/fonts/01_open_source_commercial_safe/Montserrat/static/Montserrat-Light.ttf
+          weight: 300
+        - asset: assets/fonts/01_open_source_commercial_safe/Montserrat/static/Montserrat-LightItalic.ttf
+          weight: 300
+          style: italic
+        - asset: assets/fonts/01_open_source_commercial_safe/Montserrat/static/Montserrat-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/01_open_source_commercial_safe/Montserrat/static/Montserrat-MediumItalic.ttf
+          weight: 500
+          style: italic
+        - asset: assets/fonts/01_open_source_commercial_safe/Montserrat/static/Montserrat-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/01_open_source_commercial_safe/Montserrat/static/Montserrat-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/01_open_source_commercial_safe/Montserrat/static/Montserrat-SemiBoldItalic.ttf
+          weight: 600
+          style: italic
+        - asset: assets/fonts/01_open_source_commercial_safe/Montserrat/static/Montserrat-Thin.ttf
+          weight: 100
+        - asset: assets/fonts/01_open_source_commercial_safe/Montserrat/static/Montserrat-ThinItalic.ttf
+          weight: 100
+          style: italic
+    - family: MontserratAlternates
+      fonts:
+        - asset: assets/fonts/01_open_source_commercial_safe/MontserratAlternates/MontserratAlternates-Black.otf
+          weight: 900
+        - asset: assets/fonts/01_open_source_commercial_safe/MontserratAlternates/MontserratAlternates-BlackItalic.otf
+          weight: 900
+          style: italic
+        - asset: assets/fonts/01_open_source_commercial_safe/MontserratAlternates/MontserratAlternates-Bold.otf
+          weight: 700
+        - asset: assets/fonts/01_open_source_commercial_safe/MontserratAlternates/MontserratAlternates-BoldItalic.otf
+          weight: 700
+          style: italic
+        - asset: assets/fonts/01_open_source_commercial_safe/MontserratAlternates/MontserratAlternates-ExtraBold.otf
+          weight: 800
+        - asset: assets/fonts/01_open_source_commercial_safe/MontserratAlternates/MontserratAlternates-ExtraBoldItalic.otf
+          weight: 800
+          style: italic
+        - asset: assets/fonts/01_open_source_commercial_safe/MontserratAlternates/MontserratAlternates-ExtraLight.otf
+          weight: 200
+        - asset: assets/fonts/01_open_source_commercial_safe/MontserratAlternates/MontserratAlternates-ExtraLightItalic.otf
+          weight: 200
+          style: italic
+        - asset: assets/fonts/01_open_source_commercial_safe/MontserratAlternates/MontserratAlternates-Italic.otf
+          weight: 400
+          style: italic
+        - asset: assets/fonts/01_open_source_commercial_safe/MontserratAlternates/MontserratAlternates-Light.otf
+          weight: 300
+        - asset: assets/fonts/01_open_source_commercial_safe/MontserratAlternates/MontserratAlternates-LightItalic.otf
+          weight: 300
+          style: italic
+        - asset: assets/fonts/01_open_source_commercial_safe/MontserratAlternates/MontserratAlternates-Medium.otf
+          weight: 500
+        - asset: assets/fonts/01_open_source_commercial_safe/MontserratAlternates/MontserratAlternates-MediumItalic.otf
+          weight: 500
+          style: italic
+        - asset: assets/fonts/01_open_source_commercial_safe/MontserratAlternates/MontserratAlternates-Regular.otf
+          weight: 400
+        - asset: assets/fonts/01_open_source_commercial_safe/MontserratAlternates/MontserratAlternates-SemiBold.otf
+          weight: 600
+        - asset: assets/fonts/01_open_source_commercial_safe/MontserratAlternates/MontserratAlternates-SemiBoldItalic.otf
+          weight: 600
+          style: italic
+        - asset: assets/fonts/01_open_source_commercial_safe/MontserratAlternates/MontserratAlternates-Thin.otf
+          weight: 100
+        - asset: assets/fonts/01_open_source_commercial_safe/MontserratAlternates/MontserratAlternates-ThinItalic.otf
+          weight: 100
+          style: italic
+    - family: Morganite
+      fonts:
+        - asset: assets/fonts/03_proprietary_restricted/morganite/Morganite-Black.ttf
+          weight: 400
+        - asset: assets/fonts/03_proprietary_restricted/morganite/Morganite-BlackItalic.ttf
+          weight: 400
+          style: italic
+        - asset: assets/fonts/03_proprietary_restricted/morganite/Morganite-Bold.ttf
+          weight: 400
+        - asset: assets/fonts/03_proprietary_restricted/morganite/Morganite-BoldItalic.ttf
+          weight: 400
+          style: italic
+        - asset: assets/fonts/03_proprietary_restricted/morganite/Morganite-Book.ttf
+          weight: 400
+        - asset: assets/fonts/03_proprietary_restricted/morganite/Morganite-BookItalic.ttf
+          weight: 400
+          style: italic
+        - asset: assets/fonts/03_proprietary_restricted/morganite/Morganite-ExtraBold.ttf
+          weight: 400
+        - asset: assets/fonts/03_proprietary_restricted/morganite/Morganite-ExtraBoldItalic.ttf
+          weight: 400
+          style: italic
+        - asset: assets/fonts/03_proprietary_restricted/morganite/Morganite-ExtraLight.ttf
+          weight: 200
+        - asset: assets/fonts/03_proprietary_restricted/morganite/Morganite-ExtraLightItalic.ttf
+          weight: 200
+          style: italic
+        - asset: assets/fonts/03_proprietary_restricted/morganite/Morganite-Light.ttf
+          weight: 300
+        - asset: assets/fonts/03_proprietary_restricted/morganite/Morganite-LightItalic.ttf
+          weight: 300
+          style: italic
+        - asset: assets/fonts/03_proprietary_restricted/morganite/Morganite-Medium.ttf
+          weight: 400
+        - asset: assets/fonts/03_proprietary_restricted/morganite/Morganite-MediumItalic.ttf
+          weight: 400
+          style: italic
+        - asset: assets/fonts/03_proprietary_restricted/morganite/Morganite-SemiBold.ttf
+          weight: 400
+        - asset: assets/fonts/03_proprietary_restricted/morganite/Morganite-SemiBoldItalic.ttf
+          weight: 400
+          style: italic
+        - asset: assets/fonts/03_proprietary_restricted/morganite/Morganite-Thin.ttf
+          weight: 100
+        - asset: assets/fonts/03_proprietary_restricted/morganite/Morganite-ThinItalic.ttf
+          weight: 100
+          style: italic
+    - family: Nevanta
+      fonts:
+        - asset: assets/fonts/02_trial_personal_use/creative_packs/nevanta-font/NevantaBlack-6Rwz6.otf
+          weight: 900
+        - asset: assets/fonts/02_trial_personal_use/creative_packs/nevanta-font/NevantaBold-yYra5.otf
+          weight: 700
+        - asset: assets/fonts/02_trial_personal_use/creative_packs/nevanta-font/NevantaExtraBold-9MdV5.otf
+          weight: 800
+        - asset: assets/fonts/02_trial_personal_use/creative_packs/nevanta-font/NevantaExtraLight-lxXwX.otf
+          weight: 200
+        - asset: assets/fonts/02_trial_personal_use/creative_packs/nevanta-font/NevantaLight-nAomM.otf
+          weight: 300
+        - asset: assets/fonts/02_trial_personal_use/creative_packs/nevanta-font/NevantaMedium-1jrVL.otf
+          weight: 500
+        - asset: assets/fonts/02_trial_personal_use/creative_packs/nevanta-font/NevantaObliqueBlack-R9PxM.otf
+          weight: 900
+          style: italic
+        - asset: assets/fonts/02_trial_personal_use/creative_packs/nevanta-font/NevantaObliqueBold-BLlVV.otf
+          weight: 700
+          style: italic
+        - asset: assets/fonts/02_trial_personal_use/creative_packs/nevanta-font/NevantaObliqueExtrabold-8OmVD.otf
+          weight: 800
+          style: italic
+        - asset: assets/fonts/02_trial_personal_use/creative_packs/nevanta-font/NevantaObliqueExtralight-Yqexj.otf
+          weight: 200
+          style: italic
+        - asset: assets/fonts/02_trial_personal_use/creative_packs/nevanta-font/NevantaObliqueLight-rvlXO.otf
+          weight: 300
+          style: italic
+        - asset: assets/fonts/02_trial_personal_use/creative_packs/nevanta-font/NevantaObliqueMedium-MAvxe.otf
+          weight: 500
+          style: italic
+        - asset: assets/fonts/02_trial_personal_use/creative_packs/nevanta-font/NevantaObliqueRegular-KVKqo.otf
+          weight: 400
+          style: italic
+        - asset: assets/fonts/02_trial_personal_use/creative_packs/nevanta-font/NevantaObliqueSemibold-2vMV8.otf
+          weight: 600
+          style: italic
+        - asset: assets/fonts/02_trial_personal_use/creative_packs/nevanta-font/NevantaObliqueThin-vnB0M.otf
+          weight: 100
+          style: italic
+        - asset: assets/fonts/02_trial_personal_use/creative_packs/nevanta-font/NevantaRegular-lxXwy.otf
+          weight: 400
+        - asset: assets/fonts/02_trial_personal_use/creative_packs/nevanta-font/NevantaSemiBold-nAomP.otf
+          weight: 600
+        - asset: assets/fonts/02_trial_personal_use/creative_packs/nevanta-font/NevantaThin-1jrVg.otf
+          weight: 100
+    - family: Nexa
+      fonts:
+        - asset: assets/fonts/03_proprietary_restricted/nexa/Nexa-ExtraLight.ttf
+          weight: 200
+        - asset: assets/fonts/03_proprietary_restricted/nexa/Nexa-Heavy.ttf
+          weight: 800
+    - family: Novecento
+      fonts:
+        - asset: assets/fonts/03_proprietary_restricted/Novecento-Font/Novecento Bold.otf
+          weight: 700
+        - asset: assets/fonts/03_proprietary_restricted/Novecento-Font/Novecento Bold.ttf
+          weight: 700
+        - asset: assets/fonts/03_proprietary_restricted/Novecento-Font/Novecento Book.otf
+          weight: 400
+        - asset: assets/fonts/03_proprietary_restricted/Novecento-Font/Novecento Book.ttf
+          weight: 400
+        - asset: assets/fonts/03_proprietary_restricted/Novecento-Font/Novecento CondBold.otf
+          weight: 700
+        - asset: assets/fonts/03_proprietary_restricted/Novecento-Font/Novecento CondBold.ttf
+          weight: 700
+        - asset: assets/fonts/03_proprietary_restricted/Novecento-Font/Novecento CondBook.otf
+          weight: 400
+        - asset: assets/fonts/03_proprietary_restricted/Novecento-Font/Novecento CondBook.ttf
+          weight: 400
+        - asset: assets/fonts/03_proprietary_restricted/Novecento-Font/Novecento CondLight.otf
+          weight: 300
+        - asset: assets/fonts/03_proprietary_restricted/Novecento-Font/Novecento CondLight.ttf
+          weight: 300
+        - asset: assets/fonts/03_proprietary_restricted/Novecento-Font/Novecento CondNormal.otf
+          weight: 400
+        - asset: assets/fonts/03_proprietary_restricted/Novecento-Font/Novecento CondNormal.ttf
+          weight: 400
+        - asset: assets/fonts/03_proprietary_restricted/Novecento-Font/Novecento DemiBold.otf
+          weight: 600
+        - asset: assets/fonts/03_proprietary_restricted/Novecento-Font/Novecento DemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/03_proprietary_restricted/Novecento-Font/Novecento Light.otf
+          weight: 300
+        - asset: assets/fonts/03_proprietary_restricted/Novecento-Font/Novecento Light.ttf
+          weight: 300
+        - asset: assets/fonts/03_proprietary_restricted/Novecento-Font/Novecento Medium.otf
+          weight: 500
+        - asset: assets/fonts/03_proprietary_restricted/Novecento-Font/Novecento Medium.ttf
+          weight: 500
+        - asset: assets/fonts/03_proprietary_restricted/Novecento-Font/Novecento NarrowBold.otf
+          weight: 700
+        - asset: assets/fonts/03_proprietary_restricted/Novecento-Font/Novecento NarrowBold.ttf
+          weight: 700
+        - asset: assets/fonts/03_proprietary_restricted/Novecento-Font/Novecento NarrowBook.otf
+          weight: 400
+        - asset: assets/fonts/03_proprietary_restricted/Novecento-Font/Novecento NarrowBook.ttf
+          weight: 400
+        - asset: assets/fonts/03_proprietary_restricted/Novecento-Font/Novecento Normal.otf
+          weight: 400
+        - asset: assets/fonts/03_proprietary_restricted/Novecento-Font/Novecento Normal.ttf
+          weight: 400
+        - asset: assets/fonts/03_proprietary_restricted/Novecento-Font/Novecento UltraBold.otf
+          weight: 700
+        - asset: assets/fonts/03_proprietary_restricted/Novecento-Font/Novecento UltraBold.ttf
+          weight: 700
+        - asset: assets/fonts/03_proprietary_restricted/Novecento-Font/Novecento UltraLight.otf
+          weight: 200
+        - asset: assets/fonts/03_proprietary_restricted/Novecento-Font/Novecento UltraLight.ttf
+          weight: 200
+        - asset: assets/fonts/03_proprietary_restricted/Novecento-Font/Novecento WideBold.otf
+          weight: 700
+        - asset: assets/fonts/03_proprietary_restricted/Novecento-Font/Novecento WideBold.ttf
+          weight: 700
+        - asset: assets/fonts/03_proprietary_restricted/Novecento-Font/Novecento WideBook.otf
+          weight: 400
+        - asset: assets/fonts/03_proprietary_restricted/Novecento-Font/Novecento WideBook.ttf
+          weight: 400
+        - asset: assets/fonts/03_proprietary_restricted/Novecento-Font/Novecento WideLight.otf
+          weight: 300
+        - asset: assets/fonts/03_proprietary_restricted/Novecento-Font/Novecento WideLight.ttf
+          weight: 300
+        - asset: assets/fonts/03_proprietary_restricted/Novecento-Font/Novecento WideMedium.otf
+          weight: 500
+        - asset: assets/fonts/03_proprietary_restricted/Novecento-Font/Novecento WideMedium.ttf
+          weight: 500
+        - asset: assets/fonts/03_proprietary_restricted/Novecento-Font/Novecento WideNormal.otf
+          weight: 400
+        - asset: assets/fonts/03_proprietary_restricted/Novecento-Font/Novecento WideNormal.ttf
+          weight: 400
+    - family: Orletta
+      fonts:
+        - asset: assets/fonts/02_trial_personal_use/creative_packs/orletta-font/Orletta-6R6VY.otf
+          weight: 400
+        - asset: assets/fonts/02_trial_personal_use/creative_packs/orletta-font/Orletta-yYpWY.ttf
+          weight: 400
+    - family: Poppins
+      fonts:
+        - asset: assets/fonts/01_open_source_commercial_safe/Poppins/Poppins-Black.ttf
+          weight: 900
+        - asset: assets/fonts/01_open_source_commercial_safe/Poppins/Poppins-BlackItalic.ttf
+          weight: 900
+          style: italic
+        - asset: assets/fonts/01_open_source_commercial_safe/Poppins/Poppins-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/01_open_source_commercial_safe/Poppins/Poppins-BoldItalic.ttf
+          weight: 700
+          style: italic
+        - asset: assets/fonts/01_open_source_commercial_safe/Poppins/Poppins-ExtraBold.ttf
+          weight: 800
+        - asset: assets/fonts/01_open_source_commercial_safe/Poppins/Poppins-ExtraBoldItalic.ttf
+          weight: 800
+          style: italic
+        - asset: assets/fonts/01_open_source_commercial_safe/Poppins/Poppins-ExtraLight.ttf
+          weight: 200
+        - asset: assets/fonts/01_open_source_commercial_safe/Poppins/Poppins-ExtraLightItalic.ttf
+          weight: 200
+          style: italic
+        - asset: assets/fonts/01_open_source_commercial_safe/Poppins/Poppins-Italic.ttf
+          weight: 400
+          style: italic
+        - asset: assets/fonts/01_open_source_commercial_safe/Poppins/Poppins-Light.ttf
+          weight: 300
+        - asset: assets/fonts/01_open_source_commercial_safe/Poppins/Poppins-LightItalic.ttf
+          weight: 300
+          style: italic
+        - asset: assets/fonts/01_open_source_commercial_safe/Poppins/Poppins-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/01_open_source_commercial_safe/Poppins/Poppins-MediumItalic.ttf
+          weight: 500
+          style: italic
+        - asset: assets/fonts/01_open_source_commercial_safe/Poppins/Poppins-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/01_open_source_commercial_safe/Poppins/Poppins-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/01_open_source_commercial_safe/Poppins/Poppins-SemiBoldItalic.ttf
+          weight: 600
+          style: italic
+        - asset: assets/fonts/01_open_source_commercial_safe/Poppins/Poppins-Thin.ttf
+          weight: 100
+        - asset: assets/fonts/01_open_source_commercial_safe/Poppins/Poppins-ThinItalic.ttf
+          weight: 100
+          style: italic
+    - family: Quicking
+      fonts:
+        - asset: assets/fonts/02_trial_personal_use/creative_packs/quicking-font/QuickingRegular-gw5KY.otf
+          weight: 400
+    - family: Refile
+      fonts:
+        - asset: assets/fonts/02_trial_personal_use/creative_packs/refile-font/Refile-KVw6p.otf
+          weight: 400
+    - family: Runtime
+      fonts:
+        - asset: assets/fonts/02_trial_personal_use/creative_packs/runtime-font/RuntimeRegular-m2Odx.otf
+          weight: 400
+    - family: SFPro
+      fonts:
+        - asset: assets/fonts/03_proprietary_restricted/Apple-SF-Pro/San-Francisco-Pro-Fonts-master/SF-Pro-Italic.ttf
+          weight: 400
+          style: italic
+        - asset: assets/fonts/03_proprietary_restricted/Apple-SF-Pro/San-Francisco-Pro-Fonts-master/SF-Pro.ttf
+          weight: 400
+    - family: SFProDisplay
+      fonts:
+        - asset: assets/fonts/03_proprietary_restricted/Apple-SF-Pro/San-Francisco-Pro-Fonts-master/SF-Pro-Display-Black.otf
+          weight: 900
+        - asset: assets/fonts/03_proprietary_restricted/Apple-SF-Pro/San-Francisco-Pro-Fonts-master/SF-Pro-Display-BlackItalic.otf
+          weight: 900
+          style: italic
+        - asset: assets/fonts/03_proprietary_restricted/Apple-SF-Pro/San-Francisco-Pro-Fonts-master/SF-Pro-Display-Bold.otf
+          weight: 700
+        - asset: assets/fonts/03_proprietary_restricted/Apple-SF-Pro/San-Francisco-Pro-Fonts-master/SF-Pro-Display-BoldItalic.otf
+          weight: 700
+          style: italic
+        - asset: assets/fonts/03_proprietary_restricted/Apple-SF-Pro/San-Francisco-Pro-Fonts-master/SF-Pro-Display-Heavy.otf
+          weight: 800
+        - asset: assets/fonts/03_proprietary_restricted/Apple-SF-Pro/San-Francisco-Pro-Fonts-master/SF-Pro-Display-HeavyItalic.otf
+          weight: 800
+          style: italic
+        - asset: assets/fonts/03_proprietary_restricted/Apple-SF-Pro/San-Francisco-Pro-Fonts-master/SF-Pro-Display-Light.otf
+          weight: 300
+        - asset: assets/fonts/03_proprietary_restricted/Apple-SF-Pro/San-Francisco-Pro-Fonts-master/SF-Pro-Display-LightItalic.otf
+          weight: 300
+          style: italic
+        - asset: assets/fonts/03_proprietary_restricted/Apple-SF-Pro/San-Francisco-Pro-Fonts-master/SF-Pro-Display-Medium.otf
+          weight: 500
+        - asset: assets/fonts/03_proprietary_restricted/Apple-SF-Pro/San-Francisco-Pro-Fonts-master/SF-Pro-Display-MediumItalic.otf
+          weight: 500
+          style: italic
+        - asset: assets/fonts/03_proprietary_restricted/Apple-SF-Pro/San-Francisco-Pro-Fonts-master/SF-Pro-Display-Regular.otf
+          weight: 400
+        - asset: assets/fonts/03_proprietary_restricted/Apple-SF-Pro/San-Francisco-Pro-Fonts-master/SF-Pro-Display-RegularItalic.otf
+          weight: 400
+          style: italic
+        - asset: assets/fonts/03_proprietary_restricted/Apple-SF-Pro/San-Francisco-Pro-Fonts-master/SF-Pro-Display-Semibold.otf
+          weight: 600
+        - asset: assets/fonts/03_proprietary_restricted/Apple-SF-Pro/San-Francisco-Pro-Fonts-master/SF-Pro-Display-SemiboldItalic.otf
+          weight: 600
+          style: italic
+        - asset: assets/fonts/03_proprietary_restricted/Apple-SF-Pro/San-Francisco-Pro-Fonts-master/SF-Pro-Display-Thin.otf
+          weight: 100
+        - asset: assets/fonts/03_proprietary_restricted/Apple-SF-Pro/San-Francisco-Pro-Fonts-master/SF-Pro-Display-ThinItalic.otf
+          weight: 100
+          style: italic
+        - asset: assets/fonts/03_proprietary_restricted/Apple-SF-Pro/San-Francisco-Pro-Fonts-master/SF-Pro-Display-Ultralight.otf
+          weight: 200
+        - asset: assets/fonts/03_proprietary_restricted/Apple-SF-Pro/San-Francisco-Pro-Fonts-master/SF-Pro-Display-UltralightItalic.otf
+          weight: 200
+          style: italic
+        - asset: assets/fonts/03_proprietary_restricted/sf-pro-display/SFPRODISPLAYBLACKITALIC.OTF
+          weight: 900
+          style: italic
+        - asset: assets/fonts/03_proprietary_restricted/sf-pro-display/SFPRODISPLAYBOLD.OTF
+          weight: 700
+        - asset: assets/fonts/03_proprietary_restricted/sf-pro-display/SFPRODISPLAYHEAVYITALIC.OTF
+          weight: 800
+          style: italic
+        - asset: assets/fonts/03_proprietary_restricted/sf-pro-display/SFPRODISPLAYLIGHTITALIC.OTF
+          weight: 300
+          style: italic
+        - asset: assets/fonts/03_proprietary_restricted/sf-pro-display/SFPRODISPLAYMEDIUM.OTF
+          weight: 500
+        - asset: assets/fonts/03_proprietary_restricted/sf-pro-display/SFPRODISPLAYREGULAR.OTF
+          weight: 400
+        - asset: assets/fonts/03_proprietary_restricted/sf-pro-display/SFPRODISPLAYSEMIBOLDITALIC.OTF
+          weight: 600
+          style: italic
+        - asset: assets/fonts/03_proprietary_restricted/sf-pro-display/SFPRODISPLAYTHINITALIC.OTF
+          weight: 100
+          style: italic
+        - asset: assets/fonts/03_proprietary_restricted/sf-pro-display/SFPRODISPLAYULTRALIGHTITALIC.OTF
+          weight: 200
+          style: italic
+    - family: SFProRounded
+      fonts:
+        - asset: assets/fonts/03_proprietary_restricted/Apple-SF-Pro/San-Francisco-Pro-Fonts-master/SF-Pro-Rounded-Black.otf
+          weight: 900
+        - asset: assets/fonts/03_proprietary_restricted/Apple-SF-Pro/San-Francisco-Pro-Fonts-master/SF-Pro-Rounded-Bold.otf
+          weight: 700
+        - asset: assets/fonts/03_proprietary_restricted/Apple-SF-Pro/San-Francisco-Pro-Fonts-master/SF-Pro-Rounded-Heavy.otf
+          weight: 800
+        - asset: assets/fonts/03_proprietary_restricted/Apple-SF-Pro/San-Francisco-Pro-Fonts-master/SF-Pro-Rounded-Light.otf
+          weight: 300
+        - asset: assets/fonts/03_proprietary_restricted/Apple-SF-Pro/San-Francisco-Pro-Fonts-master/SF-Pro-Rounded-Medium.otf
+          weight: 500
+        - asset: assets/fonts/03_proprietary_restricted/Apple-SF-Pro/San-Francisco-Pro-Fonts-master/SF-Pro-Rounded-Regular.otf
+          weight: 400
+        - asset: assets/fonts/03_proprietary_restricted/Apple-SF-Pro/San-Francisco-Pro-Fonts-master/SF-Pro-Rounded-Semibold.otf
+          weight: 600
+        - asset: assets/fonts/03_proprietary_restricted/Apple-SF-Pro/San-Francisco-Pro-Fonts-master/SF-Pro-Rounded-Thin.otf
+          weight: 100
+        - asset: assets/fonts/03_proprietary_restricted/Apple-SF-Pro/San-Francisco-Pro-Fonts-master/SF-Pro-Rounded-Ultralight.otf
+          weight: 200
+    - family: SFProText
+      fonts:
+        - asset: assets/fonts/03_proprietary_restricted/Apple-SF-Pro/San-Francisco-Pro-Fonts-master/SF-Pro-Text-Black.otf
+          weight: 900
+        - asset: assets/fonts/03_proprietary_restricted/Apple-SF-Pro/San-Francisco-Pro-Fonts-master/SF-Pro-Text-BlackItalic.otf
+          weight: 900
+          style: italic
+        - asset: assets/fonts/03_proprietary_restricted/Apple-SF-Pro/San-Francisco-Pro-Fonts-master/SF-Pro-Text-Bold.otf
+          weight: 700
+        - asset: assets/fonts/03_proprietary_restricted/Apple-SF-Pro/San-Francisco-Pro-Fonts-master/SF-Pro-Text-BoldItalic.otf
+          weight: 700
+          style: italic
+        - asset: assets/fonts/03_proprietary_restricted/Apple-SF-Pro/San-Francisco-Pro-Fonts-master/SF-Pro-Text-Heavy.otf
+          weight: 800
+        - asset: assets/fonts/03_proprietary_restricted/Apple-SF-Pro/San-Francisco-Pro-Fonts-master/SF-Pro-Text-HeavyItalic.otf
+          weight: 800
+          style: italic
+        - asset: assets/fonts/03_proprietary_restricted/Apple-SF-Pro/San-Francisco-Pro-Fonts-master/SF-Pro-Text-Light.otf
+          weight: 300
+        - asset: assets/fonts/03_proprietary_restricted/Apple-SF-Pro/San-Francisco-Pro-Fonts-master/SF-Pro-Text-LightItalic.otf
+          weight: 300
+          style: italic
+        - asset: assets/fonts/03_proprietary_restricted/Apple-SF-Pro/San-Francisco-Pro-Fonts-master/SF-Pro-Text-Medium.otf
+          weight: 500
+        - asset: assets/fonts/03_proprietary_restricted/Apple-SF-Pro/San-Francisco-Pro-Fonts-master/SF-Pro-Text-MediumItalic.otf
+          weight: 500
+          style: italic
+        - asset: assets/fonts/03_proprietary_restricted/Apple-SF-Pro/San-Francisco-Pro-Fonts-master/SF-Pro-Text-Regular.otf
+          weight: 400
+        - asset: assets/fonts/03_proprietary_restricted/Apple-SF-Pro/San-Francisco-Pro-Fonts-master/SF-Pro-Text-RegularItalic.otf
+          weight: 400
+          style: italic
+        - asset: assets/fonts/03_proprietary_restricted/Apple-SF-Pro/San-Francisco-Pro-Fonts-master/SF-Pro-Text-Semibold.otf
+          weight: 600
+        - asset: assets/fonts/03_proprietary_restricted/Apple-SF-Pro/San-Francisco-Pro-Fonts-master/SF-Pro-Text-SemiboldItalic.otf
+          weight: 600
+          style: italic
+        - asset: assets/fonts/03_proprietary_restricted/Apple-SF-Pro/San-Francisco-Pro-Fonts-master/SF-Pro-Text-Thin.otf
+          weight: 100
+        - asset: assets/fonts/03_proprietary_restricted/Apple-SF-Pro/San-Francisco-Pro-Fonts-master/SF-Pro-Text-ThinItalic.otf
+          weight: 100
+          style: italic
+        - asset: assets/fonts/03_proprietary_restricted/Apple-SF-Pro/San-Francisco-Pro-Fonts-master/SF-Pro-Text-Ultralight.otf
+          weight: 200
+        - asset: assets/fonts/03_proprietary_restricted/Apple-SF-Pro/San-Francisco-Pro-Fonts-master/SF-Pro-Text-UltralightItalic.otf
+          weight: 200
+          style: italic
+    - family: Sacrifice
+      fonts:
+        - asset: assets/fonts/02_trial_personal_use/creative_packs/sacrifice-font/SacrificeDemo-8Ox1B.ttf
+          weight: 400
+    - family: Salcio
+      fonts:
+        - asset: assets/fonts/02_trial_personal_use/creative_packs/salcio-font/Salcio-gwn36.otf
+          weight: 400
+        - asset: assets/fonts/02_trial_personal_use/creative_packs/salcio-font/Salcio-ovKEz.ttf
+          weight: 400
+    - family: Silkroad
+      fonts:
+        - asset: assets/fonts/02_trial_personal_use/creative_packs/silkroad-font/Silkroad-7O5ol.otf
+          weight: 400
+        - asset: assets/fonts/02_trial_personal_use/creative_packs/silkroad-font/Silkroad-m2BKx.ttf
+          weight: 400
+    - family: Skiwar
+      fonts:
+        - asset: assets/fonts/02_trial_personal_use/creative_packs/skiwar-font/SkiwarRegular-woOan.otf
+          weight: 400
+    - family: TacticSans
+      fonts:
+        - asset: assets/fonts/03_proprietary_restricted/Tactic.Sans/TacticSans-Bld.otf
+          weight: 700
+        - asset: assets/fonts/03_proprietary_restricted/Tactic.Sans/TacticSans-BldIt.otf
+          weight: 700
+          style: italic
+        - asset: assets/fonts/03_proprietary_restricted/Tactic.Sans/TacticSans-Blk.otf
+          weight: 900
+        - asset: assets/fonts/03_proprietary_restricted/Tactic.Sans/TacticSans-BlkIt.otf
+          weight: 900
+          style: italic
+        - asset: assets/fonts/03_proprietary_restricted/Tactic.Sans/TacticSans-Lgt.otf
+          weight: 300
+        - asset: assets/fonts/03_proprietary_restricted/Tactic.Sans/TacticSans-LgtIt.otf
+          weight: 300
+          style: italic
+        - asset: assets/fonts/03_proprietary_restricted/Tactic.Sans/TacticSans-Med.otf
+          weight: 500
+        - asset: assets/fonts/03_proprietary_restricted/Tactic.Sans/TacticSans-MedIt.otf
+          weight: 500
+          style: italic
+        - asset: assets/fonts/03_proprietary_restricted/Tactic.Sans/TacticSans-Reg.otf
+          weight: 400
+        - asset: assets/fonts/03_proprietary_restricted/Tactic.Sans/TacticSans-RegIt.otf
+          weight: 400
+          style: italic
+        - asset: assets/fonts/03_proprietary_restricted/Tactic.Sans/TacticSans-Thn.otf
+          weight: 100
+        - asset: assets/fonts/03_proprietary_restricted/Tactic.Sans/TacticSans-ThnIt.otf
+          weight: 100
+          style: italic
+        - asset: assets/fonts/03_proprietary_restricted/Tactic.Sans/TacticSans-Ult.otf
+          weight: 400
+        - asset: assets/fonts/03_proprietary_restricted/Tactic.Sans/TacticSans-UltIt.otf
+          weight: 400
+          style: italic
+        - asset: assets/fonts/03_proprietary_restricted/Tactic.Sans/TacticSansExd-Bld.otf
+          weight: 700
+        - asset: assets/fonts/03_proprietary_restricted/Tactic.Sans/TacticSansExd-BldIt.otf
+          weight: 700
+          style: italic
+        - asset: assets/fonts/03_proprietary_restricted/Tactic.Sans/TacticSansExd-Blk.otf
+          weight: 900
+        - asset: assets/fonts/03_proprietary_restricted/Tactic.Sans/TacticSansExd-BlkIt.otf
+          weight: 900
+          style: italic
+        - asset: assets/fonts/03_proprietary_restricted/Tactic.Sans/TacticSansExd-Lgt.otf
+          weight: 300
+        - asset: assets/fonts/03_proprietary_restricted/Tactic.Sans/TacticSansExd-LgtIt.otf
+          weight: 300
+          style: italic
+        - asset: assets/fonts/03_proprietary_restricted/Tactic.Sans/TacticSansExd-Med.otf
+          weight: 500
+        - asset: assets/fonts/03_proprietary_restricted/Tactic.Sans/TacticSansExd-MedIt.otf
+          weight: 500
+          style: italic
+        - asset: assets/fonts/03_proprietary_restricted/Tactic.Sans/TacticSansExd-Reg.otf
+          weight: 400
+        - asset: assets/fonts/03_proprietary_restricted/Tactic.Sans/TacticSansExd-RegIt.otf
+          weight: 400
+          style: italic
+        - asset: assets/fonts/03_proprietary_restricted/Tactic.Sans/TacticSansExd-Thn.otf
+          weight: 100
+        - asset: assets/fonts/03_proprietary_restricted/Tactic.Sans/TacticSansExd-ThnIt.otf
+          weight: 100
+          style: italic
+        - asset: assets/fonts/03_proprietary_restricted/Tactic.Sans/TacticSansExd-Ult.otf
+          weight: 400
+        - asset: assets/fonts/03_proprietary_restricted/Tactic.Sans/TacticSansExd-UltIt.otf
+          weight: 400
+          style: italic
+        - asset: assets/fonts/03_proprietary_restricted/Tactic.Sans/TacticSansExtExd-Bld.otf
+          weight: 700
+        - asset: assets/fonts/03_proprietary_restricted/Tactic.Sans/TacticSansExtExd-BldIt.otf
+          weight: 700
+          style: italic
+        - asset: assets/fonts/03_proprietary_restricted/Tactic.Sans/TacticSansExtExd-Blk.otf
+          weight: 900
+        - asset: assets/fonts/03_proprietary_restricted/Tactic.Sans/TacticSansExtExd-BlkIt.otf
+          weight: 900
+          style: italic
+        - asset: assets/fonts/03_proprietary_restricted/Tactic.Sans/TacticSansExtExd-Lgt.otf
+          weight: 300
+        - asset: assets/fonts/03_proprietary_restricted/Tactic.Sans/TacticSansExtExd-LgtIt.otf
+          weight: 300
+          style: italic
+        - asset: assets/fonts/03_proprietary_restricted/Tactic.Sans/TacticSansExtExd-Med.otf
+          weight: 500
+        - asset: assets/fonts/03_proprietary_restricted/Tactic.Sans/TacticSansExtExd-MedIt.otf
+          weight: 500
+          style: italic
+        - asset: assets/fonts/03_proprietary_restricted/Tactic.Sans/TacticSansExtExd-Reg.otf
+          weight: 400
+        - asset: assets/fonts/03_proprietary_restricted/Tactic.Sans/TacticSansExtExd-RegIt.otf
+          weight: 400
+          style: italic
+        - asset: assets/fonts/03_proprietary_restricted/Tactic.Sans/TacticSansExtExd-Thn.otf
+          weight: 100
+        - asset: assets/fonts/03_proprietary_restricted/Tactic.Sans/TacticSansExtExd-ThnIt.otf
+          weight: 100
+          style: italic
+        - asset: assets/fonts/03_proprietary_restricted/Tactic.Sans/TacticSansExtExd-Ult.otf
+          weight: 400
+        - asset: assets/fonts/03_proprietary_restricted/Tactic.Sans/TacticSansExtExd-UltIt.otf
+          weight: 400
+          style: italic
+    - family: TimesNewRoman
+      fonts:
+        - asset: assets/fonts/03_proprietary_restricted/Times New Romens/Times New Roman Bold Italic.ttf
+          weight: 700
+          style: italic
+        - asset: assets/fonts/03_proprietary_restricted/Times New Romens/Times New Roman Bold.ttf
+          weight: 700
+        - asset: assets/fonts/03_proprietary_restricted/Times New Romens/Times New Roman Italic.ttf
+          weight: 400
+          style: italic
+        - asset: assets/fonts/03_proprietary_restricted/Times New Romens/Times New Roman.ttf
+          weight: 400
+        - asset: assets/fonts/03_proprietary_restricted/Times New Romens/times.ttf
+          weight: 400
+        - asset: assets/fonts/03_proprietary_restricted/Times New Romens/timesi.ttf
+          weight: 400
+    - family: Trevon
+      fonts:
+        - asset: assets/fonts/02_trial_personal_use/creative_packs/trevon-font/TrevonRegular-2vYB3.otf
+          weight: 400

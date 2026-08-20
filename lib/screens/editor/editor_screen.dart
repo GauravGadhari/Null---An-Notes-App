@@ -1,0 +1,734 @@
+import 'dart:async';
+import 'package:flutter/material.dart';
+import '../../core/controllers/null_rich_text_controller.dart';
+import '../../core/fonts/app_fonts.dart';
+import '../../core/models/note.dart';
+import '../../core/models/span_style.dart';
+import '../../core/services/notes_service.dart';
+import '../../widgets/null_selection_context_menu.dart';
+import 'editor_state.dart';
+
+class EditorScreen extends StatefulWidget {
+  final int pageIndex;
+  final EditorState state;
+  final VoidCallback? onSleepRequested;
+
+  const EditorScreen({
+    super.key,
+    required this.pageIndex,
+    required this.state,
+    this.onSleepRequested,
+  });
+
+  @override
+  State<EditorScreen> createState() => _EditorScreenState();
+}
+
+class _EditorScreenState extends State<EditorScreen> {
+  late DateTime _displayTime;
+  Timer? _timer;
+  late QuoteItem _quote;
+
+  late final NullRichTextController _textController;
+  final FocusNode _focusNode = FocusNode();
+  bool _isFocused = false;
+  bool _hasCreatedNote = false;
+
+  // Unified Undo/Redo History Stack (Captures Text + Word Spans + Base Styles)
+  final List<_EditorSnapshot> _undoStack = [];
+  final List<_EditorSnapshot> _redoStack = [];
+  bool _isApplyingHistory = false;
+  Timer? _textDebounceTimer;
+  String _lastRecordedText = '';
+  TextSelection _lastSelection = const TextSelection.collapsed(offset: -1);
+
+  static const List<String> _curatedFonts = [
+    AppFonts.sfProDisplay,
+    AppFonts.beatrice,
+    AppFonts.kaftan,
+    AppFonts.basementGrotesque,
+    AppFonts.coolvetica,
+    AppFonts.futura,
+    AppFonts.aloevera,
+    AppFonts.inter,
+    AppFonts.europaNova,
+    AppFonts.gotham,
+  ];
+
+  static const List<double> _fontSizes = [
+    34.0,
+    44.0,
+    52.0,
+    62.0,
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    final notes = NotesService.instance.notes;
+
+    if (widget.pageIndex < notes.length) {
+      // Existing Saved Note
+      final note = notes[widget.pageIndex];
+      _displayTime = note.createdAt;
+      _quote = note.quote;
+      _hasCreatedNote = true;
+      _textController = NullRichTextController(
+        text: note.text,
+        spans: note.spans,
+        onSpansChanged: _onSpansChanged,
+      );
+    } else {
+      // Brand New Blank Editor Page
+      _displayTime = DateTime.now();
+      _quote = NotesService.instance.activeDraftQuote;
+      _hasCreatedNote = false;
+      _textController = NullRichTextController(
+        onSpansChanged: _onSpansChanged,
+      );
+      NotesService.instance.activeDraftQuoteNotifier.addListener(_onDraftQuoteRefreshed);
+
+      // Live clock updates for the active blank editor
+      _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+        if (mounted && !_hasCreatedNote) {
+          setState(() {
+            _displayTime = DateTime.now();
+          });
+        }
+      });
+    }
+
+    // Initialize baseline snapshot
+    _recordSnapshot();
+
+    _textController.addListener(_onTextChanged);
+    _focusNode.addListener(_handleFocusChanged);
+    NotesService.instance.registerFocusCallback(widget.pageIndex, _requestFocus);
+  }
+
+  void _requestFocus() {
+    if (mounted) {
+      _focusNode.requestFocus();
+    }
+  }
+
+  void _recordSnapshot() {
+    if (_isApplyingHistory) return;
+
+    final currentText = _textController.text;
+    final currentSpans = _textController.spans;
+    final currentSelection = _textController.selection;
+
+    if (_undoStack.isNotEmpty &&
+        _undoStack.last.matches(currentText, currentSpans, _quote)) {
+      return;
+    }
+
+    _undoStack.add(_EditorSnapshot(
+      text: currentText,
+      selection: currentSelection,
+      spans: List.from(currentSpans),
+      quote: _quote,
+    ));
+
+    if (_undoStack.length > 60) {
+      _undoStack.removeAt(0);
+    }
+    _redoStack.clear();
+  }
+
+  void _undo() {
+    if (_undoStack.length > 1) {
+      _isApplyingHistory = true;
+      final current = _undoStack.removeLast();
+      _redoStack.add(current);
+
+      final previous = _undoStack.last;
+      _restoreSnapshot(previous);
+      _isApplyingHistory = false;
+    }
+  }
+
+  void _redo() {
+    if (_redoStack.isNotEmpty) {
+      _isApplyingHistory = true;
+      final next = _redoStack.removeLast();
+      _undoStack.add(next);
+      _restoreSnapshot(next);
+      _isApplyingHistory = false;
+    }
+  }
+
+  void _restoreSnapshot(_EditorSnapshot snapshot) {
+    setState(() {
+      _quote = snapshot.quote;
+    });
+
+    _textController.value = TextEditingValue(
+      text: snapshot.text,
+      selection: snapshot.selection,
+    );
+    _textController.spans = snapshot.spans;
+
+    if (_hasCreatedNote) {
+      NotesService.instance.updateNoteText(widget.pageIndex, snapshot.text);
+      NotesService.instance.updateNoteSpans(widget.pageIndex, snapshot.spans);
+      final note = NotesService.instance.getNote(widget.pageIndex);
+      if (note != null) {
+        note.quote = snapshot.quote;
+      }
+    }
+    _updateActiveToolbarFont();
+  }
+
+  void _onSpansChanged(List<SpanStyle> spans) {
+    if (_hasCreatedNote) {
+      NotesService.instance.updateNoteSpans(widget.pageIndex, spans);
+    }
+    if (!_isApplyingHistory) {
+      _recordSnapshot();
+    }
+    _updateActiveToolbarFont();
+  }
+
+  void _updateActiveToolbarFont() {
+    if (!mounted) return;
+    final currentFont = (_textController.selection.isValid && !_textController.selection.isCollapsed)
+        ? (_textController.getEffectiveFontAtSelection(_quote.fontFamily) ?? _quote.fontFamily)
+        : _quote.fontFamily;
+    NotesService.instance.activeEditorFontNotifier.value = currentFont;
+  }
+
+  void _handleFocusChanged() {
+    if (!mounted) return;
+    setState(() {
+      _isFocused = _focusNode.hasFocus;
+    });
+
+    if (_focusNode.hasFocus) {
+      _updateActiveToolbarFont();
+      NotesService.instance.activeBackgroundColorNotifier.value =
+          _quote.backgroundColorValue ?? 0xFF000000;
+      NotesService.instance.onUndo = _undo;
+      NotesService.instance.onRedo = _redo;
+      NotesService.instance.onCycleFont = _cycleFont;
+      NotesService.instance.onCycleFontSize = _cycleFontSize;
+      NotesService.instance.onCycleBackground = _cycleBackground;
+      NotesService.instance.onDismissKeyboard = () => _focusNode.unfocus();
+      NotesService.instance.isEditorFocusedNotifier.value = true;
+    } else {
+      NotesService.instance.isEditorFocusedNotifier.value = false;
+    }
+  }
+
+  void _cycleBackground() {
+    final palette = QuoteItem.backgroundPalette;
+    final currentBg = _quote.backgroundColorValue ?? 0xFF000000;
+    int nextIdx = 0;
+    for (int i = 0; i < palette.length; i++) {
+      if (palette[i] == currentBg) {
+        nextIdx = (i + 1) % palette.length;
+        break;
+      }
+    }
+    final nextBg = palette[nextIdx];
+
+    setState(() {
+      _quote = QuoteItem(
+        mainText: _quote.mainText,
+        dimPrompt: _quote.dimPrompt,
+        showTime: _quote.showTime,
+        showDivider: _quote.showDivider,
+        fontFamily: _quote.fontFamily,
+        fontSize: _quote.fontSize,
+        fontWeight: _quote.fontWeight,
+        letterSpacing: _quote.letterSpacing,
+        height: _quote.height,
+        backgroundColorValue: nextBg,
+      );
+    });
+
+    NotesService.instance.activeBackgroundColorNotifier.value = nextBg;
+
+    if (_hasCreatedNote) {
+      NotesService.instance.updateNoteQuote(widget.pageIndex, _quote);
+    }
+    _recordSnapshot();
+  }
+
+  void _cycleFont() {
+    // 1. Selection-Based Word Formatting (If words are highlighted/selected)
+    if (_textController.selection.isValid && !_textController.selection.isCollapsed) {
+      final currentFont = _textController.getEffectiveFontAtSelection(_quote.fontFamily) ?? _quote.fontFamily;
+      final currentIndex = _curatedFonts.indexOf(currentFont);
+      final nextIndex = (currentIndex + 1) % _curatedFonts.length;
+      final nextFont = _curatedFonts[nextIndex];
+
+      _textController.applyStyleToSelection(fontFamily: nextFont);
+      if (_hasCreatedNote) {
+        NotesService.instance.updateNoteSpans(widget.pageIndex, _textController.spans);
+      }
+      _updateActiveToolbarFont();
+      return;
+    }
+
+    // 2. Base Note Font Formatting (If no selection)
+    final currentIndex = _curatedFonts.indexOf(_quote.fontFamily);
+    final nextIndex = (currentIndex + 1) % _curatedFonts.length;
+    final nextFont = _curatedFonts[nextIndex];
+
+    setState(() {
+      _quote = QuoteItem(
+        mainText: _quote.mainText,
+        dimPrompt: _quote.dimPrompt,
+        showTime: _quote.showTime,
+        showDivider: _quote.showDivider,
+        fontFamily: nextFont,
+        fontSize: _quote.fontSize,
+        fontWeight: _quote.fontWeight,
+        letterSpacing: _quote.letterSpacing,
+        height: _quote.height,
+        backgroundColorValue: _quote.backgroundColorValue,
+      );
+    });
+
+    if (_hasCreatedNote) {
+      NotesService.instance.updateNoteQuote(widget.pageIndex, _quote);
+    }
+    _updateActiveToolbarFont();
+    _recordSnapshot();
+  }
+
+  void _cycleFontSize() {
+    // 1. Selection-Based Word Formatting (If words are highlighted/selected)
+    if (_textController.selection.isValid && !_textController.selection.isCollapsed) {
+      final currentSize = _textController.getEffectiveFontSizeAtSelection(_quote.fontSize);
+      int nextIndex = 0;
+      for (int i = 0; i < _fontSizes.length; i++) {
+        if ((_fontSizes[i] - currentSize).abs() < 2.0) {
+          nextIndex = (i + 1) % _fontSizes.length;
+          break;
+        }
+      }
+      final nextSize = _fontSizes[nextIndex];
+
+      _textController.applyStyleToSelection(fontSize: nextSize);
+      if (_hasCreatedNote) {
+        NotesService.instance.updateNoteSpans(widget.pageIndex, _textController.spans);
+      }
+      return;
+    }
+
+    // 2. Base Note Font Size Formatting (If no selection)
+    final currentSize = _quote.fontSize;
+    int nextIndex = 0;
+    for (int i = 0; i < _fontSizes.length; i++) {
+      if ((_fontSizes[i] - currentSize).abs() < 2.0) {
+        nextIndex = (i + 1) % _fontSizes.length;
+        break;
+      }
+    }
+    final nextSize = _fontSizes[nextIndex];
+
+    setState(() {
+      _quote = QuoteItem(
+        mainText: _quote.mainText,
+        dimPrompt: _quote.dimPrompt,
+        showTime: _quote.showTime,
+        showDivider: _quote.showDivider,
+        fontFamily: _quote.fontFamily,
+        fontSize: nextSize,
+        fontWeight: _quote.fontWeight,
+        letterSpacing: _quote.letterSpacing,
+        height: _quote.height,
+        backgroundColorValue: _quote.backgroundColorValue,
+      );
+    });
+
+    if (_hasCreatedNote) {
+      NotesService.instance.updateNoteQuote(widget.pageIndex, _quote);
+    }
+    _recordSnapshot();
+  }
+
+  void _onDraftQuoteRefreshed() {
+    if (!_hasCreatedNote && _textController.text.isEmpty && mounted) {
+      setState(() {
+        _quote = NotesService.instance.activeDraftQuote;
+      });
+      _recordSnapshot();
+    }
+  }
+
+  void _onTextChanged() {
+    final text = _textController.text;
+    final selection = _textController.selection;
+
+    final textChanged = text != _lastRecordedText;
+    final selectionChanged = selection != _lastSelection;
+
+    if (textChanged) {
+      _lastRecordedText = text;
+      if (_hasCreatedNote) {
+        // Update existing note text directly in memory
+        NotesService.instance.updateNoteText(widget.pageIndex, text);
+      } else if (text.isNotEmpty) {
+        // User typed the first character in the brand new editor -> create note!
+        _hasCreatedNote = true;
+        _timer?.cancel();
+        NotesService.instance.activeDraftQuoteNotifier.removeListener(_onDraftQuoteRefreshed);
+        NotesService.instance.createNote(
+          text: text,
+          quote: _quote,
+          spans: _textController.spans,
+        );
+        // Spawn new draft quote for the next page
+        NotesService.instance.refreshActiveDraftQuote();
+      }
+
+      if (!_isApplyingHistory) {
+        _textDebounceTimer?.cancel();
+        _textDebounceTimer = Timer(const Duration(milliseconds: 300), () {
+          if (mounted) {
+            _recordSnapshot();
+          }
+        });
+      }
+    }
+
+    if (selectionChanged) {
+      _lastSelection = selection;
+      _updateActiveToolbarFont();
+    }
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _textDebounceTimer?.cancel();
+    NotesService.instance.unregisterFocusCallback(widget.pageIndex);
+    if (_focusNode.hasFocus) {
+      NotesService.instance.isEditorFocusedNotifier.value = false;
+    }
+    NotesService.instance.activeDraftQuoteNotifier.removeListener(_onDraftQuoteRefreshed);
+    _textController.removeListener(_onTextChanged);
+    _textController.dispose();
+    _focusNode.removeListener(_handleFocusChanged);
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  String _formatHourMinute(DateTime dt) {
+    int hour = dt.hour % 12;
+    if (hour == 0) hour = 12;
+    final minute = dt.minute.toString().padLeft(2, '0');
+    return '$hour:$minute';
+  }
+
+  String _formatAmPm(DateTime dt) {
+    return dt.hour >= 12 ? 'PM' : 'AM';
+  }
+
+  String _formatTimeAgo(DateTime dt) {
+    final diff = DateTime.now().difference(dt);
+    if (diff.inSeconds < 45) {
+      return 'just now';
+    } else if (diff.inMinutes < 60) {
+      return '${diff.inMinutes}m ago';
+    } else if (diff.inHours < 24) {
+      return '${diff.inHours}h ago';
+    } else if (diff.inDays < 7) {
+      return '${diff.inDays}d ago';
+    } else {
+      return '${_formatHourMinute(dt)} ${_formatAmPm(dt)}';
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final screenHeight = MediaQuery.of(context).size.height;
+    final statusBarHeight = MediaQuery.of(context).padding.top;
+    final bottomBarHeight = MediaQuery.of(context).padding.bottom;
+    final topPadding = screenHeight * 0.28;
+    final bottomPadding = screenHeight * 0.55;
+    final bgColor = _quote.backgroundColor;
+
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () {
+        if (_focusNode.hasFocus) {
+          _focusNode.unfocus();
+        }
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOutCubic,
+        color: bgColor,
+        child: Stack(
+          children: [
+            // 1. Full-Height Scrollable Content Body
+            Positioned.fill(
+              child: CustomScrollView(
+                physics: const BouncingScrollPhysics(
+                  parent: AlwaysScrollableScrollPhysics(),
+                ),
+                slivers: [
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: EdgeInsets.only(
+                        left: 32.0,
+                        right: 32.0,
+                        top: topPadding,
+                        bottom: bottomPadding,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Optional Time Display Header
+                          if (_quote.showTime) ...[
+                            // "It's" prefix
+                            const Text(
+                              "It's",
+                              style: TextStyle(
+                                fontFamily: AppFonts.sfProText,
+                                fontSize: 22,
+                                fontWeight: FontWeight.w400,
+                                color: Color(0xFF636366),
+                                letterSpacing: -0.2,
+                              ),
+                            ),
+
+                            const SizedBox(height: 4),
+
+                            // Time display: "10:58 PM"
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.baseline,
+                              textBaseline: TextBaseline.alphabetic,
+                              children: [
+                                Text(
+                                  _formatHourMinute(_displayTime),
+                                  style: const TextStyle(
+                                    fontFamily: AppFonts.sfProDisplay,
+                                    fontSize: 70,
+                                    fontWeight: FontWeight.w200,
+                                    letterSpacing: -2.0,
+                                    color: Color(0xFFB5B5BA),
+                                    height: 1.02,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  _formatAmPm(_displayTime),
+                                  style: const TextStyle(
+                                    fontFamily: AppFonts.sfProText,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w400,
+                                    letterSpacing: 0.5,
+                                    color: Color(0xFF55555A),
+                                  ),
+                                ),
+                              ],
+                            ),
+
+                            const SizedBox(height: 16),
+
+                            // Divider hyphen/line
+                            Container(
+                              width: 26,
+                              height: 2.5,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF3A3A3D),
+                                borderRadius: BorderRadius.circular(1.5),
+                              ),
+                            ),
+                          ],
+
+                          const SizedBox(height: 28),
+
+                          // Main Quote / Note Body with In-Between Dim Placeholder
+                          TextField(
+                            controller: _textController,
+                            focusNode: _focusNode,
+                            maxLines: null,
+                            keyboardType: TextInputType.multiline,
+                            scrollPhysics: const NeverScrollableScrollPhysics(),
+                            cursorColor: Colors.white,
+                            cursorWidth: 2.0,
+                            contextMenuBuilder: (BuildContext context, EditableTextState editableTextState) {
+                              return NullSelectionContextMenu(
+                                editableTextState: editableTextState,
+                                controller: _textController,
+                                quote: _quote,
+                                onFormatChanged: () {
+                                  _recordSnapshot();
+                                  _updateActiveToolbarFont();
+                                  if (_hasCreatedNote) {
+                                    NotesService.instance.updateNoteSpans(widget.pageIndex, _textController.spans);
+                                  }
+                                },
+                              );
+                            },
+                            style: TextStyle(
+                              fontFamily: _quote.fontFamily,
+                              fontSize: _quote.fontSize,
+                              fontWeight: _quote.fontWeight,
+                              color: const Color(0xFFEDEDED),
+                              letterSpacing: _quote.letterSpacing,
+                              height: _quote.height,
+                            ),
+                            decoration: InputDecoration(
+                              hintText: _quote.mainText,
+                              hintStyle: TextStyle(
+                                fontFamily: _quote.fontFamily,
+                                fontSize: _quote.fontSize,
+                                fontWeight: _quote.fontWeight,
+                                color: _isFocused
+                                    ? const Color(0xFF48484C)
+                                    : const Color(0xFF9E9EA4), // In-between white & dark dim
+                                letterSpacing: _quote.letterSpacing,
+                                height: _quote.height,
+                              ),
+                              border: InputBorder.none,
+                              isDense: true,
+                              contentPadding: EdgeInsets.zero,
+                            ),
+                          ),
+
+                          // Bottom-Right Timestamp Tag on Saved Notes: "~ 2m ago"
+                          if (_hasCreatedNote && _textController.text.isNotEmpty) ...[
+                            const SizedBox(height: 18),
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: Text(
+                                '~  ${_formatTimeAgo(_displayTime)}',
+                                style: const TextStyle(
+                                  fontFamily: AppFonts.sfProText,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w400,
+                                  color: Color(0xFF636366),
+                                  letterSpacing: 0.2,
+                                ),
+                              ),
+                            ),
+                          ],
+
+                          // Optional Dim Prompt Typo (Only rendered if present)
+                          if (_quote.dimPrompt != null && _quote.dimPrompt!.isNotEmpty) ...[
+                            const SizedBox(height: 32),
+                            Text(
+                              _quote.dimPrompt!,
+                              style: TextStyle(
+                                fontFamily: _quote.fontFamily,
+                                fontSize: _quote.fontSize * 0.95,
+                                fontWeight: _quote.fontWeight,
+                                color: const Color(0xFF333336),
+                                letterSpacing: _quote.letterSpacing,
+                                height: _quote.height,
+                              ),
+                            ),
+                          ],
+
+                          const SizedBox(height: 24),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // 2. Feathered Top Gradient Overlay for THIS note/tab
+            Positioned(
+              left: 0,
+              right: 0,
+              top: 0,
+              height: 90 + statusBarHeight,
+              child: IgnorePointer(
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        bgColor,
+                        bgColor.withValues(alpha: 0.85),
+                        bgColor.withValues(alpha: 0.40),
+                        bgColor.withValues(alpha: 0.0),
+                      ],
+                      stops: const [0.0, 0.35, 0.70, 1.0],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+            // 3. Feathered Bottom Gradient Overlay for THIS note/tab
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              height: 110 + bottomBarHeight,
+              child: IgnorePointer(
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        bgColor.withValues(alpha: 0.0),
+                        bgColor.withValues(alpha: 0.40),
+                        bgColor.withValues(alpha: 0.85),
+                        bgColor,
+                      ],
+                      stops: const [0.0, 0.45, 0.80, 1.0],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _EditorSnapshot {
+  final String text;
+  final TextSelection selection;
+  final List<SpanStyle> spans;
+  final QuoteItem quote;
+
+  _EditorSnapshot({
+    required this.text,
+    required this.selection,
+    required this.spans,
+    required this.quote,
+  });
+
+  bool matches(String currentText, List<SpanStyle> currentSpans, QuoteItem currentQuote) {
+    if (text != currentText) return false;
+    if (quote.fontFamily != currentQuote.fontFamily ||
+        quote.fontSize != currentQuote.fontSize ||
+        quote.backgroundColorValue != currentQuote.backgroundColorValue) {
+      return false;
+    }
+    if (spans.length != currentSpans.length) return false;
+    for (int i = 0; i < spans.length; i++) {
+      final a = spans[i];
+      final b = currentSpans[i];
+      if (a.start != b.start ||
+          a.end != b.end ||
+          a.fontFamily != b.fontFamily ||
+          a.fontSize != b.fontSize ||
+          a.colorValue != b.colorValue ||
+          a.highlightColorValue != b.highlightColorValue ||
+          a.fontWeightIndex != b.fontWeightIndex ||
+          a.isItalic != b.isItalic ||
+          a.isUnderline != b.isUnderline) {
+        return false;
+      }
+    }
+    return true;
+  }
+}
