@@ -12,27 +12,20 @@ An ultra-minimalist, pure dark notes and thinking sanctuary crafted with obsessi
 [![Storage](https://img.shields.io/badge/Storage-Hive%20Binary-yellow?style=for-the-badge&logo=hive&logoColor=black)](https://pub.dev/packages/hive)
 [![License](https://img.shields.io/badge/License-MIT-white?style=for-the-badge)](LICENSE)
 
-[Screenshots](#-visual-showcase) • [Features](#-key-features) • [Smart Typography](#-smart-words-formatting-engine) • [Architecture](#-architecture) • [Getting Started](#-getting-started) • [Privacy Policy](PRIVACY_POLICY.md) • [Author](#-author)
+[Screenshots](#-live-showcase) • [Features](#-key-features) • [Smart Typography](#-smart-words-formatting-engine) • [Architecture](#-architecture) • [Getting Started](#-getting-started) • [Privacy Policy](PRIVACY_POLICY.md) • [Author](#-author)
 
 ---
 
 </div>
 
-## 📱 Visual Showcase
+## 📱 Live Showcase
 
 <div align="center">
 
-| Pure Dark Canvas | Selection Toolbar | Editorial Overscroll |
-| :---: | :---: | :---: |
-| <img src="screenshots/hero_canvas.png" width="260" alt="Pure Dark Canvas" /> | <img src="screenshots/selection_toolbar.png" width="260" alt="Selection Toolbar" /> | <img src="screenshots/overscroll_spine.png" width="260" alt="Editorial Overscroll Spine" /> |
-| *Immediate Blank Draft Canvas* | *Context Selection & Formatting Toolbar* | *270° Context-Aware Editorial Spine* |
-
-<br/>
-
-| Atmospheric Dark Palette | Multi-Note Horizontal Swiping |
-| :---: | :---: |
-| <img src="screenshots/dark_atmosphere.png" width="260" alt="Dark Atmosphere Palette" /> | <img src="screenshots/multi_page_editor.png" width="260" alt="Multi-Note Page Swiping" /> |
-| *Atmospheric Color Tints & Typo Cycles* | *Full-Height Independent Tab Columns* |
+| 1. Pure Dark Canvas | 2. Smart Words Styling | 3. Floating Selection Tools | 4. Dark-Glass Settings |
+| :---: | :---: | :---: | :---: |
+| <img src="screenshots/01_hero_canvas.png" width="220" alt="Pure Dark Canvas" /> | <img src="screenshots/02_smart_words.png" width="220" alt="Smart Words Styling" /> | <img src="screenshots/03_selection_toolbar.png" width="220" alt="Selection Toolbar" /> | <img src="screenshots/04_settings_screen.png" width="220" alt="Dark Settings Screen" /> |
+| *Immediate Blank Draft Canvas* | *Live Smart Words Auto-Styling* | *Selection Menu & Floating Dock* | *Dark-Glass Preference Toggles* |
 
 </div>
 
@@ -129,11 +122,11 @@ flutter run
 ## 📁 Screenshots Archive
 
 All high-resolution application screenshots are archived inside the [`screenshots/`](screenshots/) directory:
-- [`screenshots/hero_canvas.png`](screenshots/hero_canvas.png) — Editor canvas & live time prompt
-- [`screenshots/selection_toolbar.png`](screenshots/selection_toolbar.png) — Selection context menu & bottom formatting dock
-- [`screenshots/overscroll_spine.png`](screenshots/overscroll_spine.png) — 270° rotated editorial overscroll spine
-- [`screenshots/dark_atmosphere.png`](screenshots/dark_atmosphere.png) — Atmospheric dark color swatches
-- [`screenshots/multi_page_editor.png`](screenshots/multi_page_editor.png) — Tab navigation & note stack
+- [`screenshots/01_hero_canvas.png`](screenshots/01_hero_canvas.png) — Editor canvas & live time prompt
+- [`screenshots/02_smart_words.png`](screenshots/02_smart_words.png) — Live smart words typography styling in action
+- [`screenshots/03_selection_toolbar.png`](screenshots/03_selection_toolbar.png) — Floating selection menu & bottom formatting dock
+- [`screenshots/04_settings_screen.png`](screenshots/04_settings_screen.png) — Minimalist dark-glass preference toggles
+- [`screenshots/05_dock_morph.png`](screenshots/05_dock_morph.png) — Floating bottom morphing formatting dock
 - [`screenshots/app_icon.png`](screenshots/app_icon.png) — Minimalist glyph app icon
 
 ---
