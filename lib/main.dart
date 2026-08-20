@@ -7,6 +7,7 @@ import 'core/fonts/app_fonts.dart';
 import 'core/services/notes_service.dart';
 import 'screens/editor/editor_screen.dart';
 import 'screens/editor/editor_state.dart';
+import 'screens/export/export_studio_screen.dart';
 import 'screens/settings/settings_screen.dart';
 import 'widgets/glowing_ring.dart';
 import 'widgets/null_bottom_dock.dart';
@@ -319,6 +320,28 @@ class _NullUniversalShellState extends State<NullUniversalShell>
     } else {
       NotesService.instance.requestEditorFocus(activeIndex);
     }
+  }
+
+  void _openExportStudio() {
+    final activeIndex = _currentPage.round().clamp(0, NotesService.instance.count > 0 ? NotesService.instance.count - 1 : 0);
+    Navigator.of(context).push(
+      PageRouteBuilder(
+        opaque: false,
+        pageBuilder: (context, animation, secondaryAnimation) {
+          return SlideTransition(
+            position: Tween<Offset>(
+              begin: const Offset(0.0, 1.0),
+              end: Offset.zero,
+            ).animate(CurvedAnimation(
+              parent: animation,
+              curve: Curves.easeOutCubic,
+            )),
+            child: ExportStudioScreen(initialPageIndex: activeIndex),
+          );
+        },
+        transitionDuration: const Duration(milliseconds: 360),
+      ),
+    );
   }
 
   void _onDragStart(DragStartDetails details) {
@@ -712,6 +735,50 @@ class _NullUniversalShellState extends State<NullUniversalShell>
                                 Icons.chevron_left_rounded,
                                 color: Color(0xFFEDEDED),
                                 size: 24,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+
+                  // --- Top-Right Share / Export Studio Button (Smoothly appears/disappears on focus) ---
+                  if (_toolbarMorphController.value > 0.01)
+                    Positioned(
+                      top: 16 + statusBarHeight,
+                      right: 24,
+                      child: Opacity(
+                        opacity: _toolbarMorphController.value.clamp(0.0, 1.0),
+                        child: Transform.translate(
+                          offset: Offset(18.0 * (1.0 - _toolbarMorphController.value), 0),
+                          child: GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            onTap: () {
+                              _openExportStudio();
+                            },
+                            child: Container(
+                              width: 38,
+                              height: 38,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF141416).withValues(alpha: 0.85),
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: Colors.white.withValues(alpha: 0.18),
+                                  width: 1.2,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.4),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              alignment: Alignment.center,
+                              child: const Icon(
+                                Icons.ios_share_rounded,
+                                color: Color(0xFFEDEDED),
+                                size: 19,
                               ),
                             ),
                           ),

@@ -304,6 +304,7 @@ class NotesService {
   VoidCallback? onCycleFont;
   VoidCallback? onCycleFontSize;
   VoidCallback? onCycleBackground;
+  VoidCallback? onExport;
   VoidCallback? onDismissKeyboard;
 
   final Map<int, VoidCallback> _focusCallbacks = {};

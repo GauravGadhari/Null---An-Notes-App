@@ -6,7 +6,7 @@ import '../core/fonts/app_fonts.dart';
 /// Seamlessly morphs between:
 /// 1. Circular glowing ring (32px)
 /// 2. Rectangular page indicator container (72px - 240px)
-/// 3. Floating bottom toolbar container (280px x 44px) when input is focused.
+/// 3. Floating bottom toolbar container (368px x 54px) when input is focused.
 class NullBottomDock extends StatelessWidget {
   final double morphProgress; // 0.0 = Circle, 1.0 = Fully Expanded Indicator Rectangle
   final double toolbarProgress; // 0.0 = Indicator/Circle, 1.0 = Floating Toolbar
@@ -76,25 +76,22 @@ class NullBottomDock extends StatelessWidget {
         return 'Gotham';
       case AppFonts.timesNewRoman:
         return 'Times';
-      case AppFonts.tacticSans:
-        return 'Tactic';
       case AppFonts.agitha:
         return 'Agitha';
       case AppFonts.foreverFreedom:
         return 'Freedom';
       default:
-        return family;
+        return 'SF Pro';
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final tp = toolbarProgress.clamp(0.0, 1.0);
+    final double tp = toolbarProgress.clamp(0.0, 1.0);
 
-    // --- Stage 1 (0.0 -> 0.65): Shape morphs completely first ---
+    // --- Stage 1 (0.0 -> 0.65): Morph shape from circle/indicator pill to rounded toolbar rectangle ---
     const double shapeMorphCutoff = 0.65;
-    final double rawShapeT = (tp / shapeMorphCutoff).clamp(0.0, 1.0);
-    final double shapeT = rawShapeT * rawShapeT * (3.0 - 2.0 * rawShapeT); // Smooth Hermite curve
+    final double shapeT = Curves.easeInOutCubic.transform((tp / shapeMorphCutoff).clamp(0.0, 1.0));
 
     // --- Stage 2 (0.65 -> 1.0): Toolbar items appear only AFTER shape completes (and disappear first on closing) ---
     final double rawItemsT = ((tp - shapeMorphCutoff) / (1.0 - shapeMorphCutoff)).clamp(0.0, 1.0);
@@ -109,8 +106,8 @@ class NullBottomDock extends StatelessWidget {
     final targetIndicatorWidth = math.min(32.0 + visibleDots * 20.0, 240.0);
     final indicatorWidth = baseSize + morphProgress.clamp(0.0, 1.0) * (targetIndicatorWidth - baseSize);
 
-    // 2. Calculate Toolbar Geometry (368px x 54px pill)
-    const double targetToolbarWidth = 368.0;
+    // 2. Calculate Toolbar Geometry (330px x 54px pill)
+    const double targetToolbarWidth = 330.0;
     const double targetToolbarHeight = 54.0;
 
     final width = (1.0 - shapeT) * indicatorWidth + shapeT * targetToolbarWidth;
@@ -178,21 +175,20 @@ class NullBottomDock extends StatelessWidget {
 
                             return GestureDetector(
                               behavior: HitTestBehavior.opaque,
-                              onTap: () => onPageSelected?.call(index),
-                              child: Center(
-                                child: AnimatedContainer(
-                                  duration: const Duration(milliseconds: 150),
+                              onTap: onPageSelected != null ? () => onPageSelected!(index) : null,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 2.0, vertical: 8.0),
+                                child: Container(
                                   width: dotWidth,
-                                  height: 4.5,
+                                  height: 4.0,
                                   decoration: BoxDecoration(
                                     color: Colors.white.withValues(alpha: dotOpacity),
-                                    borderRadius: BorderRadius.circular(3.0),
-                                    boxShadow: activeFactor > 0.6
+                                    borderRadius: BorderRadius.circular(2.0),
+                                    boxShadow: activeFactor > 0.3
                                         ? [
                                             BoxShadow(
-                                              color: Colors.white.withValues(alpha: 0.6),
-                                              blurRadius: 4,
-                                              spreadRadius: 0.5,
+                                              color: Colors.white.withValues(alpha: 0.25 * activeFactor),
+                                              blurRadius: 3.0,
                                             ),
                                           ]
                                         : null,
@@ -257,7 +253,7 @@ class NullBottomDock extends StatelessWidget {
                                 onTap: onSizeTap,
                               ),
 
-                              // 5. Background Color Swatch (Multi-tap to cycle atmospheric dark background colors)
+                              // 5. Background Color Swatch
                               _ToolbarBackgroundButton(
                                 activeColorValue: activeBackgroundColor,
                                 onTap: onBackgroundTap,
@@ -318,68 +314,6 @@ class _ToolbarButton extends StatelessWidget {
   }
 }
 
-class _ToolbarBackgroundButton extends StatelessWidget {
-  final int activeColorValue;
-  final VoidCallback? onTap;
-
-  const _ToolbarBackgroundButton({
-    required this.activeColorValue,
-    this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final color = Color(activeColorValue);
-    final isPureBlack = activeColorValue == 0xFF000000;
-
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: onTap,
-      child: Container(
-        width: 38,
-        height: 38,
-        alignment: Alignment.center,
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            // Color Swatch Disc
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 250),
-              width: 24,
-              height: 24,
-              decoration: BoxDecoration(
-                color: color,
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: isPureBlack
-                      ? Colors.white.withValues(alpha: 0.35)
-                      : Colors.white.withValues(alpha: 0.75),
-                  width: 1.5,
-                ),
-                boxShadow: !isPureBlack
-                    ? [
-                        BoxShadow(
-                          color: color.withValues(alpha: 0.6),
-                          blurRadius: 6,
-                          spreadRadius: 1,
-                        ),
-                      ]
-                    : null,
-              ),
-            ),
-            // Subtle palette / sparkle glyph
-            Icon(
-              Icons.palette_outlined,
-              size: 13,
-              color: Colors.white.withValues(alpha: 0.85),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 class _ToolbarFontButton extends StatelessWidget {
   final String fontName;
   final String fontFamily;
@@ -397,26 +331,76 @@ class _ToolbarFontButton extends StatelessWidget {
       behavior: HitTestBehavior.opaque,
       onTap: onTap,
       child: Container(
-        height: 36,
+        height: 32,
         padding: const EdgeInsets.symmetric(horizontal: 10),
+        alignment: Alignment.center,
         decoration: BoxDecoration(
           color: Colors.white.withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: Colors.white.withValues(alpha: 0.12),
+            color: Colors.white.withValues(alpha: 0.15),
             width: 1.0,
           ),
         ),
-        alignment: Alignment.center,
         child: Text(
           fontName,
           style: TextStyle(
             fontFamily: fontFamily,
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
             color: const Color(0xFFEDEDED),
             letterSpacing: -0.2,
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ToolbarBackgroundButton extends StatelessWidget {
+  final int activeColorValue;
+  final VoidCallback? onTap;
+
+  const _ToolbarBackgroundButton({
+    required this.activeColorValue,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final color = Color(activeColorValue);
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: Container(
+        width: 40,
+        height: 40,
+        alignment: Alignment.center,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            const Icon(
+              Icons.palette_outlined,
+              size: 21,
+              color: Color(0xFFEDEDED),
+            ),
+            Positioned(
+              right: 6,
+              bottom: 6,
+              child: Container(
+                width: 9,
+                height: 9,
+                decoration: BoxDecoration(
+                  color: color == const Color(0xFF000000) ? const Color(0xFF2C2C2E) : color,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.8),
+                    width: 1.2,
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
