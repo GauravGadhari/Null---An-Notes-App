@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="screenshots/app_icon.png" width="108" height="108" alt="Null App Icon" style="border-radius: 24px; box-shadow: 0 8px 32px rgba(255,255,255,0.15);" />
+
 # ✦ NULL ✦
 ### Pure Dark. Zero Friction. Just Your Thoughts.
 
@@ -10,11 +12,31 @@ An ultra-minimalist, pure dark notes and thinking sanctuary crafted with obsessi
 [![Storage](https://img.shields.io/badge/Storage-Hive%20Binary-yellow?style=for-the-badge&logo=hive&logoColor=black)](https://pub.dev/packages/hive)
 [![License](https://img.shields.io/badge/License-MIT-white?style=for-the-badge)](LICENSE)
 
-[Features](#-key-features) • [Smart Typography](#-smart-words-formatting-engine) • [Architecture](#-architecture) • [Getting Started](#-getting-started) • [Privacy Policy](PRIVACY_POLICY.md) • [Developer](#-author)
+[Screenshots](#-visual-showcase) • [Features](#-key-features) • [Smart Typography](#-smart-words-formatting-engine) • [Architecture](#-architecture) • [Getting Started](#-getting-started) • [Privacy Policy](PRIVACY_POLICY.md) • [Author](#-author)
 
 ---
 
 </div>
+
+## 📱 Visual Showcase
+
+<div align="center">
+
+| Pure Dark Canvas | Selection Toolbar | Editorial Overscroll |
+| :---: | :---: | :---: |
+| <img src="screenshots/hero_canvas.png" width="260" alt="Pure Dark Canvas" /> | <img src="screenshots/selection_toolbar.png" width="260" alt="Selection Toolbar" /> | <img src="screenshots/overscroll_spine.png" width="260" alt="Editorial Overscroll Spine" /> |
+| *Immediate Blank Draft Canvas* | *Context Selection & Formatting Toolbar* | *270° Context-Aware Editorial Spine* |
+
+<br/>
+
+| Atmospheric Dark Palette | Multi-Note Horizontal Swiping |
+| :---: | :---: |
+| <img src="screenshots/dark_atmosphere.png" width="260" alt="Dark Atmosphere Palette" /> | <img src="screenshots/multi_page_editor.png" width="260" alt="Multi-Note Page Swiping" /> |
+| *Atmospheric Color Tints & Typo Cycles* | *Full-Height Independent Tab Columns* |
+
+</div>
+
+---
 
 ## 🌌 Philosophy & Essence
 
@@ -31,13 +53,17 @@ Most note-taking applications clutter your mind with complex menus, nested folde
 
 ### 1. 🖋️ Smart Words Formatting Engine
 Expressive emotions, Gen Z slang, and aesthetic expressions automatically format into bespoke typography as you type in real time:
-- **💖 Love & Affection** (`love`, `dear`, `heart`, `forever`, `adore`, `sweet`, `kiss`, `plea+se`...) $\to$ *`Aloevera` italic script with soft rose blush*.
-- **⚡ Intensity & Drama** (`hate`, `rage`, `anger`, `never`, `burn`, `chaos`, `fire`, `cooked`, `crying`, `dying`, `down bad`, `noo+`, `bruh+`...) $\to$ *`BasementGrotesque` w900 stark bold*.
-- **💅 Gen Z Slang & Lore** (`fr`, `frfr`, `lowkey`, `highkey`, `ngl`, `tbh`, `nocap`, `cap`, `delulu`, `rizz`, `aura`, `slay`, `valid`, `period`, `iykyk`, `idk`, `rn`, `omg+`...) $\to$ *`Coolvetica` w600 with soft violet glow*.
-- **💰 Wealth & Ambition** (`money`, `cash`, `wealth`, `rich`, `gold`, `empire`, `success`, `dollar`, `crypto`, `bag`...) $\to$ *`Futura` w600 with soft amber gold highlight*.
-- **✨ Eras & Manifestation** (`era`, `main character`, `manifest`, `manifesting`, `healing`, `vibe`, `vibes`, `glow up`, `obsessed`, `so real`, `literally`, `yess+`...) $\to$ *`Beatrice` italic bold*.
-- **🐞 Miraculous & Fandom Lore** (`marinette`, `adrien`, `cat noir`, `tikki`, `plagg`, `iyamatwm`, `spots on`, `claws out`, `miraculous`, `kwami`...) $\to$ *Parisian Ladybug Rose / Cat Noir Neon Lime accents*.
-- **🌌 Void & 3AM Solitude** (`dark`, `light`, `void`, `null`, `infinite`, `peace`, `breathe`, `sleep`, `dream`, `silence`, `3am`, `midnight`, `whyy+`...) $\to$ *`Agitha` italic with soft sky highlight*.
+
+| Category | Triggers & Examples | Typography & Style |
+| :--- | :--- | :--- |
+| **💖 Love & Affection** | `love`, `dear`, `heart`, `forever`, `adore`, `sweet`, `kiss`, `plea+se` | *`Aloevera` Italic Script with Soft Rose Blush (`0x44FF453A`)* |
+| **⚡ Intensity & Drama** | `hate`, `rage`, `anger`, `never`, `burn`, `chaos`, `cooked`, `crying`, `down bad`, `noo+`, `bruh+` | *`BasementGrotesque` w900 Stark Ultra-Bold* |
+| **💅 Gen Z Slang & Lore** | `fr`, `frfr`, `lowkey`, `highkey`, `ngl`, `tbh`, `delulu`, `rizz`, `aura`, `slay`, `valid`, `nocap`, `omg+` | *`Coolvetica` w600 with Soft Violet Glow (`0x44BF5AF2`)* |
+| **💰 Wealth & Ambition** | `money`, `cash`, `wealth`, `rich`, `gold`, `empire`, `success`, `dollar`, `crypto`, `bag` | *`Futura` w600 with Soft Amber Gold Highlight (`0x44FFD60A`)* |
+| **✨ Eras & Manifestation** | `era`, `main character`, `manifest`, `manifesting`, `healing`, `vibe`, `glow up`, `obsessed`, `literally`, `yess+` | *`Beatrice` Italic Bold (`w700`)* |
+| **🐞 Miraculous & Fandom** | `marinette`, `adrien`, `cat noir`, `tikki`, `plagg`, `iyamatwm`, `spots on`, `claws out`, `miraculous` | *Parisian Ladybug Rose / Cat Noir Neon Lime Accents* |
+| **🌌 Void & 3AM Solitude** | `dark`, `light`, `void`, `null`, `infinite`, `peace`, `breathe`, `sleep`, `dream`, `silence`, `3am`, `midnight`, `whyy+` | *`Agitha` Italic with Soft Sky Highlight (`0x4464D2FF`)* |
+| **👤 Self & Identity** | `I`, `me`, `myself`, `you`, `we`, `people`, `human`, `soul`, `mind` | *`Beatrice` Bold (`w700`)* |
 
 ### 2. 🪄 Non-Destructive Selection Toolbar
 - High-performance text interval slicing for word-level and selection-level formatting.
@@ -97,6 +123,18 @@ flutter test
 # Launch on your device or emulator
 flutter run
 ```
+
+---
+
+## 📁 Screenshots Archive
+
+All high-resolution application screenshots are archived inside the [`screenshots/`](screenshots/) directory:
+- [`screenshots/hero_canvas.png`](screenshots/hero_canvas.png) — Editor canvas & live time prompt
+- [`screenshots/selection_toolbar.png`](screenshots/selection_toolbar.png) — Selection context menu & bottom formatting dock
+- [`screenshots/overscroll_spine.png`](screenshots/overscroll_spine.png) — 270° rotated editorial overscroll spine
+- [`screenshots/dark_atmosphere.png`](screenshots/dark_atmosphere.png) — Atmospheric dark color swatches
+- [`screenshots/multi_page_editor.png`](screenshots/multi_page_editor.png) — Tab navigation & note stack
+- [`screenshots/app_icon.png`](screenshots/app_icon.png) — Minimalist glyph app icon
 
 ---
 
