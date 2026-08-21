@@ -172,14 +172,22 @@ Return ONLY the JSON code block without filler text.
     }
   }
 
-  void _showManualAddDialog() {
+  void _showWordCustomizerSheet({
+    CustomSmartWord? initialWord,
+    SpanStyle? initialStyle,
+    String? wordText,
+    bool isCustom = false,
+  }) {
     HapticFeedback.lightImpact();
-    final wordController = TextEditingController();
-    String selectedFont = AppFonts.beatrice;
-    bool isBold = false;
-    bool isItalic = true;
-    bool isUnderline = false;
-    int? selectedHighlight;
+    final wordController = TextEditingController(
+      text: wordText ?? initialWord?.word ?? '',
+    );
+    String selectedFont = initialWord?.fontFamily ?? initialStyle?.fontFamily ?? AppFonts.beatrice;
+    bool isBold = (initialWord?.fontWeightIndex != null && initialWord!.fontWeightIndex! >= 6) ||
+        (initialStyle?.fontWeightIndex != null && initialStyle!.fontWeightIndex! >= 6);
+    bool isItalic = initialWord?.isItalic ?? initialStyle?.isItalic ?? false;
+    bool isUnderline = initialWord?.isUnderline ?? initialStyle?.isUnderline ?? false;
+    int? selectedHighlight = initialWord?.highlightColorValue ?? initialStyle?.highlightColorValue;
 
     const availableFonts = [
       AppFonts.beatrice,
@@ -211,6 +219,9 @@ Return ONLY the JSON code block without filler text.
         return StatefulBuilder(
           builder: (context, setDialogState) {
             final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+            final currentWordText = wordController.text.trim();
+            final displayText = currentWordText.isEmpty ? 'Specimen' : currentWordText;
+
             return Container(
               margin: EdgeInsets.only(
                 left: 16,
@@ -226,20 +237,23 @@ Return ONLY the JSON code block without filler text.
                   width: 1.2,
                 ),
               ),
-              padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 22),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
               child: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Header
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
-                          'Add Smart Word',
-                          style: TextStyle(
+                        Text(
+                          initialWord != null || wordText != null
+                              ? 'Customize Style'
+                              : 'Add Smart Word',
+                          style: const TextStyle(
                             fontFamily: AppFonts.sfProDisplay,
-                            fontSize: 18,
+                            fontSize: 17,
                             fontWeight: FontWeight.w600,
                             color: Color(0xFFEDEDED),
                           ),
@@ -252,9 +266,73 @@ Return ONLY the JSON code block without filler text.
                     ),
                     const SizedBox(height: 16),
 
+                    // ── Live Specimen Preview Box (Visible at Top) ──
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF000000),
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.09),
+                        ),
+                      ),
+                      child: Column(
+                        children: [
+                          const Text(
+                            'LIVE SPECIMEN PREVIEW',
+                            style: TextStyle(
+                              fontFamily: AppFonts.sfProText,
+                              fontSize: 9,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 1.1,
+                              color: Color(0xFF636366),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                            decoration: BoxDecoration(
+                              color: selectedHighlight != null
+                                  ? Color(selectedHighlight!)
+                                  : const Color(0xFF141416),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.12),
+                                width: 1.0,
+                              ),
+                            ),
+                            child: Text(
+                              displayText,
+                              style: TextStyle(
+                                fontFamily: selectedFont,
+                                fontSize: 18,
+                                fontWeight: isBold ? FontWeight.w700 : FontWeight.w400,
+                                fontStyle: isItalic ? FontStyle.italic : FontStyle.normal,
+                                decoration: isUnderline ? TextDecoration.underline : TextDecoration.none,
+                                color: const Color(0xFFEDEDED),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            '$selectedFont • ${isBold ? 'Bold ' : ''}${isItalic ? 'Italic ' : ''}${isUnderline ? 'Underline ' : ''}${selectedHighlight != null ? 'Highlight' : 'Plain'}',
+                            style: const TextStyle(
+                              fontFamily: AppFonts.sfProText,
+                              fontSize: 11,
+                              color: Color(0xFF8E8E93),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    // Word Input
                     TextField(
                       controller: wordController,
-                      autofocus: true,
+                      onChanged: (_) => setDialogState(() {}),
                       style: const TextStyle(
                         fontFamily: AppFonts.sfProText,
                         fontSize: 15,
@@ -273,10 +351,12 @@ Return ONLY the JSON code block without filler text.
                           borderRadius: BorderRadius.circular(14),
                           borderSide: BorderSide.none,
                         ),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                       ),
                     ),
                     const SizedBox(height: 16),
 
+                    // Typography Font Selector
                     const Text(
                       'TYPOGRAPHY',
                       style: TextStyle(
@@ -317,6 +397,7 @@ Return ONLY the JSON code block without filler text.
                     ),
                     const SizedBox(height: 16),
 
+                    // Format Toggles
                     Row(
                       children: [
                         _buildDialogToggle(
@@ -340,8 +421,9 @@ Return ONLY the JSON code block without filler text.
                     ),
                     const SizedBox(height: 16),
 
+                    // Highlight Colors
                     const Text(
-                      'HIGHLIGHT',
+                      'HIGHLIGHT BLUSH',
                       style: TextStyle(
                         fontFamily: AppFonts.sfProText,
                         fontSize: 10,
@@ -353,6 +435,7 @@ Return ONLY the JSON code block without filler text.
                     const SizedBox(height: 8),
                     Wrap(
                       spacing: 8,
+                      runSpacing: 8,
                       children: availableHighlights.entries.map((e) {
                         final isSelected = selectedHighlight == e.value;
                         return GestureDetector(
@@ -385,45 +468,82 @@ Return ONLY the JSON code block without filler text.
                     ),
                     const SizedBox(height: 22),
 
-                    GestureDetector(
-                      onTap: () {
-                        final word = wordController.text.trim();
-                        if (word.isEmpty) return;
+                    // Actions
+                    Row(
+                      children: [
+                        if (isCustom && initialWord != null) ...[
+                          GestureDetector(
+                            onTap: () {
+                              NotesService.instance.removeCustomSmartWord(initialWord.word);
+                              Navigator.pop(modalCtx);
+                              setState(() {});
+                              HapticFeedback.lightImpact();
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF2C2C2E),
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(
+                                  color: Colors.white.withValues(alpha: 0.10),
+                                ),
+                              ),
+                              child: const Icon(
+                                CupertinoIcons.trash,
+                                size: 16,
+                                color: Color(0xFFFF453A),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                        ],
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () {
+                              final word = wordController.text.trim();
+                              if (word.isEmpty) return;
 
-                        NotesService.instance.addCustomSmartWords([
-                          CustomSmartWord(
-                            word: word,
-                            fontFamily: selectedFont,
-                            fontWeightIndex: isBold ? 7 : null,
-                            isItalic: isItalic,
-                            isUnderline: isUnderline,
-                            highlightColorValue: selectedHighlight,
+                              // If renaming existing custom word, remove old
+                              if (initialWord != null && initialWord.word != word) {
+                                NotesService.instance.removeCustomSmartWord(initialWord.word);
+                              }
+
+                              NotesService.instance.addCustomSmartWords([
+                                CustomSmartWord(
+                                  word: word,
+                                  fontFamily: selectedFont,
+                                  fontWeightIndex: isBold ? 7 : null,
+                                  isItalic: isItalic,
+                                  isUnderline: isUnderline,
+                                  highlightColorValue: selectedHighlight,
+                                ),
+                              ]);
+                              Navigator.pop(modalCtx);
+                              setState(() {
+                                _selectedCategory = 'custom';
+                              });
+                              HapticFeedback.mediumImpact();
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 13),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                              alignment: Alignment.center,
+                              child: Text(
+                                initialWord != null || wordText != null ? 'Apply Style' : 'Save Smart Word',
+                                style: const TextStyle(
+                                  fontFamily: AppFonts.sfProText,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.black,
+                                ),
+                              ),
+                            ),
                           ),
-                        ]);
-                        Navigator.pop(modalCtx);
-                        setState(() {
-                          _selectedCategory = 'custom';
-                        });
-                        HapticFeedback.mediumImpact();
-                      },
-                      child: Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(vertical: 13),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(14),
                         ),
-                        alignment: Alignment.center,
-                        child: const Text(
-                          'Save Word',
-                          style: TextStyle(
-                            fontFamily: AppFonts.sfProText,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.black,
-                          ),
-                        ),
-                      ),
+                      ],
                     ),
                   ],
                 ),
@@ -518,7 +638,7 @@ Return ONLY the JSON code block without filler text.
                   ),
                   GestureDetector(
                     behavior: HitTestBehavior.opaque,
-                    onTap: _showManualAddDialog,
+                    onTap: () => _showWordCustomizerSheet(),
                     child: Container(
                       width: 38,
                       height: 38,
@@ -948,6 +1068,10 @@ Return ONLY the JSON code block without filler text.
                                 return _buildInteractiveWordCard(
                                   word: item.word,
                                   style: style,
+                                  onTap: () => _showWordCustomizerSheet(
+                                    initialWord: item,
+                                    isCustom: true,
+                                  ),
                                   onDelete: () {
                                     NotesService.instance.removeCustomSmartWord(item.word);
                                     setState(() {});
@@ -1014,6 +1138,11 @@ Return ONLY the JSON code block without filler text.
                               return _buildInteractiveWordCard(
                                 word: w,
                                 style: cat.style,
+                                onTap: () => _showWordCustomizerSheet(
+                                  wordText: w,
+                                  initialStyle: cat.style,
+                                  isCustom: false,
+                                ),
                               );
                             }).toList(),
                           ),
@@ -1078,6 +1207,7 @@ Return ONLY the JSON code block without filler text.
   Widget _buildInteractiveWordCard({
     required String word,
     required SpanStyle style,
+    required VoidCallback onTap,
     VoidCallback? onDelete,
   }) {
     final TextStyle wordStyle = TextStyle(
@@ -1090,12 +1220,7 @@ Return ONLY the JSON code block without filler text.
     );
 
     return GestureDetector(
-      onTap: () {
-        final current = _sandboxController.text;
-        _sandboxController.text = current.isEmpty ? word : '$current $word';
-        _sandboxController.selection = TextSelection.collapsed(offset: _sandboxController.text.length);
-        HapticFeedback.lightImpact();
-      },
+      onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
