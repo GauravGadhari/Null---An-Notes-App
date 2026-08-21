@@ -375,6 +375,15 @@ class _NullUniversalShellState extends State<NullUniversalShell>
         !_isWakingDown &&
         !_isSleepingAnim;
 
+    final totalNotes = NotesService.instance.count;
+    final totalPages = totalNotes + 2;
+
+    final leftOverscrollText = totalNotes == 0
+        ? "recent notes here or create your first note"
+        : (totalNotes % 2 == 0
+            ? "aha no more stuff here"
+            : "break the flow here bruhh you dont have any more");
+
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, result) {
@@ -437,7 +446,45 @@ class _NullUniversalShellState extends State<NullUniversalShell>
               _morphController,
               _toolbarMorphController,
             ]),
-            builder: (context, child) {
+            child: RepaintBoundary(
+              child: PageView.builder(
+                controller: _pageController,
+                physics: const BouncingScrollPhysics(),
+                itemCount: totalPages,
+                onPageChanged: (index) {
+                  NotesService.instance.setLastActivePage(index);
+                  final note = NotesService.instance.getNote(index);
+                  if (note != null) {
+                    NotesService.instance.activeBackgroundColorNotifier.value =
+                        note.quote.backgroundColorValue ?? 0xFF000000;
+                    NotesService.instance.activeEditorFontNotifier.value =
+                        note.quote.fontFamily;
+                  } else {
+                    final draft = NotesService.instance.activeDraftQuote;
+                    NotesService.instance.activeBackgroundColorNotifier.value =
+                        draft.backgroundColorValue ?? 0xFF000000;
+                    NotesService.instance.activeEditorFontNotifier.value =
+                        draft.fontFamily;
+                  }
+                },
+                itemBuilder: (context, index) {
+                  if (index <= totalNotes) {
+                    return EditorScreen(
+                      key: ValueKey('editor_page_$index'),
+                      pageIndex: index,
+                      state: _state,
+                      onSleepRequested: _putToSleep,
+                    );
+                  } else {
+                    return SettingsScreen(
+                      key: const ValueKey('settings_page'),
+                      onSleepRequested: _putToSleep,
+                    );
+                  }
+                },
+              ),
+            ),
+            builder: (context, staticPageView) {
               // --- 1. Compute Unified Real-Time Content Opacity ---
               double contentOpacity = 0.0;
 
@@ -546,15 +593,6 @@ class _NullUniversalShellState extends State<NullUniversalShell>
                 ringOpacity = 0.35;
               }
 
-              final totalNotes = NotesService.instance.count;
-              final totalPages = totalNotes + 2;
-
-              final leftOverscrollText = totalNotes == 0
-                  ? "recent notes here or create your first note"
-                  : (totalNotes % 2 == 0
-                      ? "aha no more stuff here"
-                      : "break the flow here bruhh you dont have any more");
-
               return Stack(
                 children: [
                   // --- Left Overscroll Vertical Typographic Reveal (Oldest Note edge) ---
@@ -613,42 +651,7 @@ class _NullUniversalShellState extends State<NullUniversalShell>
                       opacity: contentOpacity,
                       child: IgnorePointer(
                         ignoring: contentOpacity < 0.6,
-                        child: PageView.builder(
-                          controller: _pageController,
-                          physics: const BouncingScrollPhysics(),
-                          itemCount: totalPages,
-                          onPageChanged: (index) {
-                            NotesService.instance.setLastActivePage(index);
-                            final note = NotesService.instance.getNote(index);
-                            if (note != null) {
-                              NotesService.instance.activeBackgroundColorNotifier.value =
-                                  note.quote.backgroundColorValue ?? 0xFF000000;
-                              NotesService.instance.activeEditorFontNotifier.value =
-                                  note.quote.fontFamily;
-                            } else {
-                              final draft = NotesService.instance.activeDraftQuote;
-                              NotesService.instance.activeBackgroundColorNotifier.value =
-                                  draft.backgroundColorValue ?? 0xFF000000;
-                              NotesService.instance.activeEditorFontNotifier.value =
-                                  draft.fontFamily;
-                            }
-                          },
-                          itemBuilder: (context, index) {
-                            if (index <= totalNotes) {
-                              return EditorScreen(
-                                key: ValueKey('editor_page_$index'),
-                                pageIndex: index,
-                                state: _state,
-                                onSleepRequested: _putToSleep,
-                              );
-                            } else {
-                              return SettingsScreen(
-                                key: const ValueKey('settings_page'),
-                                onSleepRequested: _putToSleep,
-                              );
-                            }
-                          },
-                        ),
+                        child: staticPageView,
                       ),
                     ),
                   ),
