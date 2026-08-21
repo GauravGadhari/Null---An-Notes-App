@@ -52,7 +52,7 @@ class SmartWordsEngine {
     isItalic: true,
   );
 
-  // 2. ⚡ Intensity & Outbursts & Drama
+  // 2. Intensity & Outbursts & Drama
   static final RegExp _intensityPattern = RegExp(
     r'\b(hate|rage|anger|never|burn|chaos|fire|raw|scream|break|stop|shut up|cooked|crying|screaming|dying|down bad)\b|noo+|bruh+',
     caseSensitive: false,
@@ -64,7 +64,7 @@ class SmartWordsEngine {
     fontWeightIndex: 8, // FontWeight.w900
   );
 
-  // 3. 💅 Gen Z Slang & Internet Lore
+  // 3. Gen Z Slang & Internet Lore
   static final RegExp _slangPattern = RegExp(
     r'\b(fr|frfr|lowkey|highkey|ngl|tbh|nocap|cap|delulu|rizz|aura|slay|valid|period|iykyk|idk|rn|unhinged|canon event)\b|omg+|omfg+',
     caseSensitive: false,
@@ -77,7 +77,7 @@ class SmartWordsEngine {
     fontWeightIndex: 5, // FontWeight.w600
   );
 
-  // 4. 💰 Wealth, Hustle & Ambition
+  // 4. Wealth, Hustle & Ambition
   static final RegExp _wealthPattern = RegExp(
     r'\b(money|cash|wealth|rich|gold|empire|success|dollar|crypto|bag|secure the bag)\b',
     caseSensitive: false,
@@ -90,7 +90,7 @@ class SmartWordsEngine {
     fontWeightIndex: 5, // FontWeight.w600
   );
 
-  // 5. ✨ Eras, Energy & Manifestation
+  // 5. Eras, Energy & Manifestation
   static final RegExp _manifestPattern = RegExp(
     r'\b(era|main character|manifest|manifesting|healing|energy|vibe|vibes|glow up|obsessed|so real|unreal|literally|actually|overthinking)\b|yess+',
     caseSensitive: false,
@@ -103,7 +103,7 @@ class SmartWordsEngine {
     isItalic: true,
   );
 
-  // 6. 🌌 Void, Stillness & 3AM Aesthetic
+  // 6. Void, Stillness & 3AM Aesthetic
   static final RegExp _voidPattern = RegExp(
     r'\b(dark|light|shadow|void|null|infinite|truth|peace|breathe|sleep|dream|silence|3am|midnight|existential|nostalgia|solitude|cozy)\b|whyy+',
     caseSensitive: false,
@@ -116,7 +116,7 @@ class SmartWordsEngine {
     isItalic: true,
   );
 
-  // 7. 👤 Self & Identity
+  // 7. Self & Identity
   static final RegExp _identityPattern = RegExp(
     r'\b(I|me|myself|you|we|people|human|soul|mind)\b',
     caseSensitive: false,
@@ -128,7 +128,7 @@ class SmartWordsEngine {
     fontWeightIndex: 6, // FontWeight.w700
   );
 
-  // 8. 🐞 Miraculous Ladybug & Marinette
+  // 8. Miraculous Ladybug & Marinette
   static final RegExp _miraculousLadybugPattern = RegExp(
     r'\b(marinette|merrinette|ladybug|tikki|spots on|spots off|lucky charm|de-evilize)\b',
     caseSensitive: false,
@@ -142,7 +142,7 @@ class SmartWordsEngine {
     isItalic: true,
   );
 
-  // 9. 🐾 Cat Noir & Adrien
+  // 9. Cat Noir & Adrien
   static final RegExp _catNoirPattern = RegExp(
     r"\b(adrien|cat noir|chat noir|plagg|claws out|claws in|cataclysm|m'lady|bugaboo)\b",
     caseSensitive: false,
@@ -155,7 +155,7 @@ class SmartWordsEngine {
     fontWeightIndex: 6, // FontWeight.w700
   );
 
-  // 10. ✨ Miraculous Mythology & Iconic Phrases
+  // 10. Miraculous Mythology & Iconic Phrases
   static final RegExp _miraculousLorePattern = RegExp(
     r"\b(miraculous|iyamatwm|akuma|amok|hawkmoth|hawk moth|shadow moth|monarch|kwami|pound it|just a friend|she's just a friend|shes just a friend|alya|nino|chloe|luka|felix|kagami|gabriel)\b",
     caseSensitive: false,

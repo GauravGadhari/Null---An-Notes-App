@@ -565,15 +565,25 @@ Return ONLY the JSON code block without filler text.
               color: Colors.white,
               borderRadius: BorderRadius.circular(16),
             ),
-            alignment: Alignment.center,
-            child: const Text(
-              '⚡ Activate Rules',
-              style: TextStyle(
-                fontFamily: AppFonts.sfProText,
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: Colors.black,
-              ),
+            child: const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  CupertinoIcons.sparkles,
+                  size: 16,
+                  color: Colors.black,
+                ),
+                SizedBox(width: 8),
+                Text(
+                  'Activate Rules',
+                  style: TextStyle(
+                    fontFamily: AppFonts.sfProText,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black,
+                  ),
+                ),
+              ],
             ),
           ),
         ),
