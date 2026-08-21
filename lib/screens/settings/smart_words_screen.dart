@@ -31,40 +31,45 @@ class _SmartWordsScreenState extends State<SmartWordsScreen> {
     String? errorText;
 
     const String chatGptPrompt = '''
-You are an aesthetic typography stylist for the "Null" minimalist notes app.
-Analyze my unique vocabulary, slang, phrases, names, and emotional expressions, or generate 15-30 custom smart word typography rules tailored to my vibe.
+You are an aesthetic typography stylist for "Null" (an ultra-minimalist luxury notes app).
+
+YOUR TASK:
+1. Analyze our entire past conversation history, my messages, writing habits, and frequent vocabulary.
+2. Understand what I typically talk about and my specific domain (e.g., software development, design, creative writing, gaming, fandoms, daily musings, texting quirks like repeated letters, slang, or abbreviations).
+3. Identify 20-35 of the most characteristic words, slang, repeated phrases, or domain-specific keywords that I uniquely write.
+4. Assign an aesthetic typography rule to each word from the supported fonts and accent highlights below based on the word's emotional tone and vibe.
 
 Available Font Families (choose one per word):
-- Beatrice (Editorial, Elegant, High-fashion serif/sans)
-- Coolvetica (Modern, Trendy, Y2K Slang & Punchy)
-- Aloevera (Soft, Romantic, Organic, Expressive)
-- BasementGrotesque (Heavy, Brutalist, Bold impact)
-- Futura (Geometric, Clean, High-end Luxe)
-- Agitha (Atmospheric, Dreamy, 3AM Void)
-- ForeverFreedom (Mystical, Expressive script)
-- TimesNewRoman (Classic Editorial Serif)
+- Beatrice (Editorial, Elegant, High-fashion, Manifestation)
+- Coolvetica (Modern, Trendy, Y2K Slang, Punchy Tech)
+- Aloevera (Soft, Romantic, Organic, Heartfelt)
+- BasementGrotesque (Heavy, Brutalist, Bold impact, Raw energy)
+- Futura (Geometric, Clean, High-end Luxe, Ambition)
+- Agitha (Atmospheric, Dreamy, 3AM Void, Solitude)
+- ForeverFreedom (Mystical, Expressive script, Lore)
+- TimesNewRoman (Classic Literary Serif)
 - SFProDisplay (Clean Apple Standard)
 
-Available Highlight Color Hexes (or null):
+Available Highlight Color Hexes (or null for pure typography):
 - 0x44FF453A (Rose Crimson)
 - 0x44BF5AF2 (Lilac Violet)
 - 0x44FFD60A (Amber Gold)
-- 0x4464D2FF (Sky Blue)
+- 0x4464D2FF (Soft Sky Blue)
 - 0x4432D74B (Emerald Green)
 - 0x33FFFFFF (Minimalist Glow)
 
-Return ONLY a valid JSON code block with an array of objects matching this schema:
+Return ONLY a valid JSON code block with an array of objects matching this exact schema:
 ```json
 [
   {
-    "word": "bestie",
+    "word": "ohkkk",
     "fontFamily": "Coolvetica",
     "bold": true,
     "italic": true,
     "highlightColorValue": 1153374962
   },
   {
-    "word": "iconic",
+    "word": "gotchaa",
     "fontFamily": "Beatrice",
     "bold": false,
     "italic": true,
@@ -72,6 +77,7 @@ Return ONLY a valid JSON code block with an array of objects matching this schem
   }
 ]
 ```
+Do not include any other text outside the JSON code block.
 ''';
 
     showModalBottomSheet(
