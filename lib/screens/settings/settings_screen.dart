@@ -25,7 +25,7 @@ class SettingsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
-    final topPadding = screenHeight * 0.12;
+    final topPadding = screenHeight * 0.20;
 
     return Container(
       color: const Color(0xFF000000),
@@ -40,7 +40,7 @@ class SettingsScreen extends StatelessWidget {
                 left: 24.0,
                 right: 24.0,
                 top: topPadding,
-                bottom: 120.0,
+                bottom: 180.0,
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -49,18 +49,18 @@ class SettingsScreen extends StatelessWidget {
                     'settings',
                     style: TextStyle(
                       fontFamily: AppFonts.sfProDisplay,
-                      fontSize: 44,
+                      fontSize: 46,
                       fontWeight: FontWeight.w300,
                       letterSpacing: -1.2,
                       color: Color(0xFFEDEDED),
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 12),
                   const Text(
                     'pure dark.\nzero friction.\njust your thoughts.',
                     style: TextStyle(
                       fontFamily: AppFonts.sfProDisplay,
-                      fontSize: 19,
+                      fontSize: 20,
                       fontWeight: FontWeight.w300,
                       color: Color(0xFF55555A),
                       height: 1.35,
@@ -68,11 +68,11 @@ class SettingsScreen extends StatelessWidget {
                     ),
                   ),
 
-                  const SizedBox(height: 38),
+                  const SizedBox(height: 48),
 
                   // ── SECTION 1: GENERAL GROUP ──
                   _buildSectionHeader('GENERAL'),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 10),
                   Container(
                     decoration: BoxDecoration(
                       color: const Color(0xFF141416).withValues(alpha: 0.90),
@@ -119,11 +119,11 @@ class SettingsScreen extends StatelessWidget {
                     ),
                   ),
 
-                  const SizedBox(height: 28),
+                  const SizedBox(height: 36),
 
                   // ── SECTION 2: TYPOGRAPHY & SMART WORDS GROUP ──
                   _buildSectionHeader('TYPOGRAPHY & INTELLIGENCE'),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 10),
                   Container(
                     decoration: BoxDecoration(
                       color: const Color(0xFF141416).withValues(alpha: 0.90),
@@ -164,19 +164,19 @@ class SettingsScreen extends StatelessWidget {
                             );
                           },
                           child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
                             child: Row(
                               children: [
                                 Container(
-                                  width: 32,
-                                  height: 32,
+                                  width: 34,
+                                  height: 34,
                                   decoration: BoxDecoration(
                                     color: Colors.white.withValues(alpha: 0.08),
-                                    borderRadius: BorderRadius.circular(8),
+                                    borderRadius: BorderRadius.circular(9),
                                   ),
                                   child: const Icon(
                                     CupertinoIcons.sparkles,
-                                    size: 16,
+                                    size: 17,
                                     color: Color(0xFFEDEDED),
                                   ),
                                 ),
@@ -228,13 +228,13 @@ class SettingsScreen extends StatelessWidget {
                     ),
                   ),
 
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 36),
 
                   // ── SECTION 3: DEVELOPER GROUP ──
                   _buildSectionHeader('DEVELOPER'),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 10),
                   Container(
-                    padding: const EdgeInsets.all(20),
+                    padding: const EdgeInsets.all(22),
                     decoration: BoxDecoration(
                       color: const Color(0xFF141416).withValues(alpha: 0.90),
                       borderRadius: BorderRadius.circular(24),
@@ -302,7 +302,7 @@ class SettingsScreen extends StatelessWidget {
                           ],
                         ),
 
-                        const SizedBox(height: 18),
+                        const SizedBox(height: 20),
 
                         // Action Buttons: GitHub & Portfolio
                         Row(
@@ -314,7 +314,7 @@ class SettingsScreen extends StatelessWidget {
                                 onTap: () => _openUrl('https://github.com/GauravGadhari'),
                               ),
                             ),
-                            const SizedBox(width: 10),
+                            const SizedBox(width: 12),
                             Expanded(
                               child: _buildActionButton(
                                 icon: CupertinoIcons.globe,
@@ -328,7 +328,7 @@ class SettingsScreen extends StatelessWidget {
                     ),
                   ),
 
-                  const SizedBox(height: 40),
+                  const SizedBox(height: 48),
 
                   // Subtle Footer Brand mark
                   Center(
@@ -384,7 +384,7 @@ class SettingsScreen extends StatelessWidget {
   Widget _buildDivider() {
     return Container(
       height: 1.0,
-      margin: const EdgeInsets.symmetric(horizontal: 18),
+      margin: const EdgeInsets.symmetric(horizontal: 20),
       color: Colors.white.withValues(alpha: 0.07),
     );
   }
@@ -397,19 +397,19 @@ class SettingsScreen extends StatelessWidget {
     required ValueChanged<bool> onChanged,
   }) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
       child: Row(
         children: [
           Container(
-            width: 32,
-            height: 32,
+            width: 34,
+            height: 34,
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(9),
             ),
             child: Icon(
               icon,
-              size: 16,
+              size: 17,
               color: const Color(0xFFEDEDED),
             ),
           ),
@@ -494,10 +494,10 @@ class SettingsScreen extends StatelessWidget {
         onTap();
       },
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 11),
+        padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
           color: const Color(0xFF1E1E22),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: Colors.white.withValues(alpha: 0.10),
             width: 1.0,
