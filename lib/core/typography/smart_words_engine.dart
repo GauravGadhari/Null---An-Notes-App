@@ -162,8 +162,9 @@ class SmartWordsEngine {
   static const SpanStyle _miraculousLoreStyle = SpanStyle(
     start: 0,
     end: 0,
-    fontFamily: AppFonts.foreverFreedom,
+    fontFamily: AppFonts.beatrice,
     highlightColorValue: 0x44BF5AF2, // Mystical Akuma / Kwami Violet
+    fontWeightIndex: 6, // FontWeight.w700
     isItalic: true,
   );
 
@@ -236,7 +237,7 @@ class SmartWordsEngine {
       SmartWordCategory(
         title: 'Miraculous Lore',
         emoji: '🔮',
-        description: 'Forever Freedom • Mystical Violet • Italic',
+        description: 'Beatrice • Mystical Violet • Bold Italic',
         words: ['miraculous', 'iyamatwm', 'akuma', 'amok', 'hawkmoth', 'hawk moth', 'shadow moth', 'monarch', 'kwami', 'pound it', "just a friend", 'alya', 'nino', 'chloe', 'luka', 'felix', 'kagami', 'gabriel'],
         style: _miraculousLoreStyle,
       ),
