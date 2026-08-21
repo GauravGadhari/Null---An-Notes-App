@@ -490,53 +490,225 @@ class _EditorScreenState extends State<EditorScreen> {
     }
   }
 
-  Widget _buildStyleChip(String label, int styleIndex, BuildContext modalCtx) {
-    final isSelected = _quote.timeStyle == styleIndex;
-    return GestureDetector(
-      onTap: () {
-        Navigator.pop(modalCtx);
-        setState(() {
-          _quote = QuoteItem(
-            mainText: _quote.mainText,
-            dimPrompt: _quote.dimPrompt,
-            showTime: _quote.showTime,
-            showDivider: _quote.showDivider,
-            fontFamily: _quote.fontFamily,
-            fontSize: _quote.fontSize,
-            fontWeight: _quote.fontWeight,
-            letterSpacing: _quote.letterSpacing,
-            height: _quote.height,
-            backgroundColorValue: _quote.backgroundColorValue,
-            timeStyle: styleIndex,
-          );
-        });
-        if (_hasCreatedNote) {
-          final note = NotesService.instance.getNote(widget.pageIndex);
-          if (note != null) {
-            note.quote = _quote;
-            NotesService.instance.saveNow();
-          }
-        }
-        HapticFeedback.lightImpact();
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected ? Colors.white : Colors.white.withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isSelected ? Colors.white : Colors.white.withValues(alpha: 0.12),
-            width: 1,
+  Widget _buildVisualPreviewCard({
+    required int styleIndex,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    String title = '';
+    Widget previewContent = const SizedBox();
+
+    if (styleIndex == 0) {
+      title = 'Classic';
+      previewContent = Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text(
+            "It's",
+            style: TextStyle(
+              fontFamily: AppFonts.sfProText,
+              fontSize: 8,
+              color: Color(0xFF8E8E93),
+            ),
+          ),
+          const SizedBox(height: 1),
+          const Text(
+            "12:05",
+            style: TextStyle(
+              fontFamily: AppFonts.sfProDisplay,
+              fontSize: 18,
+              fontWeight: FontWeight.w200,
+              color: Color(0xFFEDEDED),
+              height: 1.0,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Container(
+            width: 14,
+            height: 1.5,
+            decoration: BoxDecoration(
+              color: const Color(0xFF55555A),
+              borderRadius: BorderRadius.circular(1),
+            ),
+          ),
+        ],
+      );
+    } else if (styleIndex == 1) {
+      title = 'Editorial';
+      previewContent = const Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            "written at",
+            style: TextStyle(
+              fontFamily: AppFonts.beatrice,
+              fontSize: 7.5,
+              fontStyle: FontStyle.italic,
+              color: Color(0xFF8E8E93),
+            ),
+          ),
+          SizedBox(height: 1),
+          Text(
+            "12:05 PM",
+            style: TextStyle(
+              fontFamily: AppFonts.timesNewRoman,
+              fontSize: 15,
+              fontStyle: FontStyle.italic,
+              color: Color(0xFFEDEDED),
+              height: 1.0,
+            ),
+          ),
+          SizedBox(height: 4),
+          SizedBox(
+            width: 20,
+            height: 1.0,
+            child: Divider(color: Color(0xFF636366), height: 1, thickness: 1),
+          ),
+        ],
+      );
+    } else if (styleIndex == 2) {
+      title = 'Journal';
+      previewContent = Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text(
+            "FRI, AUG 21",
+            style: TextStyle(
+              fontFamily: AppFonts.sfProText,
+              fontSize: 7,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.8,
+              color: Color(0xFF8E8E93),
+            ),
+          ),
+          const SizedBox(height: 1),
+          const Text(
+            "12:05",
+            style: TextStyle(
+              fontFamily: AppFonts.sfProDisplay,
+              fontSize: 16,
+              fontWeight: FontWeight.w300,
+              color: Color(0xFFEDEDED),
+              height: 1.0,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Container(
+            width: 3,
+            height: 3,
+            decoration: const BoxDecoration(
+              color: Color(0xFF636366),
+              shape: BoxShape.circle,
+            ),
+          ),
+        ],
+      );
+    } else if (styleIndex == 3) {
+      title = 'Minimal';
+      previewContent = const Center(
+        child: Text(
+          "12:05 AM",
+          style: TextStyle(
+            fontFamily: AppFonts.sfProDisplay,
+            fontSize: 14,
+            fontWeight: FontWeight.w200,
+            color: Color(0xFFEDEDED),
+            letterSpacing: 0.2,
           ),
         ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontFamily: AppFonts.sfProText,
-            fontSize: 13,
-            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-            color: isSelected ? Colors.black : const Color(0xFFEDEDED),
+      );
+    } else if (styleIndex == 4) {
+      title = '24H Matrix';
+      previewContent = Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text(
+            "// 24H",
+            style: TextStyle(
+              fontFamily: AppFonts.sfProText,
+              fontSize: 7,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 1.0,
+              color: Color(0xFF55555A),
+            ),
           ),
+          const SizedBox(height: 1),
+          const Text(
+            "00:05",
+            style: TextStyle(
+              fontFamily: AppFonts.sfProRounded,
+              fontSize: 17,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFFD1D1D6),
+              height: 1.0,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Container(
+            width: 14,
+            height: 1.5,
+            color: const Color(0xFF64D2FF).withValues(alpha: 0.6),
+          ),
+        ],
+      );
+    }
+
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        width: 110,
+        height: 88,
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFF222226) : const Color(0xFF161618),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isSelected ? Colors.white : Colors.white.withValues(alpha: 0.08),
+            width: isSelected ? 1.5 : 1.0,
+          ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: Colors.white.withValues(alpha: 0.1),
+                    blurRadius: 10,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  title.toUpperCase(),
+                  style: TextStyle(
+                    fontFamily: AppFonts.sfProText,
+                    fontSize: 8.5,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.8,
+                    color: isSelected ? Colors.white : const Color(0xFF636366),
+                  ),
+                ),
+                if (isSelected)
+                  const Icon(
+                    Icons.check_circle_rounded,
+                    size: 11,
+                    color: Colors.white,
+                  ),
+              ],
+            ),
+            const Spacer(),
+            previewContent,
+            const Spacer(),
+          ],
         ),
       ),
     );
@@ -582,156 +754,187 @@ class _EditorScreenState extends State<EditorScreen> {
       context: context,
       backgroundColor: Colors.transparent,
       barrierColor: Colors.black.withValues(alpha: 0.65),
+      isScrollControlled: true,
       builder: (ctx) {
-        return Container(
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-          decoration: BoxDecoration(
-            color: const Color(0xFF141416),
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(
-              color: Colors.white.withValues(alpha: 0.14),
-              width: 1.2,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.5),
-                blurRadius: 30,
-                offset: const Offset(0, 10),
-              ),
-            ],
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Timestamp Options',
-                    style: TextStyle(
-                      fontFamily: AppFonts.sfProDisplay,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFFEDEDED),
-                      letterSpacing: -0.3,
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: () => Navigator.pop(ctx),
-                    child: Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.08),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.close_rounded,
-                        size: 16,
-                        color: Color(0xFF8E8E93),
-                      ),
-                    ),
+        return StatefulBuilder(
+          builder: (modalContext, setModalState) {
+            return Container(
+              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+              decoration: BoxDecoration(
+                color: const Color(0xFF141416),
+                borderRadius: BorderRadius.circular(26),
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.14),
+                  width: 1.2,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.6),
+                    blurRadius: 32,
+                    offset: const Offset(0, 12),
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Header
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Timestamp Options',
+                        style: TextStyle(
+                          fontFamily: AppFonts.sfProDisplay,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFFEDEDED),
+                          letterSpacing: -0.3,
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: () => Navigator.pop(ctx),
+                        child: Container(
+                          padding: const EdgeInsets.all(5),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.08),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.close_rounded,
+                            size: 16,
+                            color: Color(0xFF8E8E93),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
 
-              // Style Selector
-              const Text(
-                'STYLES (TAP TO SELECT OR MULTI-TAP IN NOTE)',
-                style: TextStyle(
-                  fontFamily: AppFonts.sfProText,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF636366),
-                  letterSpacing: 1.2,
-                ),
-              ),
-              const SizedBox(height: 10),
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                physics: const BouncingScrollPhysics(),
-                child: Row(
-                  children: [
-                    _buildStyleChip('Classic', 0, ctx),
-                    const SizedBox(width: 8),
-                    _buildStyleChip('Editorial', 1, ctx),
-                    const SizedBox(width: 8),
-                    _buildStyleChip('Journal', 2, ctx),
-                    const SizedBox(width: 8),
-                    _buildStyleChip('Minimal', 3, ctx),
-                    const SizedBox(width: 8),
-                    _buildStyleChip('24H Digital', 4, ctx),
-                  ],
-                ),
-              ),
+                  // Visual Previews Section
+                  const Text(
+                    'CHOOSE STYLE (PREVIEWS)',
+                    style: TextStyle(
+                      fontFamily: AppFonts.sfProText,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF636366),
+                      letterSpacing: 1.2,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
 
-              const SizedBox(height: 18),
-              Container(
-                width: double.infinity,
-                height: 1,
-                color: Colors.white.withValues(alpha: 0.08),
-              ),
-              const SizedBox(height: 14),
+                  // Horizontal Visual Card Previews
+                  SizedBox(
+                    height: 90,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      physics: const BouncingScrollPhysics(),
+                      itemCount: 5,
+                      separatorBuilder: (context, index) => const SizedBox(width: 10),
+                      itemBuilder: (context, idx) {
+                        return _buildVisualPreviewCard(
+                          styleIndex: idx,
+                          isSelected: _quote.timeStyle == idx,
+                          onTap: () {
+                            setModalState(() {});
+                            setState(() {
+                              _quote = QuoteItem(
+                                mainText: _quote.mainText,
+                                dimPrompt: _quote.dimPrompt,
+                                showTime: _quote.showTime,
+                                showDivider: _quote.showDivider,
+                                fontFamily: _quote.fontFamily,
+                                fontSize: _quote.fontSize,
+                                fontWeight: _quote.fontWeight,
+                                letterSpacing: _quote.letterSpacing,
+                                height: _quote.height,
+                                backgroundColorValue: _quote.backgroundColorValue,
+                                timeStyle: idx,
+                              );
+                            });
+                            if (_hasCreatedNote) {
+                              final note = NotesService.instance.getNote(widget.pageIndex);
+                              if (note != null) {
+                                note.quote = _quote;
+                                NotesService.instance.saveNow();
+                              }
+                            }
+                            HapticFeedback.selectionClick();
+                          },
+                        );
+                      },
+                    ),
+                  ),
 
-              // Action 1: Update to Current Time
-              _buildMenuActionItem(
-                icon: CupertinoIcons.clock,
-                title: 'Update to Current Time',
-                onTap: () {
-                  Navigator.pop(ctx);
-                  setState(() {
-                    _displayTime = DateTime.now();
-                  });
-                  if (_hasCreatedNote) {
-                    final note = NotesService.instance.getNote(widget.pageIndex);
-                    if (note != null) {
-                      note.createdAt = _displayTime;
-                      NotesService.instance.saveNow();
-                    }
-                  }
-                  HapticFeedback.lightImpact();
-                },
-              ),
+                  const SizedBox(height: 18),
+                  Container(
+                    width: double.infinity,
+                    height: 1,
+                    color: Colors.white.withValues(alpha: 0.08),
+                  ),
+                  const SizedBox(height: 14),
 
-              const SizedBox(height: 8),
+                  // Action 1: Update to Current Time
+                  _buildMenuActionItem(
+                    icon: CupertinoIcons.clock,
+                    title: 'Update to Current Time',
+                    onTap: () {
+                      setModalState(() {});
+                      setState(() {
+                        _displayTime = DateTime.now();
+                      });
+                      if (_hasCreatedNote) {
+                        final note = NotesService.instance.getNote(widget.pageIndex);
+                        if (note != null) {
+                          note.createdAt = _displayTime;
+                          NotesService.instance.saveNow();
+                        }
+                      }
+                      HapticFeedback.lightImpact();
+                    },
+                  ),
 
-              // Action 2: Remove / Hide Timestamp
-              _buildMenuActionItem(
-                icon: CupertinoIcons.eye_slash,
-                title: 'Remove Timestamp',
-                isDestructive: true,
-                onTap: () {
-                  Navigator.pop(ctx);
-                  setState(() {
-                    _quote = QuoteItem(
-                      mainText: _quote.mainText,
-                      dimPrompt: _quote.dimPrompt,
-                      showTime: false,
-                      showDivider: _quote.showDivider,
-                      fontFamily: _quote.fontFamily,
-                      fontSize: _quote.fontSize,
-                      fontWeight: _quote.fontWeight,
-                      letterSpacing: _quote.letterSpacing,
-                      height: _quote.height,
-                      backgroundColorValue: _quote.backgroundColorValue,
-                      timeStyle: _quote.timeStyle,
-                    );
-                  });
-                  if (_hasCreatedNote) {
-                    final note = NotesService.instance.getNote(widget.pageIndex);
-                    if (note != null) {
-                      note.quote = _quote;
-                      NotesService.instance.saveNow();
-                    }
-                  }
-                  HapticFeedback.mediumImpact();
-                },
+                  const SizedBox(height: 6),
+
+                  // Action 2: Remove / Hide Timestamp
+                  _buildMenuActionItem(
+                    icon: CupertinoIcons.eye_slash,
+                    title: 'Remove Timestamp',
+                    isDestructive: true,
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      setState(() {
+                        _quote = QuoteItem(
+                          mainText: _quote.mainText,
+                          dimPrompt: _quote.dimPrompt,
+                          showTime: false,
+                          showDivider: _quote.showDivider,
+                          fontFamily: _quote.fontFamily,
+                          fontSize: _quote.fontSize,
+                          fontWeight: _quote.fontWeight,
+                          letterSpacing: _quote.letterSpacing,
+                          height: _quote.height,
+                          backgroundColorValue: _quote.backgroundColorValue,
+                          timeStyle: _quote.timeStyle,
+                        );
+                      });
+                      if (_hasCreatedNote) {
+                        final note = NotesService.instance.getNote(widget.pageIndex);
+                        if (note != null) {
+                          note.quote = _quote;
+                          NotesService.instance.saveNow();
+                        }
+                      }
+                      HapticFeedback.mediumImpact();
+                    },
+                  ),
+                ],
               ),
-            ],
-          ),
+            );
+          },
         );
       },
     );
@@ -986,7 +1189,7 @@ class _EditorScreenState extends State<EditorScreen> {
                           // Tappable Multi-Style Timestamp Header
                           if (_quote.showTime) ...[
                             _buildTimestampHeader(),
-                          ] else ...[
+                          ] else if (NotesService.instance.suggestAddTimestampNotifier.value && _isFocused) ...[
                             GestureDetector(
                               behavior: HitTestBehavior.opaque,
                               onTap: () {
@@ -1017,10 +1220,10 @@ class _EditorScreenState extends State<EditorScreen> {
                               child: Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                                 decoration: BoxDecoration(
-                                  color: Colors.white.withValues(alpha: 0.05),
+                                  color: Colors.white.withValues(alpha: 0.08),
                                   borderRadius: BorderRadius.circular(14),
                                   border: Border.all(
-                                    color: Colors.white.withValues(alpha: 0.08),
+                                    color: Colors.white.withValues(alpha: 0.15),
                                     width: 1,
                                   ),
                                 ),
@@ -1030,15 +1233,15 @@ class _EditorScreenState extends State<EditorScreen> {
                                     Icon(
                                       CupertinoIcons.clock,
                                       size: 13,
-                                      color: Colors.white.withValues(alpha: 0.35),
+                                      color: Colors.white.withValues(alpha: 0.6),
                                     ),
                                     const SizedBox(width: 6),
-                                    Text(
+                                    const Text(
                                       '+ add timestamp',
                                       style: TextStyle(
                                         fontFamily: AppFonts.sfProText,
                                         fontSize: 12,
-                                        color: Colors.white.withValues(alpha: 0.35),
+                                        color: Color(0xFFEDEDED),
                                         letterSpacing: 0.2,
                                       ),
                                     ),

@@ -244,6 +244,98 @@ class SettingsScreen extends StatelessWidget {
                     },
                   ),
 
+                  const SizedBox(height: 12),
+
+                  // Option 3: Suggest Add Timestamp in Editor
+                  ValueListenableBuilder<bool>(
+                    valueListenable: NotesService.instance.suggestAddTimestampNotifier,
+                    builder: (context, suggestAddTimestamp, _) {
+                      return Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF141416).withValues(alpha: 0.85),
+                          borderRadius: BorderRadius.circular(22),
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.12),
+                            width: 1.0,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'Suggest Add Timestamp',
+                                    style: TextStyle(
+                                      fontFamily: AppFonts.sfProDisplay,
+                                      fontSize: 17,
+                                      fontWeight: FontWeight.w500,
+                                      color: Color(0xFFEDEDED),
+                                      letterSpacing: -0.2,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    suggestAddTimestamp
+                                        ? 'Shows "+ Add timestamp" button while editing'
+                                        : 'Never prompts to add timestamp',
+                                    style: const TextStyle(
+                                      fontFamily: AppFonts.sfProText,
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w400,
+                                      color: Color(0xFF8E8E93),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            GestureDetector(
+                              behavior: HitTestBehavior.opaque,
+                              onTap: () {
+                                NotesService.instance.setSuggestAddTimestamp(!suggestAddTimestamp);
+                              },
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 250),
+                                curve: Curves.easeOutCubic,
+                                width: 50,
+                                height: 30,
+                                padding: const EdgeInsets.all(3),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(15),
+                                  color: suggestAddTimestamp
+                                      ? const Color(0xFFEDEDED)
+                                      : const Color(0xFF2C2C2E),
+                                ),
+                                alignment: suggestAddTimestamp
+                                    ? Alignment.centerRight
+                                    : Alignment.centerLeft,
+                                child: Container(
+                                  width: 24,
+                                  height: 24,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: suggestAddTimestamp
+                                        ? const Color(0xFF000000)
+                                        : const Color(0xFF8E8E93),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withValues(alpha: 0.3),
+                                        blurRadius: 4,
+                                        offset: const Offset(0, 1),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+
                   const SizedBox(height: 28),
 
                   // ── 3. Developer & Craft Section ──

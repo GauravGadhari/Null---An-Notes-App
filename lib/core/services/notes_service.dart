@@ -18,10 +18,12 @@ class NotesService {
   static const String _openOnNewNoteKey = 'open_on_new_note';
   static const String _lastActivePageKey = 'last_active_page';
   static const String _smartWordsEnabledKey = 'smart_words_enabled';
+  static const String _suggestAddTimestampKey = 'suggest_add_timestamp';
 
   final ValueNotifier<bool> openOnNewNoteNotifier = ValueNotifier<bool>(true);
   final ValueNotifier<int> lastActivePageIndexNotifier = ValueNotifier<int>(0);
   final ValueNotifier<bool> smartWordsEnabledNotifier = ValueNotifier<bool>(true);
+  final ValueNotifier<bool> suggestAddTimestampNotifier = ValueNotifier<bool>(true);
 
   /// Initializes Hive storage and hydrates saved notes and preferences from disk
   Future<void> init() async {
@@ -42,6 +44,7 @@ class NotesService {
       openOnNewNoteNotifier.value = _box?.get(_openOnNewNoteKey, defaultValue: true) as bool? ?? true;
       lastActivePageIndexNotifier.value = _box?.get(_lastActivePageKey, defaultValue: 0) as int? ?? 0;
       smartWordsEnabledNotifier.value = _box?.get(_smartWordsEnabledKey, defaultValue: true) as bool? ?? true;
+      suggestAddTimestampNotifier.value = _box?.get(_suggestAddTimestampKey, defaultValue: true) as bool? ?? true;
     } catch (_) {
       // In isolated unit tests or cold boots, fail gracefully
     }
@@ -60,6 +63,11 @@ class NotesService {
   void setSmartWordsEnabled(bool value) {
     smartWordsEnabledNotifier.value = value;
     _box?.put(_smartWordsEnabledKey, value);
+  }
+
+  void setSuggestAddTimestamp(bool value) {
+    suggestAddTimestampNotifier.value = value;
+    _box?.put(_suggestAddTimestampKey, value);
   }
 
   int getInitialPageIndex() {
