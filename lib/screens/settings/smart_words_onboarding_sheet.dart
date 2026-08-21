@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/fonts/app_fonts.dart';
 import '../../core/models/custom_smart_word.dart';
 import '../../core/models/span_style.dart';
@@ -31,7 +32,6 @@ class _SmartWordsOnboardingSheetState extends State<SmartWordsOnboardingSheet> {
   final TextEditingController _jsonController = TextEditingController();
 
   int _currentPage = 0;
-  bool _copiedPrompt = false;
   String? _errorMessage;
   List<CustomSmartWord> _importedWords = [];
 
@@ -109,23 +109,24 @@ Return ONLY the JSON code block without filler text.
     );
   }
 
-  void _copyPrompt() {
+  void _copyPromptAndAdvance() {
     Clipboard.setData(const ClipboardData(text: _chatGptPrompt));
     HapticFeedback.mediumImpact();
-    setState(() {
-      _copiedPrompt = true;
-    });
-    Future.delayed(const Duration(seconds: 3), () {
-      if (mounted) {
-        setState(() => _copiedPrompt = false);
-      }
-    });
+    // Smoothly and automatically transition to ChatGPT step
+    _nextPage();
+  }
+
+  Future<void> _openChatGpt() async {
+    final uri = Uri.parse('https://chatgpt.com');
+    try {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (_) {}
   }
 
   void _applyRules() {
     final text = _jsonController.text.trim();
     if (text.isEmpty) {
-      setState(() => _errorMessage = 'Please paste the JSON from ChatGPT first.');
+      setState(() => _errorMessage = 'Paste the JSON response first.');
       return;
     }
 
@@ -166,7 +167,7 @@ Return ONLY the JSON code block without filler text.
       _nextPage();
     } catch (e) {
       setState(() {
-        _errorMessage = 'Invalid JSON: Please check the ChatGPT code block.';
+        _errorMessage = 'Invalid JSON: Check ChatGPT code block.';
       });
     }
   }
@@ -179,8 +180,8 @@ Return ONLY the JSON code block without filler text.
         return AnimatedContainer(
           duration: const Duration(milliseconds: 250),
           margin: const EdgeInsets.symmetric(horizontal: 3),
-          width: isActive ? 20 : 6,
-          height: 6,
+          width: isActive ? 18 : 5,
+          height: 5,
           decoration: BoxDecoration(
             color: isActive ? Colors.white : Colors.white.withValues(alpha: 0.2),
             borderRadius: BorderRadius.circular(3),
@@ -216,7 +217,7 @@ Return ONLY the JSON code block without filler text.
           ),
         ],
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 22),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -246,19 +247,19 @@ Return ONLY the JSON code block without filler text.
             ],
           ),
 
-          const SizedBox(height: 18),
+          const SizedBox(height: 16),
 
           // Swiping Page View Body
           Flexible(
             child: SizedBox(
-              height: 380,
+              height: 360,
               child: PageView(
                 controller: _pageController,
                 physics: const BouncingScrollPhysics(),
                 onPageChanged: (idx) => setState(() => _currentPage = idx),
                 children: [
-                  _buildPage1CopyPrompt(),
-                  _buildPage2AskChatGpt(),
+                  _buildPage1VisualCopy(),
+                  _buildPage2VisualChatGpt(),
                   _buildPage3PasteAndApply(),
                   _buildPage4PreviewSuccess(),
                 ],
@@ -270,16 +271,36 @@ Return ONLY the JSON code block without filler text.
     );
   }
 
-  // ── Step 1: Copy AI Prompt ──
-  Widget _buildPage1CopyPrompt() {
+  // ── Step 1: Centered Visual Copy Button ──
+  Widget _buildPage1VisualCopy() {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
+        const Spacer(),
+        // Visual Header
+        Container(
+          width: 58,
+          height: 58,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: Colors.white.withValues(alpha: 0.06),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.12),
+              width: 1.0,
+            ),
+          ),
+          child: const Icon(
+            CupertinoIcons.sparkles,
+            size: 26,
+            color: Color(0xFFEDEDED),
+          ),
+        ),
+        const SizedBox(height: 14),
         const Text(
-          'Personalize Your Typography',
+          'AI Smart Words',
           style: TextStyle(
             fontFamily: AppFonts.sfProDisplay,
-            fontSize: 20,
+            fontSize: 21,
             fontWeight: FontWeight.w600,
             color: Color(0xFFEDEDED),
             letterSpacing: -0.4,
@@ -287,109 +308,78 @@ Return ONLY the JSON code block without filler text.
         ),
         const SizedBox(height: 6),
         const Text(
-          'Let AI scan your conversation history to extract names, slang, and domain vocabulary tailored to your texting style.',
+          'Personalize typography with your slang & names',
           style: TextStyle(
             fontFamily: AppFonts.sfProText,
             fontSize: 13,
             color: Color(0xFF8E8E93),
-            height: 1.35,
           ),
         ),
         const Spacer(),
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: const Color(0xFF0D0D0E),
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(
-              color: Colors.white.withValues(alpha: 0.08),
-            ),
-          ),
-          child: const Row(
-            children: [
-              Icon(CupertinoIcons.sparkles, size: 18, color: Color(0xFFEDEDED)),
-              SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  'Includes supported luxury fonts (Beatrice, Coolvetica, Futura, Aloevera) & highlight tones.',
-                  style: TextStyle(
-                    fontFamily: AppFonts.sfProText,
-                    fontSize: 12,
-                    color: Color(0xFF8E8E93),
-                    height: 1.3,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        const Spacer(),
+
+        // Centered Copy Button
         GestureDetector(
-          onTap: _copyPrompt,
+          behavior: HitTestBehavior.opaque,
+          onTap: _copyPromptAndAdvance,
           child: Container(
             width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 14),
+            padding: const EdgeInsets.symmetric(vertical: 16),
             decoration: BoxDecoration(
-              color: _copiedPrompt ? const Color(0xFF32D74B) : Colors.white,
-              borderRadius: BorderRadius.circular(16),
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(18),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.white.withValues(alpha: 0.15),
+                  blurRadius: 20,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
-            alignment: Alignment.center,
-            child: Row(
+            child: const Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(
-                  _copiedPrompt ? CupertinoIcons.checkmark_alt : CupertinoIcons.doc_on_clipboard_fill,
+                  CupertinoIcons.doc_on_clipboard_fill,
                   size: 16,
                   color: Colors.black,
                 ),
-                const SizedBox(width: 8),
+                SizedBox(width: 8),
                 Text(
-                  _copiedPrompt ? 'Prompt Copied!' : 'Copy AI Prompt',
-                  style: const TextStyle(
+                  'Copy AI Prompt',
+                  style: TextStyle(
                     fontFamily: AppFonts.sfProText,
-                    fontSize: 14,
+                    fontSize: 15,
                     fontWeight: FontWeight.w600,
                     color: Colors.black,
+                    letterSpacing: -0.2,
                   ),
                 ),
               ],
             ),
           ),
         ),
-        const SizedBox(height: 10),
-        GestureDetector(
-          onTap: _nextPage,
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1E1E22),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.10)),
-            ),
-            alignment: Alignment.center,
-            child: const Text(
-              'Next: Paste in ChatGPT →',
-              style: TextStyle(
-                fontFamily: AppFonts.sfProText,
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-                color: Color(0xFFEDEDED),
-              ),
-            ),
+        const SizedBox(height: 8),
+        const Text(
+          'press it to copy & continue',
+          style: TextStyle(
+            fontFamily: AppFonts.sfProText,
+            fontSize: 11,
+            fontWeight: FontWeight.w400,
+            color: Color(0xFF636366),
           ),
         ),
+        const SizedBox(height: 10),
       ],
     );
   }
 
-  // ── Step 2: Open ChatGPT & Copy Output ──
-  Widget _buildPage2AskChatGpt() {
+  // ── Step 2: Visual ChatGPT Flow ──
+  Widget _buildPage2VisualChatGpt() {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        const SizedBox(height: 8),
         const Text(
-          'Ask ChatGPT',
+          'Paste in ChatGPT',
           style: TextStyle(
             fontFamily: AppFonts.sfProDisplay,
             fontSize: 20,
@@ -398,68 +388,110 @@ Return ONLY the JSON code block without filler text.
             letterSpacing: -0.4,
           ),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 4),
         const Text(
-          'Paste the prompt into your ChatGPT chat and copy the generated JSON code block.',
+          'Send prompt & copy the JSON response',
           style: TextStyle(
             fontFamily: AppFonts.sfProText,
-            fontSize: 13,
+            fontSize: 12,
             color: Color(0xFF8E8E93),
-            height: 1.35,
           ),
         ),
         const Spacer(),
+
+        // Visual 3-Step Flow Card
         Container(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           decoration: BoxDecoration(
             color: const Color(0xFF0D0D0E),
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(20),
             border: Border.all(
               color: Colors.white.withValues(alpha: 0.08),
             ),
           ),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildBullet(
-                icon: CupertinoIcons.arrow_right_circle_fill,
-                text: 'Open ChatGPT in your browser or app',
+              _buildVisualRow(
+                icon: CupertinoIcons.chat_bubble_2_fill,
+                title: '1. Paste in ChatGPT',
+                subtitle: 'Send the copied prompt in your chat',
               ),
-              const SizedBox(height: 10),
-              _buildBullet(
-                icon: CupertinoIcons.arrow_right_circle_fill,
-                text: 'Paste the prompt and hit send',
+              const SizedBox(height: 12),
+              _buildVisualRow(
+                icon: CupertinoIcons.sparkles,
+                title: '2. Generate Rules',
+                subtitle: 'AI analyzes your vocabulary',
               ),
-              const SizedBox(height: 10),
-              _buildBullet(
-                icon: CupertinoIcons.arrow_right_circle_fill,
-                text: 'Copy the JSON output code block',
+              const SizedBox(height: 12),
+              _buildVisualRow(
+                icon: CupertinoIcons.arrow_down_doc_fill,
+                title: '3. Copy JSON Block',
+                subtitle: 'Copy the output and come back',
               ),
             ],
           ),
         ),
         const Spacer(),
-        GestureDetector(
-          onTap: _nextPage,
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 14),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            alignment: Alignment.center,
-            child: const Text(
-              'I\'ve Copied the JSON →',
-              style: TextStyle(
-                fontFamily: AppFonts.sfProText,
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: Colors.black,
+
+        // Action Buttons
+        Row(
+          children: [
+            Expanded(
+              child: GestureDetector(
+                onTap: _openChatGpt,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1E1E22),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+                  ),
+                  alignment: Alignment.center,
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(CupertinoIcons.arrow_up_right, size: 14, color: Color(0xFFEDEDED)),
+                      SizedBox(width: 6),
+                      Text(
+                        'Open ChatGPT',
+                        style: TextStyle(
+                          fontFamily: AppFonts.sfProText,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: Color(0xFFEDEDED),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
-          ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: GestureDetector(
+                onTap: _nextPage,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  alignment: Alignment.center,
+                  child: const Text(
+                    'Paste Code →',
+                    style: TextStyle(
+                      fontFamily: AppFonts.sfProText,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
+        const SizedBox(height: 6),
       ],
     );
   }
@@ -479,16 +511,7 @@ Return ONLY the JSON code block without filler text.
             letterSpacing: -0.4,
           ),
         ),
-        const SizedBox(height: 6),
-        const Text(
-          'Paste the code block from ChatGPT to activate your custom smart words.',
-          style: TextStyle(
-            fontFamily: AppFonts.sfProText,
-            fontSize: 13,
-            color: Color(0xFF8E8E93),
-          ),
-        ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 12),
         Expanded(
           child: Container(
             padding: const EdgeInsets.all(12),
@@ -522,7 +545,7 @@ Return ONLY the JSON code block without filler text.
           ),
         ),
         if (_errorMessage != null) ...[
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           Text(
             _errorMessage!,
             style: const TextStyle(
@@ -532,7 +555,7 @@ Return ONLY the JSON code block without filler text.
             ),
           ),
         ],
-        const SizedBox(height: 14),
+        const SizedBox(height: 12),
         GestureDetector(
           onTap: _applyRules,
           child: Container(
@@ -554,6 +577,7 @@ Return ONLY the JSON code block without filler text.
             ),
           ),
         ),
+        const SizedBox(height: 4),
       ],
     );
   }
@@ -567,15 +591,15 @@ Return ONLY the JSON code block without filler text.
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Row(
+        Row(
           children: [
-            Icon(CupertinoIcons.checkmark_seal_fill, size: 22, color: Color(0xFF32D74B)),
-            SizedBox(width: 8),
+            const Icon(CupertinoIcons.checkmark_seal_fill, size: 20, color: Color(0xFF32D74B)),
+            const SizedBox(width: 8),
             Text(
-              'Rules Activated!',
-              style: TextStyle(
+              '${words.length} Rules Activated',
+              style: const TextStyle(
                 fontFamily: AppFonts.sfProDisplay,
-                fontSize: 20,
+                fontSize: 19,
                 fontWeight: FontWeight.w600,
                 color: Color(0xFFEDEDED),
                 letterSpacing: -0.4,
@@ -583,21 +607,11 @@ Return ONLY the JSON code block without filler text.
             ),
           ],
         ),
-        const SizedBox(height: 6),
-        Text(
-          'Activated ${words.length} personal smart words. They will automatically format as you write in Null.',
-          style: const TextStyle(
-            fontFamily: AppFonts.sfProText,
-            fontSize: 13,
-            color: Color(0xFF8E8E93),
-            height: 1.35,
-          ),
-        ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 12),
         Expanded(
           child: Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(14),
+            padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               color: const Color(0xFF0D0D0E),
               borderRadius: BorderRadius.circular(18),
@@ -650,7 +664,7 @@ Return ONLY the JSON code block without filler text.
             ),
           ),
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 12),
         Row(
           children: [
             Expanded(
@@ -715,23 +729,51 @@ Return ONLY the JSON code block without filler text.
             ),
           ],
         ),
+        const SizedBox(height: 4),
       ],
     );
   }
 
-  Widget _buildBullet({required IconData icon, required String text}) {
+  Widget _buildVisualRow({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+  }) {
     return Row(
       children: [
-        Icon(icon, size: 14, color: const Color(0xFF8E8E93)),
-        const SizedBox(width: 10),
+        Container(
+          width: 32,
+          height: 32,
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(icon, size: 15, color: const Color(0xFFEDEDED)),
+        ),
+        const SizedBox(width: 12),
         Expanded(
-          child: Text(
-            text,
-            style: const TextStyle(
-              fontFamily: AppFonts.sfProText,
-              fontSize: 13,
-              color: Color(0xFFEDEDED),
-            ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  fontFamily: AppFonts.sfProDisplay,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFFEDEDED),
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                subtitle,
+                style: const TextStyle(
+                  fontFamily: AppFonts.sfProText,
+                  fontSize: 11,
+                  color: Color(0xFF8E8E93),
+                ),
+              ),
+            ],
           ),
         ),
       ],
