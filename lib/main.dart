@@ -375,9 +375,24 @@ class _NullUniversalShellState extends State<NullUniversalShell>
         !_isWakingDown &&
         !_isSleepingAnim;
 
-    return Scaffold(
-      backgroundColor: const Color(0xFF000000),
-      body: NotificationListener<ScrollNotification>(
+    final isEditorActive = NotesService.instance.isEditorFocusedNotifier.value ||
+        _toolbarMorphController.value > 0.01;
+
+    return PopScope(
+      canPop: !isEditorActive,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        // Intercept Android Back: smoothly exit active editor instead of exiting app
+        if (NotesService.instance.isEditorFocusedNotifier.value ||
+            _toolbarMorphController.value > 0.01) {
+          NotesService.instance.onDismissKeyboard?.call();
+          FocusManager.instance.primaryFocus?.unfocus();
+          _toolbarMorphController.reverse();
+        }
+      },
+      child: Scaffold(
+        backgroundColor: const Color(0xFF000000),
+        body: NotificationListener<ScrollNotification>(
         onNotification: (notification) {
           if (_state == EditorState.awake && !_isSleepingAnim) {
             // Unfocus active editor when horizontal tab swipe begins
@@ -791,6 +806,7 @@ class _NullUniversalShellState extends State<NullUniversalShell>
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }
