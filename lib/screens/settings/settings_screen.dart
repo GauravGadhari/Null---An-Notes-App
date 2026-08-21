@@ -283,8 +283,8 @@ class SettingsScreen extends StatelessWidget {
                                 shape: BoxShape.circle,
                                 color: Colors.white.withValues(alpha: 0.08),
                                 border: Border.all(
-                                  color: const Color(0xFF64D2FF).withValues(alpha: 0.4),
-                                  width: 1.5,
+                                  color: Colors.white.withValues(alpha: 0.18),
+                                  width: 1.2,
                                 ),
                               ),
                               alignment: Alignment.center,
@@ -360,35 +360,21 @@ class SettingsScreen extends StatelessWidget {
                           ],
                         ),
 
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 14),
 
                         // Footer Note
-                        Row(
+                        const Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Container(
-                                  width: 5,
-                                  height: 5,
-                                  decoration: const BoxDecoration(
-                                    color: Color(0xFF32D74B),
-                                    shape: BoxShape.circle,
-                                  ),
-                                ),
-                                const SizedBox(width: 6),
-                                const Text(
-                                  '100% Offline & Private',
-                                  style: TextStyle(
-                                    fontFamily: AppFonts.sfProText,
-                                    fontSize: 11,
-                                    color: Color(0xFF636366),
-                                  ),
-                                ),
-                              ],
+                            Text(
+                              '100% Offline & Private',
+                              style: TextStyle(
+                                fontFamily: AppFonts.sfProText,
+                                fontSize: 11,
+                                color: Color(0xFF636366),
+                              ),
                             ),
-                            const Text(
+                            Text(
                               'Null v1.0.2',
                               style: TextStyle(
                                 fontFamily: AppFonts.sfProText,
