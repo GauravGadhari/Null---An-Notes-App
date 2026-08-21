@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:null_notes/core/controllers/null_rich_text_controller.dart';
 import 'package:null_notes/core/fonts/app_fonts.dart';
+import 'package:null_notes/core/models/custom_smart_word.dart';
 import 'package:null_notes/core/models/span_style.dart';
 import 'package:null_notes/core/services/notes_service.dart';
 import 'package:null_notes/core/typography/smart_words_engine.dart';
@@ -46,6 +47,32 @@ void main() {
       expect(words.contains('marinette'), isTrue);
       expect(words.contains('cat noir'), isTrue);
       expect(words.contains('iyamatwm'), isTrue);
+    });
+
+    test('custom user smart words take 100% precedence over built-in smart words on conflict', () {
+      final engine = SmartWordsEngine.instance;
+
+      // "love" is built-in Aloevera. We override it with custom Futura
+      NotesService.instance.saveCustomSmartWords([
+        const CustomSmartWord(
+          word: 'love',
+          fontFamily: AppFonts.futura,
+          fontWeightIndex: 8,
+          isUnderline: true,
+        ),
+      ]);
+
+      final text = 'I love you';
+      final matches = engine.findMatches(text);
+
+      final loveMatch = matches.firstWhere((m) => m.word.toLowerCase() == 'love');
+      expect(loveMatch.isCustom, isTrue);
+      expect(loveMatch.style.fontFamily, equals(AppFonts.futura));
+      expect(loveMatch.style.fontWeightIndex, equals(8));
+      expect(loveMatch.style.isUnderline, isTrue);
+
+      // Clean up
+      NotesService.instance.clearCustomSmartWords();
     });
   });
 

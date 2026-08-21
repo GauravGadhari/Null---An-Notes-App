@@ -1,16 +1,35 @@
 import '../fonts/app_fonts.dart';
 import '../models/span_style.dart';
+import '../services/notes_service.dart';
 
 class SmartWordMatch {
   final int start;
   final int end;
   final String word;
   final SpanStyle style;
+  final bool isCustom;
 
   const SmartWordMatch({
     required this.start,
     required this.end,
     required this.word,
+    required this.style,
+    this.isCustom = false,
+  });
+}
+
+class SmartWordCategory {
+  final String title;
+  final String emoji;
+  final String description;
+  final List<String> words;
+  final SpanStyle style;
+
+  const SmartWordCategory({
+    required this.title,
+    required this.emoji,
+    required this.description,
+    required this.words,
     required this.style,
   });
 }
@@ -135,7 +154,7 @@ class SmartWordsEngine {
     fontWeightIndex: 6, // FontWeight.w700
   );
 
-  // 10. ✨ Miraculous Mythology & Iconic Phrases (iyamatwm, kwami, akuma)
+  // 10. ✨ Miraculous Mythology & Iconic Phrases
   static final RegExp _miraculousLorePattern = RegExp(
     r"\b(miraculous|iyamatwm|akuma|amok|hawkmoth|hawk moth|shadow moth|monarch|kwami|pound it|just a friend|she's just a friend|shes just a friend|alya|nino|chloe|luka|felix|kagami|gabriel)\b",
     caseSensitive: false,
@@ -148,44 +167,171 @@ class SmartWordsEngine {
     isItalic: true,
   );
 
-  /// Scans unformatted text and returns all non-overlapping smart matches
+  /// Returns catalog of all built-in smart categories
+  List<SmartWordCategory> getBuiltInCategories() {
+    return const [
+      SmartWordCategory(
+        title: 'Love & Affection',
+        emoji: '💖',
+        description: 'Aloevera • Soft Rose Blush • Italic',
+        words: ['love', 'loved', 'dear', 'heart', 'forever', 'adore', 'darling', 'beloved', 'sweet', 'kiss', 'babe', 'miss you', 'please...'],
+        style: _loveStyle,
+      ),
+      SmartWordCategory(
+        title: 'Intensity & Drama',
+        emoji: '⚡',
+        description: 'Basement Grotesque • Heavy w900',
+        words: ['hate', 'rage', 'anger', 'never', 'burn', 'chaos', 'fire', 'raw', 'scream', 'break', 'stop', 'shut up', 'cooked', 'crying', 'screaming', 'dying', 'down bad', 'noo...', 'bruh...'],
+        style: _intensityStyle,
+      ),
+      SmartWordCategory(
+        title: 'Gen Z Slang & Lore',
+        emoji: '💅',
+        description: 'Coolvetica • Soft Violet Blush • w600',
+        words: ['fr', 'frfr', 'lowkey', 'highkey', 'ngl', 'tbh', 'nocap', 'cap', 'delulu', 'rizz', 'aura', 'slay', 'valid', 'period', 'iykyk', 'idk', 'rn', 'unhinged', 'canon event', 'omg...', 'omfg...'],
+        style: _slangStyle,
+      ),
+      SmartWordCategory(
+        title: 'Wealth & Ambition',
+        emoji: '💰',
+        description: 'Futura • Amber Gold Blush • w600',
+        words: ['money', 'cash', 'wealth', 'rich', 'gold', 'empire', 'success', 'dollar', 'crypto', 'bag', 'secure the bag'],
+        style: _wealthStyle,
+      ),
+      SmartWordCategory(
+        title: 'Manifestation & Energy',
+        emoji: '✨',
+        description: 'Beatrice • Bold Italic',
+        words: ['era', 'main character', 'manifest', 'manifesting', 'healing', 'energy', 'vibe', 'vibes', 'glow up', 'obsessed', 'so real', 'unreal', 'literally', 'actually', 'overthinking', 'yess...'],
+        style: _manifestStyle,
+      ),
+      SmartWordCategory(
+        title: 'Void & 3AM Aesthetic',
+        emoji: '🌌',
+        description: 'Agitha • Soft Sky Glow • Italic',
+        words: ['dark', 'light', 'shadow', 'void', 'null', 'infinite', 'truth', 'peace', 'breathe', 'sleep', 'dream', 'silence', '3am', 'midnight', 'existential', 'nostalgia', 'solitude', 'cozy', 'whyy...'],
+        style: _voidStyle,
+      ),
+      SmartWordCategory(
+        title: 'Self & Identity',
+        emoji: '👤',
+        description: 'Beatrice • Bold w700',
+        words: ['I', 'me', 'myself', 'you', 'we', 'people', 'human', 'soul', 'mind'],
+        style: _identityStyle,
+      ),
+      SmartWordCategory(
+        title: 'Miraculous Ladybug',
+        emoji: '🐞',
+        description: 'Beatrice • Crimson Blush • Italic',
+        words: ['marinette', 'merrinette', 'ladybug', 'tikki', 'spots on', 'spots off', 'lucky charm', 'de-evilize'],
+        style: _miraculousLadybugStyle,
+      ),
+      SmartWordCategory(
+        title: 'Cat Noir & Adrien',
+        emoji: '🐾',
+        description: 'Coolvetica • Emerald Blush • Bold',
+        words: ['adrien', 'cat noir', 'chat noir', 'plagg', 'claws out', 'claws in', 'cataclysm', "m'lady", 'bugaboo'],
+        style: _catNoirStyle,
+      ),
+      SmartWordCategory(
+        title: 'Miraculous Lore',
+        emoji: '🔮',
+        description: 'Forever Freedom • Mystical Violet • Italic',
+        words: ['miraculous', 'iyamatwm', 'akuma', 'amok', 'hawkmoth', 'hawk moth', 'shadow moth', 'monarch', 'kwami', 'pound it', "just a friend", 'alya', 'nino', 'chloe', 'luka', 'felix', 'kagami', 'gabriel'],
+        style: _miraculousLoreStyle,
+      ),
+    ];
+  }
+
+  /// Scans unformatted text and returns all non-overlapping smart matches.
+  /// Custom user-defined rules take 100% precedence over built-in defaults.
   List<SmartWordMatch> findMatches(String text) {
     if (text.isEmpty) return const [];
 
-    final matches = <SmartWordMatch>[];
+    final customMatches = <SmartWordMatch>[];
+    final defaultMatches = <SmartWordMatch>[];
 
-    void scan(RegExp pattern, SpanStyle style) {
+    // 1. Scan Custom Dynamic Smart Words (First Priority)
+    final customList = NotesService.instance.customSmartWordsNotifier.value;
+    for (final custom in customList) {
+      if (custom.word.trim().isEmpty) continue;
+      final escaped = RegExp.escape(custom.word.trim());
+      final pattern = RegExp(r'\b' + escaped + r'\b', caseSensitive: false);
+
+      final style = SpanStyle(
+        start: 0,
+        end: 0,
+        fontFamily: custom.fontFamily ?? AppFonts.beatrice,
+        fontWeightIndex: custom.fontWeightIndex,
+        isItalic: custom.isItalic,
+        isUnderline: custom.isUnderline,
+        highlightColorValue: custom.highlightColorValue,
+        colorValue: custom.textColorValue,
+      );
+
       for (final m in pattern.allMatches(text)) {
-        matches.add(SmartWordMatch(
+        customMatches.add(SmartWordMatch(
           start: m.start,
           end: m.end,
           word: m.group(0) ?? '',
           style: style.copyWith(start: m.start, end: m.end),
+          isCustom: true,
         ));
       }
     }
 
-    // Scan in specific precedence order
-    scan(_miraculousLadybugPattern, _miraculousLadybugStyle);
-    scan(_catNoirPattern, _catNoirStyle);
-    scan(_miraculousLorePattern, _miraculousLoreStyle);
-    scan(_lovePattern, _loveStyle);
-    scan(_intensityPattern, _intensityStyle);
-    scan(_slangPattern, _slangStyle);
-    scan(_wealthPattern, _wealthStyle);
-    scan(_manifestPattern, _manifestStyle);
-    scan(_voidPattern, _voidStyle);
-    scan(_identityPattern, _identityStyle);
+    // 2. Scan Built-in Defaults
+    void scanDefault(RegExp pattern, SpanStyle style) {
+      for (final m in pattern.allMatches(text)) {
+        defaultMatches.add(SmartWordMatch(
+          start: m.start,
+          end: m.end,
+          word: m.group(0) ?? '',
+          style: style.copyWith(start: m.start, end: m.end),
+          isCustom: false,
+        ));
+      }
+    }
 
-    if (matches.isEmpty) return const [];
+    scanDefault(_miraculousLadybugPattern, _miraculousLadybugStyle);
+    scanDefault(_catNoirPattern, _catNoirStyle);
+    scanDefault(_miraculousLorePattern, _miraculousLoreStyle);
+    scanDefault(_lovePattern, _loveStyle);
+    scanDefault(_intensityPattern, _intensityStyle);
+    scanDefault(_slangPattern, _slangStyle);
+    scanDefault(_wealthPattern, _wealthStyle);
+    scanDefault(_manifestPattern, _manifestStyle);
+    scanDefault(_voidPattern, _voidStyle);
+    scanDefault(_identityPattern, _identityStyle);
 
-    // Sort by start index and eliminate any overlapping collisions
-    matches.sort((a, b) => a.start.compareTo(b.start));
+    // Combine with custom having top precedence
+    final allMatches = <SmartWordMatch>[...customMatches];
+
+    // Only add default matches if they do not collide with any custom match
+    for (final defMatch in defaultMatches) {
+      final overlaps = customMatches.any((c) =>
+          (defMatch.start < c.end && defMatch.end > c.start));
+      if (!overlaps) {
+        allMatches.add(defMatch);
+      }
+    }
+
+    if (allMatches.isEmpty) return const [];
+
+    // Sort by start index
+    allMatches.sort((a, b) {
+      final cmp = a.start.compareTo(b.start);
+      if (cmp != 0) return cmp;
+      // If same start, custom takes precedence
+      if (a.isCustom && !b.isCustom) return -1;
+      if (!a.isCustom && b.isCustom) return 1;
+      return 0;
+    });
 
     final resolved = <SmartWordMatch>[];
     int lastEnd = 0;
 
-    for (final match in matches) {
+    for (final match in allMatches) {
       if (match.start >= lastEnd) {
         resolved.add(match);
         lastEnd = match.end;
@@ -195,3 +341,4 @@ class SmartWordsEngine {
     return resolved;
   }
 }
+

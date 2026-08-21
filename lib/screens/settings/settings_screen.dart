@@ -1,8 +1,11 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/fonts/app_fonts.dart';
+import '../../core/models/custom_smart_word.dart';
 import '../../core/services/notes_service.dart';
+import 'smart_words_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   final VoidCallback? onSleepRequested;
@@ -21,6 +24,9 @@ class SettingsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final screenHeight = MediaQuery.of(context).size.height;
+    final topPadding = screenHeight * 0.12;
+
     return Container(
       color: const Color(0xFF000000),
       child: CustomScrollView(
@@ -28,26 +34,28 @@ class SettingsScreen extends StatelessWidget {
           parent: AlwaysScrollableScrollPhysics(),
         ),
         slivers: [
-          SliverFillRemaining(
-            hasScrollBody: false,
+          SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 32.0),
+              padding: EdgeInsets.only(
+                left: 28.0,
+                right: 28.0,
+                top: topPadding,
+                bottom: 120.0,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const SizedBox(height: 48),
                   const Text(
                     'settings',
                     style: TextStyle(
                       fontFamily: AppFonts.sfProDisplay,
-                      fontSize: 44,
+                      fontSize: 46,
                       fontWeight: FontWeight.w300,
-                      letterSpacing: -1.0,
+                      letterSpacing: -1.2,
                       color: Color(0xFFEDEDED),
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 10),
                   const Text(
                     'pure dark.\nzero friction.\njust your thoughts.',
                     style: TextStyle(
@@ -60,17 +68,17 @@ class SettingsScreen extends StatelessWidget {
                     ),
                   ),
 
-                  const SizedBox(height: 36),
+                  const SizedBox(height: 44),
 
                   // ── 1. Launch Behavior Toggle ──
                   ValueListenableBuilder<bool>(
                     valueListenable: NotesService.instance.openOnNewNoteNotifier,
                     builder: (context, openOnNewNote, _) {
                       return Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
                         decoration: BoxDecoration(
                           color: const Color(0xFF141416).withValues(alpha: 0.85),
-                          borderRadius: BorderRadius.circular(22),
+                          borderRadius: BorderRadius.circular(24),
                           border: Border.all(
                             color: Colors.white.withValues(alpha: 0.12),
                             width: 1.0,
@@ -92,7 +100,7 @@ class SettingsScreen extends StatelessWidget {
                                       letterSpacing: -0.2,
                                     ),
                                   ),
-                                  const SizedBox(height: 4),
+                                  const SizedBox(height: 5),
                                   Text(
                                     openOnNewNote
                                         ? 'Opens clean draft on launch'
@@ -152,17 +160,17 @@ class SettingsScreen extends StatelessWidget {
                     },
                   ),
 
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 16),
 
                   // ── 2. Smart Words Styling Toggle ──
                   ValueListenableBuilder<bool>(
                     valueListenable: NotesService.instance.smartWordsEnabledNotifier,
                     builder: (context, smartWordsEnabled, _) {
                       return Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
                         decoration: BoxDecoration(
                           color: const Color(0xFF141416).withValues(alpha: 0.85),
-                          borderRadius: BorderRadius.circular(22),
+                          borderRadius: BorderRadius.circular(24),
                           border: Border.all(
                             color: Colors.white.withValues(alpha: 0.12),
                             width: 1.0,
@@ -184,7 +192,7 @@ class SettingsScreen extends StatelessWidget {
                                       letterSpacing: -0.2,
                                     ),
                                   ),
-                                  const SizedBox(height: 4),
+                                  const SizedBox(height: 5),
                                   Text(
                                     smartWordsEnabled
                                         ? 'Expressive styles for emotions & slang'
@@ -244,17 +252,93 @@ class SettingsScreen extends StatelessWidget {
                     },
                   ),
 
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 16),
 
-                  // Option 3: Suggest Add Timestamp in Editor
+                  // ── 3. Smart Words Catalog & AI Import Tile ──
+                  GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () {
+                      HapticFeedback.lightImpact();
+                      Navigator.push(
+                        context,
+                        CupertinoPageRoute(
+                          builder: (_) => const SmartWordsScreen(),
+                        ),
+                      );
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF141416).withValues(alpha: 0.85),
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.12),
+                          width: 1.0,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Row(
+                                  children: [
+                                    Text(
+                                      'Smart Words Catalog',
+                                      style: TextStyle(
+                                        fontFamily: AppFonts.sfProDisplay,
+                                        fontSize: 17,
+                                        fontWeight: FontWeight.w500,
+                                        color: Color(0xFFEDEDED),
+                                        letterSpacing: -0.2,
+                                      ),
+                                    ),
+                                    SizedBox(width: 6),
+                                    Text('✨', style: TextStyle(fontSize: 14)),
+                                  ],
+                                ),
+                                const SizedBox(height: 5),
+                                ValueListenableBuilder<List<CustomSmartWord>>(
+                                  valueListenable: NotesService.instance.customSmartWordsNotifier,
+                                  builder: (context, customList, _) {
+                                    return Text(
+                                      customList.isEmpty
+                                          ? 'View all styled words & AI ChatGPT import'
+                                          : '${customList.length} custom rules • Tap to view & import',
+                                      style: const TextStyle(
+                                        fontFamily: AppFonts.sfProText,
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w400,
+                                        color: Color(0xFF8E8E93),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
+                          const Icon(
+                            CupertinoIcons.chevron_forward,
+                            size: 18,
+                            color: Color(0xFF8E8E93),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // ── 4. Suggest Add Timestamp in Editor ──
                   ValueListenableBuilder<bool>(
                     valueListenable: NotesService.instance.suggestAddTimestampNotifier,
                     builder: (context, suggestAddTimestamp, _) {
                       return Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
                         decoration: BoxDecoration(
                           color: const Color(0xFF141416).withValues(alpha: 0.85),
-                          borderRadius: BorderRadius.circular(22),
+                          borderRadius: BorderRadius.circular(24),
                           border: Border.all(
                             color: Colors.white.withValues(alpha: 0.12),
                             width: 1.0,
@@ -276,7 +360,7 @@ class SettingsScreen extends StatelessWidget {
                                       letterSpacing: -0.2,
                                     ),
                                   ),
-                                  const SizedBox(height: 4),
+                                  const SizedBox(height: 5),
                                   Text(
                                     suggestAddTimestamp
                                         ? 'Shows "+ Add timestamp" button while editing'
@@ -336,9 +420,9 @@ class SettingsScreen extends StatelessWidget {
                     },
                   ),
 
-                  const SizedBox(height: 28),
+                  const SizedBox(height: 38),
 
-                  // ── 3. Developer & Craft Section ──
+                  // ── 5. Developer & Craft Section ──
                   const Text(
                     'DEVELOPER',
                     style: TextStyle(
@@ -350,13 +434,13 @@ class SettingsScreen extends StatelessWidget {
                     ),
                   ),
 
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 14),
 
                   Container(
-                    padding: const EdgeInsets.all(20),
+                    padding: const EdgeInsets.all(22),
                     decoration: BoxDecoration(
                       color: const Color(0xFF141416).withValues(alpha: 0.85),
-                      borderRadius: BorderRadius.circular(22),
+                      borderRadius: BorderRadius.circular(24),
                       border: Border.all(
                         color: Colors.white.withValues(alpha: 0.12),
                         width: 1.0,
@@ -452,7 +536,7 @@ class SettingsScreen extends StatelessWidget {
                           ],
                         ),
 
-                        const SizedBox(height: 14),
+                        const SizedBox(height: 16),
 
                         // Footer Note
                         const Row(
@@ -481,7 +565,7 @@ class SettingsScreen extends StatelessWidget {
                     ),
                   ),
 
-                  const SizedBox(height: 80),
+                  const SizedBox(height: 60),
                 ],
               ),
             ),

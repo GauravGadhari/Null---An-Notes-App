@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import '../fonts/app_fonts.dart';
+import '../models/custom_smart_word.dart';
 import '../models/note.dart';
 import '../models/span_style.dart';
 
@@ -19,11 +20,13 @@ class NotesService {
   static const String _lastActivePageKey = 'last_active_page';
   static const String _smartWordsEnabledKey = 'smart_words_enabled';
   static const String _suggestAddTimestampKey = 'suggest_add_timestamp';
+  static const String _customSmartWordsKey = 'custom_smart_words';
 
   final ValueNotifier<bool> openOnNewNoteNotifier = ValueNotifier<bool>(true);
   final ValueNotifier<int> lastActivePageIndexNotifier = ValueNotifier<int>(0);
   final ValueNotifier<bool> smartWordsEnabledNotifier = ValueNotifier<bool>(true);
   final ValueNotifier<bool> suggestAddTimestampNotifier = ValueNotifier<bool>(true);
+  final ValueNotifier<List<CustomSmartWord>> customSmartWordsNotifier = ValueNotifier<List<CustomSmartWord>>([]);
 
   /// Initializes Hive storage and hydrates saved notes and preferences from disk
   Future<void> init() async {
@@ -45,6 +48,19 @@ class NotesService {
       lastActivePageIndexNotifier.value = _box?.get(_lastActivePageKey, defaultValue: 0) as int? ?? 0;
       smartWordsEnabledNotifier.value = _box?.get(_smartWordsEnabledKey, defaultValue: true) as bool? ?? true;
       suggestAddTimestampNotifier.value = _box?.get(_suggestAddTimestampKey, defaultValue: true) as bool? ?? true;
+
+      final rawCustomWords = _box?.get(_customSmartWordsKey);
+      if (rawCustomWords != null && rawCustomWords is List) {
+        final list = <CustomSmartWord>[];
+        for (final item in rawCustomWords) {
+          if (item is Map) {
+            try {
+              list.add(CustomSmartWord.fromJson(Map<String, dynamic>.from(item)));
+            } catch (_) {}
+          }
+        }
+        customSmartWordsNotifier.value = list;
+      }
     } catch (_) {
       // In isolated unit tests or cold boots, fail gracefully
     }
@@ -68,6 +84,30 @@ class NotesService {
   void setSuggestAddTimestamp(bool value) {
     suggestAddTimestampNotifier.value = value;
     _box?.put(_suggestAddTimestampKey, value);
+  }
+
+  void saveCustomSmartWords(List<CustomSmartWord> list) {
+    customSmartWordsNotifier.value = list;
+    _box?.put(_customSmartWordsKey, list.map((e) => e.toJson()).toList());
+  }
+
+  void addCustomSmartWords(List<CustomSmartWord> newWords) {
+    final current = List<CustomSmartWord>.from(customSmartWordsNotifier.value);
+    for (final nw in newWords) {
+      current.removeWhere((item) => item.word.toLowerCase() == nw.word.toLowerCase());
+      current.insert(0, nw);
+    }
+    saveCustomSmartWords(current);
+  }
+
+  void removeCustomSmartWord(String word) {
+    final current = List<CustomSmartWord>.from(customSmartWordsNotifier.value);
+    current.removeWhere((item) => item.word.toLowerCase() == word.toLowerCase());
+    saveCustomSmartWords(current);
+  }
+
+  void clearCustomSmartWords() {
+    saveCustomSmartWords([]);
   }
 
   int getInitialPageIndex() {
