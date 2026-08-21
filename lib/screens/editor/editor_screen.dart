@@ -4,10 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../core/controllers/null_rich_text_controller.dart';
 import '../../core/fonts/app_fonts.dart';
+import '../../core/models/custom_smart_word.dart';
 import '../../core/models/note.dart';
 import '../../core/models/span_style.dart';
 import '../../core/services/notes_service.dart';
 import '../../widgets/null_selection_context_menu.dart';
+import '../settings/smart_words_onboarding_sheet.dart';
 import 'editor_state.dart';
 
 class EditorScreen extends StatefulWidget {
@@ -1771,6 +1773,63 @@ class _EditorScreenState extends State<EditorScreen> {
                   ),
                 ),
               ),
+            ),
+
+            // 4. Info Sparkles Onboarding Button (Visible when custom smart words are not yet added)
+            ValueListenableBuilder<List<CustomSmartWord>>(
+              valueListenable: NotesService.instance.customSmartWordsNotifier,
+              builder: (context, customWords, _) {
+                if (customWords.isNotEmpty || (_hasCreatedNote && _textController.text.isNotEmpty)) {
+                  return const SizedBox.shrink();
+                }
+
+                return Positioned(
+                  top: 14 + statusBarHeight,
+                  right: 20,
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () => SmartWordsOnboardingSheet.show(context),
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF141416).withValues(alpha: 0.9),
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.14),
+                              width: 1.0,
+                            ),
+                          ),
+                          child: const Icon(
+                            CupertinoIcons.sparkles,
+                            size: 15,
+                            color: Color(0xFFEDEDED),
+                          ),
+                        ),
+                        Positioned(
+                          top: -1,
+                          right: -1,
+                          child: Container(
+                            width: 9,
+                            height: 9,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFF453A),
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: const Color(0xFF000000),
+                                width: 1.5,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
             ),
           ],
         ),
