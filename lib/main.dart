@@ -375,20 +375,24 @@ class _NullUniversalShellState extends State<NullUniversalShell>
         !_isWakingDown &&
         !_isSleepingAnim;
 
-    final isEditorActive = NotesService.instance.isEditorFocusedNotifier.value ||
-        _toolbarMorphController.value > 0.01;
-
     return PopScope(
-      canPop: !isEditorActive,
+      canPop: false,
       onPopInvokedWithResult: (didPop, result) {
         if (didPop) return;
-        // Intercept Android Back: smoothly exit active editor instead of exiting app
-        if (NotesService.instance.isEditorFocusedNotifier.value ||
-            _toolbarMorphController.value > 0.01) {
+
+        final isFocused = NotesService.instance.isEditorFocusedNotifier.value;
+        final hasToolbar = _toolbarMorphController.value > 0.01;
+
+        if (isFocused || hasToolbar) {
+          // Exit active editor mode cleanly without closing the app
           NotesService.instance.onDismissKeyboard?.call();
           FocusManager.instance.primaryFocus?.unfocus();
           _toolbarMorphController.reverse();
+          return;
         }
+
+        // When resting in normal view, allow standard app close
+        SystemNavigator.pop();
       },
       child: Scaffold(
         backgroundColor: const Color(0xFF000000),
