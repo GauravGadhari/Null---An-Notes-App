@@ -1287,22 +1287,51 @@ class _EditorScreenState extends State<EditorScreen> {
       (style == 4 ? AppFonts.sfProRounded : AppFonts.sfProDisplay)
     );
 
+    final currentKey = 'timestamp_${style}_${isBold}_${isItalic}_${scale}_${_quote.timeColorValue}_$baseFont';
+
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: _cycleTimeStyle,
       onLongPress: _showTimestampMenu,
       child: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 260),
+        duration: const Duration(milliseconds: 360),
         switchInCurve: Curves.easeOutCubic,
         switchOutCurve: Curves.easeInCubic,
-        transitionBuilder: (child, animation) {
-          return FadeTransition(
-            opacity: animation,
-            child: child,
+        layoutBuilder: (currentChild, previousChildren) {
+          return Stack(
+            alignment: Alignment.topLeft,
+            children: <Widget>[
+              ...previousChildren,
+              ?currentChild,
+            ],
+          );
+        },
+        transitionBuilder: (Widget child, Animation<double> animation) {
+          final isCurrent = (child.key as ValueKey?)?.value == currentKey;
+          final offsetTween = isCurrent
+              ? Tween<Offset>(begin: const Offset(0.0, 0.45), end: Offset.zero)
+              : Tween<Offset>(begin: const Offset(0.0, -0.45), end: Offset.zero);
+
+          return ClipRect(
+            child: SlideTransition(
+              position: offsetTween.animate(
+                CurvedAnimation(
+                  parent: animation,
+                  curve: Curves.easeOutCubic,
+                ),
+              ),
+              child: FadeTransition(
+                opacity: CurvedAnimation(
+                  parent: animation,
+                  curve: Curves.easeInOut,
+                ),
+                child: child,
+              ),
+            ),
           );
         },
         child: KeyedSubtree(
-          key: ValueKey('timestamp_${style}_${isBold}_${isItalic}_${scale}_${_quote.timeColorValue}_$baseFont'),
+          key: ValueKey(currentKey),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
