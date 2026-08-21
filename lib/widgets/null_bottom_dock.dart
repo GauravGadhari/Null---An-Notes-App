@@ -102,8 +102,11 @@ class NullBottomDock extends StatelessWidget {
     final double indicatorOpacity = ((1.0 - (tp / 0.22)).clamp(0.0, 1.0)) * morphProgress.clamp(0.0, 1.0);
 
     // 1. Calculate Tab Indicator Geometry
+    // 1. Calculate Tab Indicator Geometry (Smooth sliding window for > 6 pages)
     final visibleDots = math.max(1, pageCount);
-    final targetIndicatorWidth = math.min(32.0 + visibleDots * 20.0, 240.0);
+    final targetIndicatorWidth = visibleDots <= 6
+        ? math.max(baseSize, 24.0 + visibleDots * 18.0)
+        : 148.0;
     final indicatorWidth = baseSize + morphProgress.clamp(0.0, 1.0) * (targetIndicatorWidth - baseSize);
 
     // 2. Calculate Toolbar Geometry (330px x 54px pill)
@@ -151,7 +154,7 @@ class NullBottomDock extends StatelessWidget {
           child: Stack(
             alignment: Alignment.center,
             children: [
-              // --- A. Page Indicator Dots (Fades out swiftly at start of morph) ---
+              // --- A. Dynamic Sliding Page Indicator Dots ---
               if (indicatorOpacity > 0.01)
                 Opacity(
                   opacity: indicatorOpacity,
@@ -162,42 +165,11 @@ class NullBottomDock extends StatelessWidget {
                       minHeight: 0,
                       maxHeight: height,
                       alignment: Alignment.center,
-                      child: SizedBox(
-                        width: targetIndicatorWidth,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: List.generate(visibleDots, (index) {
-                            final distance = (currentPage - index).abs();
-                            final activeFactor = (1.0 - distance).clamp(0.0, 1.0);
-
-                            final dotWidth = 5.0 + activeFactor * 10.0;
-                            final dotOpacity = 0.28 + activeFactor * 0.72;
-
-                            return GestureDetector(
-                              behavior: HitTestBehavior.opaque,
-                              onTap: onPageSelected != null ? () => onPageSelected!(index) : null,
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 2.0, vertical: 8.0),
-                                child: Container(
-                                  width: dotWidth,
-                                  height: 4.0,
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withValues(alpha: dotOpacity),
-                                    borderRadius: BorderRadius.circular(2.0),
-                                    boxShadow: activeFactor > 0.3
-                                        ? [
-                                            BoxShadow(
-                                              color: Colors.white.withValues(alpha: 0.25 * activeFactor),
-                                              blurRadius: 3.0,
-                                            ),
-                                          ]
-                                        : null,
-                                  ),
-                                ),
-                              ),
-                            );
-                          }),
-                        ),
+                      child: _buildSlidingDotIndicator(
+                        totalDots: visibleDots,
+                        currentPage: currentPage,
+                        containerWidth: targetIndicatorWidth,
+                        onPageSelected: onPageSelected,
                       ),
                     ),
                   ),
@@ -280,6 +252,145 @@ class NullBottomDock extends StatelessWidget {
                 ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSlidingDotIndicator({
+    required int totalDots,
+    required double currentPage,
+    required double containerWidth,
+    required ValueChanged<int>? onPageSelected,
+  }) {
+    // If 6 or fewer dots, layout centered evenly
+    if (totalDots <= 6) {
+      return SizedBox(
+        width: containerWidth,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: List.generate(totalDots, (index) {
+            final distance = (currentPage - index).abs();
+            final activeFactor = (1.0 - distance).clamp(0.0, 1.0);
+            final dotWidth = 5.0 + activeFactor * 10.0;
+            final dotOpacity = 0.28 + activeFactor * 0.72;
+
+            return GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: onPageSelected != null ? () => onPageSelected(index) : null,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 2.0, vertical: 8.0),
+                child: Container(
+                  width: dotWidth,
+                  height: 4.0,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: dotOpacity),
+                    borderRadius: BorderRadius.circular(2.0),
+                    boxShadow: activeFactor > 0.3
+                        ? [
+                            BoxShadow(
+                              color: Colors.white.withValues(alpha: 0.25 * activeFactor),
+                              blurRadius: 3.0,
+                            ),
+                          ]
+                        : null,
+                  ),
+                ),
+              ),
+            );
+          }),
+        ),
+      );
+    }
+
+    // Dynamic Sliding Window for many dots (Instagram / Apple style)
+    const double dotSpacing = 16.0;
+    final double centerOffset = containerWidth / 2.0;
+    // Calculate the translation shift so currentPage is positioned at centerOffset
+    final double scrollOffset = centerOffset - (currentPage * dotSpacing) - (dotSpacing / 2.0);
+
+    return SizedBox(
+      width: containerWidth,
+      height: 32.0,
+      child: ClipRect(
+        child: Stack(
+          alignment: Alignment.centerLeft,
+          children: [
+            Positioned(
+              left: scrollOffset,
+              top: 0,
+              bottom: 0,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: List.generate(totalDots, (index) {
+                  final distance = (currentPage - index).abs();
+
+                  // Compute dynamic scale and opacity based on distance from current active page
+                  double dotWidth;
+                  const double dotHeight = 4.0;
+                  double dotOpacity;
+
+                  if (distance <= 0.5) {
+                    // Active note
+                    final activeFactor = 1.0 - (distance / 0.5);
+                    dotWidth = 5.0 + activeFactor * 10.0;
+                    dotOpacity = 0.5 + activeFactor * 0.5;
+                  } else if (distance <= 1.5) {
+                    // 1st neighbor
+                    final f = 1.0 - ((distance - 0.5) / 1.0);
+                    dotWidth = 4.2 + f * 0.8;
+                    dotOpacity = 0.35 + f * 0.25;
+                  } else if (distance <= 2.5) {
+                    // 2nd neighbor
+                    final f = 1.0 - ((distance - 1.5) / 1.0);
+                    dotWidth = 3.0 + f * 1.2;
+                    dotOpacity = 0.18 + f * 0.17;
+                  } else if (distance <= 3.5) {
+                    // Outer taper micro-dot
+                    final f = 1.0 - ((distance - 2.5) / 1.0);
+                    dotWidth = 1.5 + f * 1.5;
+                    dotOpacity = 0.05 + f * 0.13;
+                  } else {
+                    // Beyond viewport
+                    dotWidth = 0.0;
+                    dotOpacity = 0.0;
+                  }
+
+                  if (dotWidth <= 0.0 || dotOpacity <= 0.0) {
+                    return const SizedBox(width: dotSpacing);
+                  }
+
+                  return GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: onPageSelected != null ? () => onPageSelected(index) : null,
+                    child: Container(
+                      width: dotSpacing,
+                      alignment: Alignment.center,
+                      child: Container(
+                        width: dotWidth,
+                        height: dotHeight,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: dotOpacity),
+                          borderRadius: BorderRadius.circular(2.0),
+                          boxShadow: distance <= 0.5
+                              ? [
+                                  BoxShadow(
+                                    color: Colors.white.withValues(
+                                      alpha: 0.25 * (1.0 - distance / 0.5),
+                                    ),
+                                    blurRadius: 3.0,
+                                  ),
+                                ]
+                              : null,
+                        ),
+                      ),
+                    ),
+                  );
+                }),
+              ),
+            ),
+          ],
         ),
       ),
     );

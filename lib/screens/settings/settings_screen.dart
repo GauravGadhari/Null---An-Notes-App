@@ -1,4 +1,6 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/fonts/app_fonts.dart';
 import '../../core/services/notes_service.dart';
 
@@ -9,6 +11,13 @@ class SettingsScreen extends StatelessWidget {
     super.key,
     this.onSleepRequested,
   });
+
+  Future<void> _openUrl(String urlString) async {
+    final uri = Uri.parse(urlString);
+    try {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (_) {}
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -27,6 +36,7 @@ class SettingsScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
+                  const SizedBox(height: 48),
                   const Text(
                     'settings',
                     style: TextStyle(
@@ -50,9 +60,9 @@ class SettingsScreen extends StatelessWidget {
                     ),
                   ),
 
-                  const SizedBox(height: 48),
+                  const SizedBox(height: 36),
 
-                  // --- Launch Behavior Toggle: Open to New Note vs Last Note ---
+                  // ── 1. Launch Behavior Toggle ──
                   ValueListenableBuilder<bool>(
                     valueListenable: NotesService.instance.openOnNewNoteNotifier,
                     builder: (context, openOnNewNote, _) {
@@ -142,9 +152,9 @@ class SettingsScreen extends StatelessWidget {
                     },
                   ),
 
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 14),
 
-                  // --- Smart Words Styling Toggle ---
+                  // ── 2. Smart Words Styling Toggle ──
                   ValueListenableBuilder<bool>(
                     valueListenable: NotesService.instance.smartWordsEnabledNotifier,
                     builder: (context, smartWordsEnabled, _) {
@@ -234,12 +244,207 @@ class SettingsScreen extends StatelessWidget {
                     },
                   ),
 
+                  const SizedBox(height: 28),
+
+                  // ── 3. Developer & Craft Section ──
+                  const Text(
+                    'DEVELOPER',
+                    style: TextStyle(
+                      fontFamily: AppFonts.sfProDisplay,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 1.2,
+                      color: Color(0xFF636366),
+                    ),
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF141416).withValues(alpha: 0.85),
+                      borderRadius: BorderRadius.circular(22),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.12),
+                        width: 1.0,
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Developer Header (Avatar + Name + Role)
+                        Row(
+                          children: [
+                            Container(
+                              width: 44,
+                              height: 44,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: Colors.white.withValues(alpha: 0.08),
+                                border: Border.all(
+                                  color: const Color(0xFF64D2FF).withValues(alpha: 0.4),
+                                  width: 1.5,
+                                ),
+                              ),
+                              alignment: Alignment.center,
+                              child: const Text(
+                                'G',
+                                style: TextStyle(
+                                  fontFamily: AppFonts.sfProDisplay,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 14),
+                            const Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Gaurav Gadhari',
+                                    style: TextStyle(
+                                      fontFamily: AppFonts.sfProDisplay,
+                                      fontSize: 17,
+                                      fontWeight: FontWeight.w600,
+                                      color: Color(0xFFEDEDED),
+                                      letterSpacing: -0.3,
+                                    ),
+                                  ),
+                                  SizedBox(height: 2),
+                                  Text(
+                                    'Software Craftsman & Designer',
+                                    style: TextStyle(
+                                      fontFamily: AppFonts.sfProText,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w400,
+                                      color: Color(0xFF8E8E93),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 16),
+
+                        Container(
+                          width: double.infinity,
+                          height: 1.0,
+                          color: Colors.white.withValues(alpha: 0.08),
+                        ),
+
+                        const SizedBox(height: 14),
+
+                        // Interactive Social / Link Chips
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildDevActionChip(
+                                icon: CupertinoIcons.link,
+                                label: 'GitHub',
+                                onTap: () => _openUrl('https://github.com/GauravGadhari'),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: _buildDevActionChip(
+                                icon: CupertinoIcons.globe,
+                                label: 'Portfolio',
+                                onTap: () => _openUrl('https://this-is-gaurav.vercel.app'),
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 12),
+
+                        // Footer Note
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  width: 5,
+                                  height: 5,
+                                  decoration: const BoxDecoration(
+                                    color: Color(0xFF32D74B),
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                const Text(
+                                  '100% Offline & Private',
+                                  style: TextStyle(
+                                    fontFamily: AppFonts.sfProText,
+                                    fontSize: 11,
+                                    color: Color(0xFF636366),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const Text(
+                              'Null v1.0.2',
+                              style: TextStyle(
+                                fontFamily: AppFonts.sfProText,
+                                fontSize: 11,
+                                color: Color(0xFF48484A),
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+
                   const SizedBox(height: 80),
                 ],
               ),
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildDevActionChip({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.05),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: Colors.white.withValues(alpha: 0.09),
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 14, color: Colors.white.withValues(alpha: 0.7)),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: const TextStyle(
+                fontFamily: AppFonts.sfProText,
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: Color(0xFFEDEDED),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
