@@ -47,6 +47,19 @@ class NullCardPreview extends StatelessWidget {
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
+    final String baseFont = quote.timeFont ?? (
+      style == 1 ? AppFonts.timesNewRoman :
+      (style == 4 ? AppFonts.sfProRounded : AppFonts.sfProDisplay)
+    );
+    final FontWeight baseWeight = quote.timeBold ? FontWeight.w700 : (
+      style == 4 ? FontWeight.w600 : FontWeight.w300
+    );
+    final FontStyle baseStyle = quote.timeItalic ? FontStyle.italic : (
+      style == 1 ? FontStyle.italic : FontStyle.normal
+    );
+    final double customScale = quote.timeScale;
+    final Color? customColor = quote.timeColorValue != null ? Color(quote.timeColorValue!) : null;
+
     if (style == 1) {
       // Style 1: Editorial Serif
       return Column(
@@ -56,7 +69,7 @@ class NullCardPreview extends StatelessWidget {
             'written at',
             style: TextStyle(
               fontFamily: AppFonts.beatrice,
-              fontSize: 14.0 * scaleFactor,
+              fontSize: 10.0 * scaleFactor * customScale,
               fontStyle: FontStyle.italic,
               color: Colors.white.withValues(alpha: 0.45),
             ),
@@ -65,10 +78,11 @@ class NullCardPreview extends StatelessWidget {
           Text(
             '$hour:$minuteStr $period',
             style: TextStyle(
-              fontFamily: AppFonts.timesNewRoman,
-              fontSize: 26.0 * scaleFactor,
-              fontStyle: FontStyle.italic,
-              color: Colors.white.withValues(alpha: 0.85),
+              fontFamily: baseFont,
+              fontSize: 26.0 * scaleFactor * customScale,
+              fontWeight: baseWeight,
+              fontStyle: baseStyle,
+              color: customColor ?? Colors.white.withValues(alpha: 0.85),
             ),
           ),
           SizedBox(height: 8.0 * scaleFactor),
@@ -91,7 +105,7 @@ class NullCardPreview extends StatelessWidget {
             '$weekday, $month ${time.day}'.toUpperCase(),
             style: TextStyle(
               fontFamily: AppFonts.sfProText,
-              fontSize: 11.0 * scaleFactor,
+              fontSize: 11.0 * scaleFactor * customScale,
               fontWeight: FontWeight.w600,
               letterSpacing: 1.0 * scaleFactor,
               color: Colors.white.withValues(alpha: 0.45),
@@ -101,10 +115,11 @@ class NullCardPreview extends StatelessWidget {
           Text(
             '$hour:$minuteStr $period',
             style: TextStyle(
-              fontFamily: AppFonts.sfProDisplay,
-              fontSize: 26.0 * scaleFactor,
-              fontWeight: FontWeight.w300,
-              color: Colors.white.withValues(alpha: 0.85),
+              fontFamily: baseFont,
+              fontSize: 26.0 * scaleFactor * customScale,
+              fontWeight: baseWeight,
+              fontStyle: baseStyle,
+              color: customColor ?? Colors.white.withValues(alpha: 0.85),
             ),
           ),
           SizedBox(height: 8.0 * scaleFactor),
@@ -127,17 +142,18 @@ class NullCardPreview extends StatelessWidget {
           Text(
             '$hour:$minuteStr $period',
             style: TextStyle(
-              fontFamily: AppFonts.sfProDisplay,
-              fontSize: 20.0 * scaleFactor,
-              fontWeight: FontWeight.w200,
-              color: Colors.white.withValues(alpha: 0.55),
+              fontFamily: baseFont,
+              fontSize: 20.0 * scaleFactor * customScale,
+              fontWeight: quote.timeBold ? FontWeight.w700 : FontWeight.w200,
+              fontStyle: baseStyle,
+              color: customColor ?? Colors.white.withValues(alpha: 0.55),
             ),
           ),
           SizedBox(height: 18.0 * scaleFactor),
         ],
       );
     } else if (style == 4) {
-      // Style 4: Digital 24H
+      // Style 4: Digital 24H (Pure Monochrome)
       final h24 = time.hour.toString().padLeft(2, '0');
       final m24 = time.minute.toString().padLeft(2, '0');
       return Column(
@@ -147,7 +163,7 @@ class NullCardPreview extends StatelessWidget {
             '// 24H TIMESTAMP',
             style: TextStyle(
               fontFamily: AppFonts.sfProText,
-              fontSize: 9.5 * scaleFactor,
+              fontSize: 9.5 * scaleFactor * customScale,
               fontWeight: FontWeight.w600,
               letterSpacing: 1.5 * scaleFactor,
               color: Colors.white.withValues(alpha: 0.40),
@@ -157,17 +173,18 @@ class NullCardPreview extends StatelessWidget {
           Text(
             '$h24:$m24',
             style: TextStyle(
-              fontFamily: AppFonts.sfProRounded,
-              fontSize: 28.0 * scaleFactor,
-              fontWeight: FontWeight.w600,
-              color: Colors.white.withValues(alpha: 0.85),
+              fontFamily: baseFont,
+              fontSize: 28.0 * scaleFactor * customScale,
+              fontWeight: baseWeight,
+              fontStyle: baseStyle,
+              color: customColor ?? Colors.white.withValues(alpha: 0.85),
             ),
           ),
           SizedBox(height: 8.0 * scaleFactor),
           Container(
             width: 22.0 * scaleFactor,
             height: 1.5 * scaleFactor,
-            color: const Color(0xFF64D2FF).withValues(alpha: 0.35),
+            color: Colors.white.withValues(alpha: 0.25),
           ),
           SizedBox(height: 18.0 * scaleFactor),
         ],
@@ -179,13 +196,22 @@ class NullCardPreview extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          "It's\n$hour:$minuteStr $period",
+          "It's",
           style: TextStyle(
-            fontFamily: AppFonts.sfProDisplay,
-            fontSize: 16.0 * scaleFactor,
+            fontFamily: AppFonts.sfProText,
+            fontSize: 11.0 * scaleFactor * customScale,
             color: Colors.white.withValues(alpha: 0.45),
-            height: 1.25,
-            fontWeight: FontWeight.w300,
+          ),
+        ),
+        Text(
+          "$hour:$minuteStr $period",
+          style: TextStyle(
+            fontFamily: baseFont,
+            fontSize: 26.0 * scaleFactor * customScale,
+            color: customColor ?? Colors.white.withValues(alpha: 0.75),
+            height: 1.15,
+            fontWeight: baseWeight,
+            fontStyle: baseStyle,
             letterSpacing: 0.5 * scaleFactor,
           ),
         ),

@@ -12,7 +12,12 @@ class QuoteItem {
   final double letterSpacing;
   final double height;
   final int? backgroundColorValue;
-  final int timeStyle; // 0: Classic Null, 1: Editorial Serif, 2: Calendar Date, 3: Minimal Zen, 4: Digital 24H
+  final int timeStyle; // 0: Classic Null, 1: Editorial Serif, 2: Calendar Date, 3: Minimal Zen, 4: 24H Clean
+  final bool timeBold;
+  final bool timeItalic;
+  final String? timeFont;
+  final double timeScale;
+  final int? timeColorValue;
 
   static const List<int> backgroundPalette = [
     0xFF000000, // Pure OLED Obsidian (Default)
@@ -35,6 +40,11 @@ class QuoteItem {
     this.height = 1.18,
     this.backgroundColorValue,
     this.timeStyle = 0,
+    this.timeBold = false,
+    this.timeItalic = false,
+    this.timeFont,
+    this.timeScale = 1.0,
+    this.timeColorValue,
   });
 
   Map<String, dynamic> toJson() => {
@@ -49,6 +59,11 @@ class QuoteItem {
         'height': height,
         'bgColor': backgroundColorValue,
         'timeStyle': timeStyle,
+        'timeBold': timeBold,
+        'timeItalic': timeItalic,
+        'timeFont': timeFont,
+        'timeScale': timeScale,
+        'timeColor': timeColorValue,
       };
 
   factory QuoteItem.fromJson(Map<String, dynamic> json) => QuoteItem(
@@ -70,6 +85,11 @@ class QuoteItem {
         height: (json['height'] as num?)?.toDouble() ?? 1.18,
         backgroundColorValue: json['bgColor'] as int?,
         timeStyle: json['timeStyle'] as int? ?? 0,
+        timeBold: json['timeBold'] as bool? ?? false,
+        timeItalic: json['timeItalic'] as bool? ?? false,
+        timeFont: json['timeFont'] as String?,
+        timeScale: (json['timeScale'] as num?)?.toDouble() ?? 1.0,
+        timeColorValue: json['timeColor'] as int?,
       );
 
   Color get backgroundColor =>

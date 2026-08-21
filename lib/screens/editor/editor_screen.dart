@@ -490,6 +490,130 @@ class _EditorScreenState extends State<EditorScreen> {
     }
   }
 
+  void _saveCurrentQuote() {
+    if (_hasCreatedNote) {
+      final note = NotesService.instance.getNote(widget.pageIndex);
+      if (note != null) {
+        note.quote = _quote;
+        NotesService.instance.saveNow();
+      }
+    }
+    _recordSnapshot();
+  }
+
+  Widget _buildFormatToggleButton({
+    required String label,
+    required bool isActive,
+    required VoidCallback onTap,
+    bool isFontWeightBold = false,
+    bool isItalic = false,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        width: 38,
+        height: 38,
+        decoration: BoxDecoration(
+          color: isActive ? Colors.white : const Color(0xFF1C1C1E),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: isActive ? Colors.white : Colors.white.withValues(alpha: 0.1),
+            width: 1,
+          ),
+        ),
+        alignment: Alignment.center,
+        child: Text(
+          label,
+          style: TextStyle(
+            fontFamily: AppFonts.sfProText,
+            fontSize: 15,
+            fontWeight: isFontWeightBold ? FontWeight.w800 : FontWeight.w500,
+            fontStyle: isItalic ? FontStyle.italic : FontStyle.normal,
+            color: isActive ? Colors.black : const Color(0xFFEDEDED),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFormatCycleButton({
+    required String label,
+    required IconData icon,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 38,
+        padding: const EdgeInsets.symmetric(horizontal: 10),
+        decoration: BoxDecoration(
+          color: const Color(0xFF1C1C1E),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: Colors.white.withValues(alpha: 0.1),
+            width: 1,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 14, color: const Color(0xFF8E8E93)),
+            const SizedBox(width: 5),
+            Flexible(
+              child: Text(
+                label,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontFamily: AppFonts.sfProText,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: Color(0xFFEDEDED),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildToneCycleButton({
+    required int? currentColor,
+    required VoidCallback onTap,
+  }) {
+    final color = currentColor != null ? Color(currentColor) : const Color(0xFFEDEDED);
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 38,
+        height: 38,
+        decoration: BoxDecoration(
+          color: const Color(0xFF1C1C1E),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: Colors.white.withValues(alpha: 0.1),
+            width: 1,
+          ),
+        ),
+        alignment: Alignment.center,
+        child: Container(
+          width: 16,
+          height: 16,
+          decoration: BoxDecoration(
+            color: color,
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.3),
+              width: 1,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildVisualPreviewCard({
     required int styleIndex,
     required bool isSelected,
@@ -621,7 +745,7 @@ class _EditorScreenState extends State<EditorScreen> {
         ),
       );
     } else if (styleIndex == 4) {
-      title = '24H Matrix';
+      title = '24H Clean';
       previewContent = Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
@@ -651,7 +775,7 @@ class _EditorScreenState extends State<EditorScreen> {
           Container(
             width: 14,
             height: 1.5,
-            color: const Color(0xFF64D2FF).withValues(alpha: 0.6),
+            color: const Color(0xFF48484A),
           ),
         ],
       );
@@ -853,20 +977,232 @@ class _EditorScreenState extends State<EditorScreen> {
                                 height: _quote.height,
                                 backgroundColorValue: _quote.backgroundColorValue,
                                 timeStyle: idx,
+                                timeBold: _quote.timeBold,
+                                timeItalic: _quote.timeItalic,
+                                timeFont: _quote.timeFont,
+                                timeScale: _quote.timeScale,
+                                timeColorValue: _quote.timeColorValue,
                               );
                             });
-                            if (_hasCreatedNote) {
-                              final note = NotesService.instance.getNote(widget.pageIndex);
-                              if (note != null) {
-                                note.quote = _quote;
-                                NotesService.instance.saveNow();
-                              }
-                            }
+                            _saveCurrentQuote();
                             HapticFeedback.selectionClick();
                           },
                         );
                       },
                     ),
+                  ),
+
+                  const SizedBox(height: 18),
+
+                  // ── Fine-Tune Formatting Options Bar ──
+                  const Text(
+                    'CUSTOMIZE SELECTED',
+                    style: TextStyle(
+                      fontFamily: AppFonts.sfProText,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF636366),
+                      letterSpacing: 1.2,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+
+                  Row(
+                    children: [
+                      // 1. Bold Toggle
+                      _buildFormatToggleButton(
+                        label: 'B',
+                        isFontWeightBold: true,
+                        isActive: _quote.timeBold,
+                        onTap: () {
+                          setModalState(() {});
+                          setState(() {
+                            _quote = QuoteItem(
+                              mainText: _quote.mainText,
+                              dimPrompt: _quote.dimPrompt,
+                              showTime: _quote.showTime,
+                              showDivider: _quote.showDivider,
+                              fontFamily: _quote.fontFamily,
+                              fontSize: _quote.fontSize,
+                              fontWeight: _quote.fontWeight,
+                              letterSpacing: _quote.letterSpacing,
+                              height: _quote.height,
+                              backgroundColorValue: _quote.backgroundColorValue,
+                              timeStyle: _quote.timeStyle,
+                              timeBold: !_quote.timeBold,
+                              timeItalic: _quote.timeItalic,
+                              timeFont: _quote.timeFont,
+                              timeScale: _quote.timeScale,
+                              timeColorValue: _quote.timeColorValue,
+                            );
+                          });
+                          _saveCurrentQuote();
+                          HapticFeedback.selectionClick();
+                        },
+                      ),
+                      const SizedBox(width: 8),
+
+                      // 2. Italic Toggle
+                      _buildFormatToggleButton(
+                        label: 'I',
+                        isItalic: true,
+                        isActive: _quote.timeItalic,
+                        onTap: () {
+                          setModalState(() {});
+                          setState(() {
+                            _quote = QuoteItem(
+                              mainText: _quote.mainText,
+                              dimPrompt: _quote.dimPrompt,
+                              showTime: _quote.showTime,
+                              showDivider: _quote.showDivider,
+                              fontFamily: _quote.fontFamily,
+                              fontSize: _quote.fontSize,
+                              fontWeight: _quote.fontWeight,
+                              letterSpacing: _quote.letterSpacing,
+                              height: _quote.height,
+                              backgroundColorValue: _quote.backgroundColorValue,
+                              timeStyle: _quote.timeStyle,
+                              timeBold: _quote.timeBold,
+                              timeItalic: !_quote.timeItalic,
+                              timeFont: _quote.timeFont,
+                              timeScale: _quote.timeScale,
+                              timeColorValue: _quote.timeColorValue,
+                            );
+                          });
+                          _saveCurrentQuote();
+                          HapticFeedback.selectionClick();
+                        },
+                      ),
+                      const SizedBox(width: 8),
+
+                      // 3. Font Cycle
+                      Expanded(
+                        child: _buildFormatCycleButton(
+                          label: _quote.timeFont ?? 'Font',
+                          icon: CupertinoIcons.textformat,
+                          onTap: () {
+                            const fonts = [
+                              null,
+                              AppFonts.sfProDisplay,
+                              AppFonts.timesNewRoman,
+                              AppFonts.beatrice,
+                              AppFonts.kaftan,
+                              AppFonts.coolvetica,
+                              AppFonts.sfProRounded,
+                              AppFonts.inter,
+                            ];
+                            int curIdx = fonts.indexOf(_quote.timeFont);
+                            int nextIdx = (curIdx + 1) % fonts.length;
+                            final nextFont = fonts[nextIdx];
+
+                            setModalState(() {});
+                            setState(() {
+                              _quote = QuoteItem(
+                                mainText: _quote.mainText,
+                                dimPrompt: _quote.dimPrompt,
+                                showTime: _quote.showTime,
+                                showDivider: _quote.showDivider,
+                                fontFamily: _quote.fontFamily,
+                                fontSize: _quote.fontSize,
+                                fontWeight: _quote.fontWeight,
+                                letterSpacing: _quote.letterSpacing,
+                                height: _quote.height,
+                                backgroundColorValue: _quote.backgroundColorValue,
+                                timeStyle: _quote.timeStyle,
+                                timeBold: _quote.timeBold,
+                                timeItalic: _quote.timeItalic,
+                                timeFont: nextFont,
+                                timeScale: _quote.timeScale,
+                                timeColorValue: _quote.timeColorValue,
+                              );
+                            });
+                            _saveCurrentQuote();
+                            HapticFeedback.selectionClick();
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+
+                      // 4. Size Cycle
+                      _buildFormatCycleButton(
+                        label: '${_quote.timeScale}x',
+                        icon: CupertinoIcons.textformat_size,
+                        onTap: () {
+                          const scales = [0.8, 1.0, 1.25];
+                          int curIdx = scales.indexOf(_quote.timeScale);
+                          if (curIdx < 0) curIdx = 1;
+                          int nextIdx = (curIdx + 1) % scales.length;
+                          final nextScale = scales[nextIdx];
+
+                          setModalState(() {});
+                          setState(() {
+                            _quote = QuoteItem(
+                              mainText: _quote.mainText,
+                              dimPrompt: _quote.dimPrompt,
+                              showTime: _quote.showTime,
+                              showDivider: _quote.showDivider,
+                              fontFamily: _quote.fontFamily,
+                              fontSize: _quote.fontSize,
+                              fontWeight: _quote.fontWeight,
+                              letterSpacing: _quote.letterSpacing,
+                              height: _quote.height,
+                              backgroundColorValue: _quote.backgroundColorValue,
+                              timeStyle: _quote.timeStyle,
+                              timeBold: _quote.timeBold,
+                              timeItalic: _quote.timeItalic,
+                              timeFont: _quote.timeFont,
+                              timeScale: nextScale,
+                              timeColorValue: _quote.timeColorValue,
+                            );
+                          });
+                          _saveCurrentQuote();
+                          HapticFeedback.selectionClick();
+                        },
+                      ),
+                      const SizedBox(width: 8),
+
+                      // 5. Tone / Brightness Cycle (Monochrome)
+                      _buildToneCycleButton(
+                        currentColor: _quote.timeColorValue,
+                        onTap: () {
+                          const tones = [
+                            null,
+                            0xFFFFFFFF,
+                            0xFFEDEDED,
+                            0xFF8E8E93,
+                            0xFF636366,
+                          ];
+                          int curIdx = tones.indexOf(_quote.timeColorValue);
+                          if (curIdx < 0) curIdx = 0;
+                          int nextIdx = (curIdx + 1) % tones.length;
+                          final nextTone = tones[nextIdx];
+
+                          setModalState(() {});
+                          setState(() {
+                            _quote = QuoteItem(
+                              mainText: _quote.mainText,
+                              dimPrompt: _quote.dimPrompt,
+                              showTime: _quote.showTime,
+                              showDivider: _quote.showDivider,
+                              fontFamily: _quote.fontFamily,
+                              fontSize: _quote.fontSize,
+                              fontWeight: _quote.fontWeight,
+                              letterSpacing: _quote.letterSpacing,
+                              height: _quote.height,
+                              backgroundColorValue: _quote.backgroundColorValue,
+                              timeStyle: _quote.timeStyle,
+                              timeBold: _quote.timeBold,
+                              timeItalic: _quote.timeItalic,
+                              timeFont: _quote.timeFont,
+                              timeScale: _quote.timeScale,
+                              timeColorValue: nextTone,
+                            );
+                          });
+                          _saveCurrentQuote();
+                          HapticFeedback.selectionClick();
+                        },
+                      ),
+                    ],
                   ),
 
                   const SizedBox(height: 18),
@@ -919,15 +1255,14 @@ class _EditorScreenState extends State<EditorScreen> {
                           height: _quote.height,
                           backgroundColorValue: _quote.backgroundColorValue,
                           timeStyle: _quote.timeStyle,
+                          timeBold: _quote.timeBold,
+                          timeItalic: _quote.timeItalic,
+                          timeFont: _quote.timeFont,
+                          timeScale: _quote.timeScale,
+                          timeColorValue: _quote.timeColorValue,
                         );
                       });
-                      if (_hasCreatedNote) {
-                        final note = NotesService.instance.getNote(widget.pageIndex);
-                        if (note != null) {
-                          note.quote = _quote;
-                          NotesService.instance.saveNow();
-                        }
-                      }
+                      _saveCurrentQuote();
                       HapticFeedback.mediumImpact();
                     },
                   ),
@@ -942,6 +1277,15 @@ class _EditorScreenState extends State<EditorScreen> {
 
   Widget _buildTimestampHeader() {
     final style = _quote.timeStyle;
+    final bool isBold = _quote.timeBold;
+    final bool isItalic = _quote.timeItalic;
+    final double scale = _quote.timeScale;
+    final Color? customColor = _quote.timeColorValue != null ? Color(_quote.timeColorValue!) : null;
+
+    final String baseFont = _quote.timeFont ?? (
+      style == 1 ? AppFonts.timesNewRoman :
+      (style == 4 ? AppFonts.sfProRounded : AppFonts.sfProDisplay)
+    );
 
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
@@ -958,20 +1302,20 @@ class _EditorScreenState extends State<EditorScreen> {
           );
         },
         child: KeyedSubtree(
-          key: ValueKey('timestamp_style_$style'),
+          key: ValueKey('timestamp_${style}_${isBold}_${isItalic}_${scale}_${_quote.timeColorValue}_$baseFont'),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
               if (style == 0) ...[
                 // Style 0: Classic Null (Stacked Big Time)
-                const Text(
+                Text(
                   "It's",
                   style: TextStyle(
                     fontFamily: AppFonts.sfProText,
-                    fontSize: 22,
+                    fontSize: 22 * scale,
                     fontWeight: FontWeight.w400,
-                    color: Color(0xFF636366),
+                    color: const Color(0xFF636366),
                     letterSpacing: -0.2,
                   ),
                 ),
@@ -982,31 +1326,32 @@ class _EditorScreenState extends State<EditorScreen> {
                   children: [
                     Text(
                       _formatHourMinute(_displayTime),
-                      style: const TextStyle(
-                        fontFamily: AppFonts.sfProDisplay,
-                        fontSize: 70,
-                        fontWeight: FontWeight.w200,
+                      style: TextStyle(
+                        fontFamily: baseFont,
+                        fontSize: 70 * scale,
+                        fontWeight: isBold ? FontWeight.w700 : FontWeight.w200,
+                        fontStyle: isItalic ? FontStyle.italic : FontStyle.normal,
                         letterSpacing: -2.0,
-                        color: Color(0xFFB5B5BA),
+                        color: customColor ?? const Color(0xFFB5B5BA),
                         height: 1.02,
                       ),
                     ),
                     const SizedBox(width: 8),
                     Text(
                       _formatAmPm(_displayTime),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: AppFonts.sfProText,
-                        fontSize: 18,
+                        fontSize: 18 * scale,
                         fontWeight: FontWeight.w400,
                         letterSpacing: 0.5,
-                        color: Color(0xFF55555A),
+                        color: const Color(0xFF55555A),
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 16),
                 Container(
-                  width: 26,
+                  width: 26 * scale,
                   height: 2.5,
                   decoration: BoxDecoration(
                     color: const Color(0xFF3A3A3D),
@@ -1015,31 +1360,32 @@ class _EditorScreenState extends State<EditorScreen> {
                 ),
               ] else if (style == 1) ...[
                 // Style 1: Editorial Serif (Vogue / Fashion)
-                const Text(
+                Text(
                   "written at",
                   style: TextStyle(
                     fontFamily: AppFonts.beatrice,
-                    fontSize: 18,
+                    fontSize: 18 * scale,
                     fontStyle: FontStyle.italic,
-                    color: Color(0xFF8E8E93),
+                    color: const Color(0xFF8E8E93),
                     letterSpacing: 0.2,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   "${_formatHourMinute(_displayTime)} ${_formatAmPm(_displayTime)}",
-                  style: const TextStyle(
-                    fontFamily: AppFonts.timesNewRoman,
-                    fontSize: 52,
-                    fontStyle: FontStyle.italic,
-                    color: Color(0xFFEDEDED),
+                  style: TextStyle(
+                    fontFamily: baseFont,
+                    fontSize: 52 * scale,
+                    fontWeight: isBold ? FontWeight.w700 : FontWeight.w300,
+                    fontStyle: isItalic ? FontStyle.italic : FontStyle.italic,
+                    color: customColor ?? const Color(0xFFEDEDED),
                     letterSpacing: -1.0,
                     height: 1.05,
                   ),
                 ),
                 const SizedBox(height: 14),
                 Container(
-                  width: 38,
+                  width: 38 * scale,
                   height: 1.2,
                   color: const Color(0xFF48484A),
                 ),
@@ -1047,12 +1393,12 @@ class _EditorScreenState extends State<EditorScreen> {
                 // Style 2: Journal / Calendar Date & Day
                 Text(
                   "${_getWeekdayName(_displayTime.weekday)}, ${_getMonthName(_displayTime.month)} ${_displayTime.day}",
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: AppFonts.sfProText,
-                    fontSize: 14,
+                    fontSize: 14 * scale,
                     fontWeight: FontWeight.w600,
                     letterSpacing: 1.2,
-                    color: Color(0xFF8E8E93),
+                    color: const Color(0xFF8E8E93),
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -1062,31 +1408,32 @@ class _EditorScreenState extends State<EditorScreen> {
                   children: [
                     Text(
                       _formatHourMinute(_displayTime),
-                      style: const TextStyle(
-                        fontFamily: AppFonts.sfProDisplay,
-                        fontSize: 54,
-                        fontWeight: FontWeight.w300,
+                      style: TextStyle(
+                        fontFamily: baseFont,
+                        fontSize: 54 * scale,
+                        fontWeight: isBold ? FontWeight.w700 : FontWeight.w300,
+                        fontStyle: isItalic ? FontStyle.italic : FontStyle.normal,
                         letterSpacing: -1.5,
-                        color: Color(0xFFEDEDED),
+                        color: customColor ?? const Color(0xFFEDEDED),
                         height: 1.05,
                       ),
                     ),
                     const SizedBox(width: 6),
                     Text(
                       _formatAmPm(_displayTime),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: AppFonts.sfProText,
-                        fontSize: 16,
+                        fontSize: 16 * scale,
                         fontWeight: FontWeight.w400,
-                        color: Color(0xFF636366),
+                        color: const Color(0xFF636366),
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 12),
                 Container(
-                  width: 5,
-                  height: 5,
+                  width: 5 * scale,
+                  height: 5 * scale,
                   decoration: const BoxDecoration(
                     color: Color(0xFF3A3A3D),
                     shape: BoxShape.circle,
@@ -1096,45 +1443,47 @@ class _EditorScreenState extends State<EditorScreen> {
                 // Style 3: Minimal Zen (Whisper)
                 Text(
                   "${_formatHourMinute(_displayTime)} ${_formatAmPm(_displayTime)}",
-                  style: const TextStyle(
-                    fontFamily: AppFonts.sfProDisplay,
-                    fontSize: 42,
-                    fontWeight: FontWeight.w200,
+                  style: TextStyle(
+                    fontFamily: baseFont,
+                    fontSize: 42 * scale,
+                    fontWeight: isBold ? FontWeight.w700 : FontWeight.w200,
+                    fontStyle: isItalic ? FontStyle.italic : FontStyle.normal,
                     letterSpacing: -0.5,
-                    color: Color(0xFF8E8E93),
+                    color: customColor ?? const Color(0xFF8E8E93),
                     height: 1.1,
                   ),
                 ),
               ] else if (style == 4) ...[
-                // Style 4: Cyber Noir (24H Digital System)
-                const Text(
+                // Style 4: Modern 24-Hour Clean (Pure Monochrome)
+                Text(
                   "// 24H TIMESTAMP",
                   style: TextStyle(
                     fontFamily: AppFonts.sfProText,
-                    fontSize: 12,
+                    fontSize: 12 * scale,
                     fontWeight: FontWeight.w600,
                     letterSpacing: 2.0,
-                    color: Color(0xFF55555A),
+                    color: const Color(0xFF55555A),
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   _format24H(_displayTime),
-                  style: const TextStyle(
-                    fontFamily: AppFonts.sfProRounded,
-                    fontSize: 58,
-                    fontWeight: FontWeight.w600,
+                  style: TextStyle(
+                    fontFamily: baseFont,
+                    fontSize: 58 * scale,
+                    fontWeight: isBold ? FontWeight.w800 : FontWeight.w600,
+                    fontStyle: isItalic ? FontStyle.italic : FontStyle.normal,
                     letterSpacing: -1.0,
-                    color: Color(0xFFD1D1D6),
+                    color: customColor ?? const Color(0xFFD1D1D6),
                     height: 1.05,
                   ),
                 ),
                 const SizedBox(height: 14),
                 Container(
-                  width: 32,
+                  width: 32 * scale,
                   height: 2.0,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF64D2FF).withValues(alpha: 0.35),
+                    color: const Color(0xFF48484A),
                     borderRadius: BorderRadius.circular(1.0),
                   ),
                 ),
