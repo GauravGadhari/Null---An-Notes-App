@@ -28,7 +28,12 @@ class CustomSmartWord {
       };
 
   factory CustomSmartWord.fromJson(Map<String, dynamic> json) {
-    final word = json['word']?.toString().trim() ?? '';
+    final list = parseJsonItem(json);
+    if (list.isNotEmpty) return list.first;
+    return CustomSmartWord(word: json['word']?.toString().trim() ?? '');
+  }
+
+  static List<CustomSmartWord> parseJsonItem(Map<String, dynamic> json) {
     final font = json['fontFamily']?.toString() ?? json['font']?.toString();
 
     int? weightIdx;
@@ -73,14 +78,29 @@ class CustomSmartWord {
       textCol = (json['textColorValue'] as num).toInt();
     }
 
-    return CustomSmartWord(
-      word: word,
+    final wordsList = <String>[];
+    if (json['words'] is List) {
+      for (final w in (json['words'] as List)) {
+        final str = w?.toString().trim();
+        if (str != null && str.isNotEmpty) {
+          wordsList.add(str);
+        }
+      }
+    } else if (json['word'] != null) {
+      final str = json['word'].toString().trim();
+      if (str.isNotEmpty) {
+        wordsList.add(str);
+      }
+    }
+
+    return wordsList.map((w) => CustomSmartWord(
+      word: w,
       fontFamily: font,
       fontWeightIndex: weightIdx,
       isItalic: italic,
       isUnderline: underline,
       highlightColorValue: highlight,
       textColorValue: textCol,
-    );
+    )).toList();
   }
 }

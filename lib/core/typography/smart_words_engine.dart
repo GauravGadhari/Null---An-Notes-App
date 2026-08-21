@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import '../fonts/app_fonts.dart';
 import '../models/span_style.dart';
 import '../services/notes_service.dart';
@@ -20,14 +21,14 @@ class SmartWordMatch {
 
 class SmartWordCategory {
   final String title;
-  final String emoji;
+  final IconData icon;
   final String description;
   final List<String> words;
   final SpanStyle style;
 
   const SmartWordCategory({
     required this.title,
-    required this.emoji,
+    required this.icon,
     required this.description,
     required this.words,
     required this.style,
@@ -173,71 +174,71 @@ class SmartWordsEngine {
     return const [
       SmartWordCategory(
         title: 'Love & Affection',
-        emoji: '💖',
-        description: 'Aloevera • Soft Rose Blush • Italic',
+        icon: CupertinoIcons.heart_fill,
+        description: 'Aloevera • Rose • Italic',
         words: ['love', 'loved', 'dear', 'heart', 'forever', 'adore', 'darling', 'beloved', 'sweet', 'kiss', 'babe', 'miss you', 'please...'],
         style: _loveStyle,
       ),
       SmartWordCategory(
         title: 'Intensity & Drama',
-        emoji: '⚡',
+        icon: CupertinoIcons.flame_fill,
         description: 'Basement Grotesque • Heavy w900',
         words: ['hate', 'rage', 'anger', 'never', 'burn', 'chaos', 'fire', 'raw', 'scream', 'break', 'stop', 'shut up', 'cooked', 'crying', 'screaming', 'dying', 'down bad', 'noo...', 'bruh...'],
         style: _intensityStyle,
       ),
       SmartWordCategory(
-        title: 'Gen Z Slang & Lore',
-        emoji: '💅',
-        description: 'Coolvetica • Soft Violet Blush • w600',
+        title: 'Gen Z Slang',
+        icon: CupertinoIcons.bolt_fill,
+        description: 'Coolvetica • Violet • w600',
         words: ['fr', 'frfr', 'lowkey', 'highkey', 'ngl', 'tbh', 'nocap', 'cap', 'delulu', 'rizz', 'aura', 'slay', 'valid', 'period', 'iykyk', 'idk', 'rn', 'unhinged', 'canon event', 'omg...', 'omfg...'],
         style: _slangStyle,
       ),
       SmartWordCategory(
         title: 'Wealth & Ambition',
-        emoji: '💰',
-        description: 'Futura • Amber Gold Blush • w600',
+        icon: CupertinoIcons.money_dollar,
+        description: 'Futura • Amber Gold • w600',
         words: ['money', 'cash', 'wealth', 'rich', 'gold', 'empire', 'success', 'dollar', 'crypto', 'bag', 'secure the bag'],
         style: _wealthStyle,
       ),
       SmartWordCategory(
-        title: 'Manifestation & Energy',
-        emoji: '✨',
+        title: 'Manifestation',
+        icon: CupertinoIcons.sparkles,
         description: 'Beatrice • Bold Italic',
         words: ['era', 'main character', 'manifest', 'manifesting', 'healing', 'energy', 'vibe', 'vibes', 'glow up', 'obsessed', 'so real', 'unreal', 'literally', 'actually', 'overthinking', 'yess...'],
         style: _manifestStyle,
       ),
       SmartWordCategory(
-        title: 'Void & 3AM Aesthetic',
-        emoji: '🌌',
-        description: 'Agitha • Soft Sky Glow • Italic',
+        title: 'Void & 3AM',
+        icon: CupertinoIcons.moon_stars_fill,
+        description: 'Agitha • Sky Glow • Italic',
         words: ['dark', 'light', 'shadow', 'void', 'null', 'infinite', 'truth', 'peace', 'breathe', 'sleep', 'dream', 'silence', '3am', 'midnight', 'existential', 'nostalgia', 'solitude', 'cozy', 'whyy...'],
         style: _voidStyle,
       ),
       SmartWordCategory(
-        title: 'Self & Identity',
-        emoji: '👤',
+        title: 'Identity & Self',
+        icon: CupertinoIcons.person_fill,
         description: 'Beatrice • Bold w700',
         words: ['I', 'me', 'myself', 'you', 'we', 'people', 'human', 'soul', 'mind'],
         style: _identityStyle,
       ),
       SmartWordCategory(
         title: 'Miraculous Ladybug',
-        emoji: '🐞',
-        description: 'Beatrice • Crimson Blush • Italic',
+        icon: CupertinoIcons.circle_grid_hex_fill,
+        description: 'Beatrice • Crimson • Italic',
         words: ['marinette', 'merrinette', 'ladybug', 'tikki', 'spots on', 'spots off', 'lucky charm', 'de-evilize'],
         style: _miraculousLadybugStyle,
       ),
       SmartWordCategory(
-        title: 'Cat Noir & Adrien',
-        emoji: '🐾',
-        description: 'Coolvetica • Emerald Blush • Bold',
+        title: 'Cat Noir',
+        icon: CupertinoIcons.shield_fill,
+        description: 'Coolvetica • Emerald • Bold',
         words: ['adrien', 'cat noir', 'chat noir', 'plagg', 'claws out', 'claws in', 'cataclysm', "m'lady", 'bugaboo'],
         style: _catNoirStyle,
       ),
       SmartWordCategory(
         title: 'Miraculous Lore',
-        emoji: '🔮',
-        description: 'Beatrice • Mystical Violet • Bold Italic',
+        icon: CupertinoIcons.wand_stars,
+        description: 'Beatrice • Violet • Bold Italic',
         words: ['miraculous', 'iyamatwm', 'akuma', 'amok', 'hawkmoth', 'hawk moth', 'shadow moth', 'monarch', 'kwami', 'pound it', "just a friend", 'alya', 'nino', 'chloe', 'luka', 'felix', 'kagami', 'gabriel'],
         style: _miraculousLoreStyle,
       ),

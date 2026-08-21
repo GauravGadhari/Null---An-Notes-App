@@ -74,6 +74,36 @@ void main() {
       // Clean up
       NotesService.instance.clearCustomSmartWords();
     });
+
+    test('CustomSmartWord.parseJsonItem parses both words array and single word', () {
+      final jsonArrayItem = {
+        'words': ['marinette', 'adrien', 'luka'],
+        'fontFamily': 'Beatrice',
+        'bold': true,
+        'italic': true,
+        'highlightColorValue': 1157584186,
+      };
+
+      final parsedList = CustomSmartWord.parseJsonItem(jsonArrayItem);
+      expect(parsedList.length, equals(3));
+      expect(parsedList[0].word, equals('marinette'));
+      expect(parsedList[1].word, equals('adrien'));
+      expect(parsedList[2].word, equals('luka'));
+      expect(parsedList[0].fontFamily, equals('Beatrice'));
+      expect(parsedList[0].fontWeightIndex, equals(6));
+      expect(parsedList[0].isItalic, isTrue);
+
+      final jsonSingleItem = {
+        'word': 'bestie',
+        'fontFamily': 'Coolvetica',
+        'italic': true,
+      };
+
+      final singleList = CustomSmartWord.parseJsonItem(jsonSingleItem);
+      expect(singleList.length, equals(1));
+      expect(singleList.first.word, equals('bestie'));
+      expect(singleList.first.fontFamily, equals('Coolvetica'));
+    });
   });
 
   group('NullRichTextController Smart Words Rendering Tests', () {

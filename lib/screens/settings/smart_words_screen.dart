@@ -30,49 +30,51 @@ class _SmartWordsScreenState extends State<SmartWordsScreen> {
 You are an aesthetic typography stylist for "Null" (an ultra-minimalist luxury notes app).
 
 YOUR TASK:
-1. Analyze our entire past conversation history, my messages, writing habits, and frequent vocabulary.
-2. Understand what I typically talk about and my specific domain (e.g., software development, design, creative writing, gaming, fandoms, daily musings, texting quirks like repeated letters, slang, or abbreviations).
-3. Identify 20-35 of the most characteristic words, slang, repeated phrases, or domain-specific keywords that I uniquely write.
-4. Assign an aesthetic typography rule to each word from the supported fonts and accent highlights below based on the word's emotional tone and vibe.
+1. Analyze our entire past conversation history, my messages, and writing style.
+2. Extract my personal vocabulary:
+   - Known person names, friends, characters, or nicknames I frequently mention
+   - Domain-specific terms (coding, design, fandoms, work, gaming, daily topics)
+   - Unique texting quirks, repeated expressions, and slang (e.g. "ohkkk", "gotchaa", "frfr")
+3. Return 20-40 tailored words/phrases with ideal typography from the supported fonts below.
 
-Available Font Families (choose one per word):
-- Beatrice (Editorial, Elegant, High-fashion, Manifestation)
-- Coolvetica (Modern, Trendy, Y2K Slang, Punchy Tech)
-- Aloevera (Soft, Romantic, Organic, Heartfelt)
-- BasementGrotesque (Heavy, Brutalist, Bold impact, Raw energy)
-- Futura (Geometric, Clean, High-end Luxe, Ambition)
-- Agitha (Atmospheric, Dreamy, 3AM Void, Solitude)
+Available Font Families (choose one per style):
+- Beatrice (Editorial, Elegant, Serif/Display)
+- Coolvetica (Modern, Tech, Y2K Slang)
+- Aloevera (Soft, Romantic, Organic)
+- BasementGrotesque (Heavy, Brutalist, Bold)
+- Futura (Geometric, Luxury, Ambition)
+- Agitha (3AM Void, Dreamy, Solitude)
 - TimesNewRoman (Classic Literary Serif)
-- SFProDisplay (Clean Apple Standard)
+- SFProDisplay (Clean Modern Standard)
 
-Available Highlight Color Hexes (or null for pure typography):
-- 0x44FF453A (Rose Crimson)
-- 0x44BF5AF2 (Lilac Violet)
-- 0x44FFD60A (Amber Gold)
-- 0x4464D2FF (Soft Sky Blue)
-- 0x4432D74B (Emerald Green)
-- 0x33FFFFFF (Minimalist Glow)
+Available Highlight Hexes (or null):
+- 0x44FF453A (Rose)
+- 0x44BF5AF2 (Violet)
+- 0x44FFD60A (Amber)
+- 0x4464D2FF (Sky)
+- 0x4432D74B (Emerald)
+- 0x33FFFFFF (Glow)
 
-Return ONLY a valid JSON code block with an array of objects matching this exact schema:
+FORMAT (You can use "words" array or "word" string):
 ```json
 [
   {
-    "word": "ohkkk",
-    "fontFamily": "Coolvetica",
+    "words": ["adrien", "marinette", "luka"],
+    "fontFamily": "Beatrice",
     "bold": true,
     "italic": true,
-    "highlightColorValue": 1153374962
+    "highlightColorValue": 1157584186
   },
   {
-    "word": "gotchaa",
-    "fontFamily": "Beatrice",
+    "words": ["ohkkk", "gotchaa", "frfr"],
+    "fontFamily": "Coolvetica",
     "bold": false,
     "italic": true,
-    "highlightColorValue": 1157584186
+    "highlightColorValue": 1153374962
   }
 ]
 ```
-Do not include any other text outside the JSON code block.
+Return ONLY the JSON code block without filler text.
 ''';
 
   @override
@@ -106,8 +108,8 @@ Do not include any other text outside the JSON code block.
     });
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('AI prompt copied! Paste into ChatGPT to generate your personal rules.'),
-        duration: Duration(seconds: 3),
+        content: Text('Prompt copied. Paste into ChatGPT to generate your custom rules.'),
+        duration: Duration(seconds: 2),
         behavior: SnackBarBehavior.floating,
       ),
     );
@@ -117,7 +119,7 @@ Do not include any other text outside the JSON code block.
     final text = _pasteJsonController.text.trim();
     if (text.isEmpty) {
       setState(() {
-        _jsonErrorText = 'Please paste the JSON from ChatGPT first.';
+        _jsonErrorText = 'Paste the JSON from ChatGPT first.';
       });
       return;
     }
@@ -138,9 +140,9 @@ Do not include any other text outside the JSON code block.
       final newCustomWords = <CustomSmartWord>[];
       for (final item in parsed) {
         if (item is Map<String, dynamic>) {
-          newCustomWords.add(CustomSmartWord.fromJson(item));
+          newCustomWords.addAll(CustomSmartWord.parseJsonItem(item));
         } else if (item is Map) {
-          newCustomWords.add(CustomSmartWord.fromJson(Map<String, dynamic>.from(item)));
+          newCustomWords.addAll(CustomSmartWord.parseJsonItem(Map<String, dynamic>.from(item)));
         }
       }
 
@@ -158,14 +160,14 @@ Do not include any other text outside the JSON code block.
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('✨ Successfully activated ${newCustomWords.length} custom AI smart words!'),
+          content: Text('Activated ${newCustomWords.length} custom smart words.'),
           duration: const Duration(seconds: 3),
           behavior: SnackBarBehavior.floating,
         ),
       );
     } catch (e) {
       setState(() {
-        _jsonErrorText = 'Invalid JSON: Make sure to copy the full JSON block from ChatGPT.';
+        _jsonErrorText = 'Invalid JSON: Check ChatGPT code block.';
       });
     }
   }
@@ -234,7 +236,7 @@ Do not include any other text outside the JSON code block.
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         const Text(
-                          'Add Custom Smart Word',
+                          'Add Smart Word',
                           style: TextStyle(
                             fontFamily: AppFonts.sfProDisplay,
                             fontSize: 18,
@@ -244,23 +246,22 @@ Do not include any other text outside the JSON code block.
                         ),
                         GestureDetector(
                           onTap: () => Navigator.pop(modalCtx),
-                          child: const Icon(Icons.close_rounded, color: Color(0xFF8E8E93)),
+                          child: const Icon(CupertinoIcons.xmark, size: 16, color: Color(0xFF8E8E93)),
                         ),
                       ],
                     ),
                     const SizedBox(height: 16),
 
-                    // Word input
                     TextField(
                       controller: wordController,
                       autofocus: true,
                       style: const TextStyle(
                         fontFamily: AppFonts.sfProText,
-                        fontSize: 16,
+                        fontSize: 15,
                         color: Color(0xFFEDEDED),
                       ),
                       decoration: InputDecoration(
-                        hintText: 'Enter word or phrase (e.g. iconic, ily)',
+                        hintText: 'Enter word, name, or phrase...',
                         hintStyle: TextStyle(
                           fontFamily: AppFonts.sfProText,
                           fontSize: 14,
@@ -276,13 +277,12 @@ Do not include any other text outside the JSON code block.
                     ),
                     const SizedBox(height: 16),
 
-                    // Font Family Selector
                     const Text(
-                      'FONT FAMILY',
+                      'TYPOGRAPHY',
                       style: TextStyle(
                         fontFamily: AppFonts.sfProText,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
                         letterSpacing: 1.0,
                         color: Color(0xFF8E8E93),
                       ),
@@ -317,7 +317,6 @@ Do not include any other text outside the JSON code block.
                     ),
                     const SizedBox(height: 16),
 
-                    // Styling Controls (Bold / Italic / Underline)
                     Row(
                       children: [
                         _buildDialogToggle(
@@ -341,13 +340,12 @@ Do not include any other text outside the JSON code block.
                     ),
                     const SizedBox(height: 16),
 
-                    // Highlight Colors
                     const Text(
-                      'HIGHLIGHT BLUSH',
+                      'HIGHLIGHT',
                       style: TextStyle(
                         fontFamily: AppFonts.sfProText,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
                         letterSpacing: 1.0,
                         color: Color(0xFF8E8E93),
                       ),
@@ -387,7 +385,6 @@ Do not include any other text outside the JSON code block.
                     ),
                     const SizedBox(height: 22),
 
-                    // Save Button
                     GestureDetector(
                       onTap: () {
                         final word = wordController.text.trim();
@@ -418,7 +415,7 @@ Do not include any other text outside the JSON code block.
                         ),
                         alignment: Alignment.center,
                         child: const Text(
-                          'Save Smart Word',
+                          'Save Word',
                           style: TextStyle(
                             fontFamily: AppFonts.sfProText,
                             fontSize: 14,
@@ -479,7 +476,7 @@ Do not include any other text outside the JSON code block.
       body: SafeArea(
         child: Column(
           children: [
-            // ── 1. Top Header Bar ──
+            // ── Top Header ──
             Padding(
               padding: const EdgeInsets.only(left: 20, right: 20, top: 12, bottom: 8),
               child: Row(
@@ -492,8 +489,8 @@ Do not include any other text outside the JSON code block.
                       Navigator.pop(context);
                     },
                     child: Container(
-                      width: 40,
-                      height: 40,
+                      width: 38,
+                      height: 38,
                       decoration: BoxDecoration(
                         color: const Color(0xFF141416),
                         shape: BoxShape.circle,
@@ -504,13 +501,13 @@ Do not include any other text outside the JSON code block.
                       ),
                       child: const Icon(
                         CupertinoIcons.back,
-                        size: 18,
+                        size: 17,
                         color: Color(0xFFEDEDED),
                       ),
                     ),
                   ),
                   const Text(
-                    'Smart Words Studio',
+                    'Smart Words',
                     style: TextStyle(
                       fontFamily: AppFonts.sfProDisplay,
                       fontSize: 17,
@@ -523,8 +520,8 @@ Do not include any other text outside the JSON code block.
                     behavior: HitTestBehavior.opaque,
                     onTap: _showManualAddDialog,
                     child: Container(
-                      width: 40,
-                      height: 40,
+                      width: 38,
+                      height: 38,
                       decoration: BoxDecoration(
                         color: const Color(0xFF141416),
                         shape: BoxShape.circle,
@@ -535,7 +532,7 @@ Do not include any other text outside the JSON code block.
                       ),
                       child: const Icon(
                         CupertinoIcons.plus,
-                        size: 18,
+                        size: 17,
                         color: Color(0xFFEDEDED),
                       ),
                     ),
@@ -544,21 +541,20 @@ Do not include any other text outside the JSON code block.
               ),
             ),
 
-            // ── Main Scrollable Body ──
+            // ── Scrollable Body ──
             Expanded(
               child: ListView(
                 physics: const BouncingScrollPhysics(),
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                 children: [
-                  // ── 2. Live Interactive Sandbox (Makes Concept Crystal Clear) ──
+                  // ── 1. Live Interactive Typing Sandbox ──
                   Container(
-                    padding: const EdgeInsets.all(18),
+                    padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       color: const Color(0xFF141416),
-                      borderRadius: BorderRadius.circular(24),
+                      borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.12),
-                        width: 1.0,
+                        color: Colors.white.withValues(alpha: 0.10),
                       ),
                     ),
                     child: Column(
@@ -566,35 +562,26 @@ Do not include any other text outside the JSON code block.
                       children: [
                         const Row(
                           children: [
-                            Text('✨', style: TextStyle(fontSize: 16)),
-                            SizedBox(width: 8),
+                            Icon(CupertinoIcons.pencil_outline, size: 14, color: Color(0xFF8E8E93)),
+                            SizedBox(width: 6),
                             Text(
-                              'Live Typing Sandbox',
+                              'Live Preview',
                               style: TextStyle(
-                                fontFamily: AppFonts.sfProDisplay,
-                                fontSize: 15,
+                                fontFamily: AppFonts.sfProText,
+                                fontSize: 12,
                                 fontWeight: FontWeight.w600,
-                                color: Color(0xFFEDEDED),
+                                color: Color(0xFF8E8E93),
+                                letterSpacing: 0.2,
                               ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 4),
-                        const Text(
-                          'Type anything below to see Smart Words automatically transform into luxury typography as you write:',
-                          style: TextStyle(
-                            fontFamily: AppFonts.sfProText,
-                            fontSize: 12,
-                            color: Color(0xFF8E8E93),
-                            height: 1.3,
-                          ),
-                        ),
-                        const SizedBox(height: 14),
+                        const SizedBox(height: 10),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                           decoration: BoxDecoration(
                             color: const Color(0xFF000000),
-                            borderRadius: BorderRadius.circular(16),
+                            borderRadius: BorderRadius.circular(14),
                             border: Border.all(
                               color: Colors.white.withValues(alpha: 0.08),
                             ),
@@ -609,7 +596,7 @@ Do not include any other text outside the JSON code block.
                               height: 1.4,
                             ),
                             decoration: InputDecoration(
-                              hintText: 'Type: i love midnight vibes, manifesting frfr...',
+                              hintText: 'Type to test smart typography...',
                               hintStyle: TextStyle(
                                 fontFamily: AppFonts.sfProDisplay,
                                 fontSize: 15,
@@ -624,24 +611,16 @@ Do not include any other text outside the JSON code block.
                     ),
                   ),
 
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 14),
 
-                  // ── 3. Prominent AI Domain & Conversation Generator Studio ──
+                  // ── 2. AI Custom Generator Studio ──
                   Container(
-                    padding: const EdgeInsets.all(20),
+                    padding: const EdgeInsets.all(18),
                     decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          const Color(0xFF1B1B1F),
-                          const Color(0xFF141416),
-                        ],
-                      ),
-                      borderRadius: BorderRadius.circular(26),
+                      color: const Color(0xFF141416),
+                      borderRadius: BorderRadius.circular(22),
                       border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.15),
-                        width: 1.1,
+                        color: Colors.white.withValues(alpha: 0.12),
                       ),
                     ),
                     child: Column(
@@ -649,53 +628,51 @@ Do not include any other text outside the JSON code block.
                       children: [
                         const Row(
                           children: [
-                            Text('🧠', style: TextStyle(fontSize: 18)),
+                            Icon(CupertinoIcons.sparkles, size: 16, color: Color(0xFFEDEDED)),
                             SizedBox(width: 8),
                             Text(
-                              'AI Custom Rules Generator',
+                              'Generate with AI',
                               style: TextStyle(
                                 fontFamily: AppFonts.sfProDisplay,
-                                fontSize: 17,
+                                fontSize: 16,
                                 fontWeight: FontWeight.w600,
                                 color: Color(0xFFEDEDED),
-                                letterSpacing: -0.3,
                               ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 6),
+                        const SizedBox(height: 4),
                         const Text(
-                          'Let ChatGPT analyze our entire chat history, your texting habits, slang, and specific domain to generate personalized smart words.',
+                          'Extracts names, slang, and domain vocabulary from your chat history.',
                           style: TextStyle(
                             fontFamily: AppFonts.sfProText,
-                            fontSize: 13,
+                            fontSize: 12,
                             color: Color(0xFF8E8E93),
-                            height: 1.35,
                           ),
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 14),
 
-                        // Step 1: Copy Button
+                        // Copy Button
                         GestureDetector(
                           onTap: _copyPrompt,
                           child: Container(
                             width: double.infinity,
-                            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                            padding: const EdgeInsets.symmetric(vertical: 11),
                             decoration: BoxDecoration(
                               color: _copiedPrompt ? const Color(0xFF32D74B) : Colors.white,
-                              borderRadius: BorderRadius.circular(14),
+                              borderRadius: BorderRadius.circular(12),
                             ),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Icon(
-                                  _copiedPrompt ? Icons.check_circle_rounded : CupertinoIcons.doc_on_clipboard_fill,
-                                  size: 15,
+                                  _copiedPrompt ? CupertinoIcons.checkmark_alt : CupertinoIcons.doc_on_clipboard_fill,
+                                  size: 14,
                                   color: Colors.black,
                                 ),
-                                const SizedBox(width: 8),
+                                const SizedBox(width: 6),
                                 Text(
-                                  _copiedPrompt ? 'Prompt Copied! Paste into ChatGPT' : 'Step 1: Copy AI Prompt',
+                                  _copiedPrompt ? 'Prompt Copied' : '1. Copy AI Prompt',
                                   style: const TextStyle(
                                     fontFamily: AppFonts.sfProText,
                                     fontSize: 13,
@@ -708,31 +685,30 @@ Do not include any other text outside the JSON code block.
                           ),
                         ),
 
-                        const SizedBox(height: 14),
+                        const SizedBox(height: 10),
 
-                        // Step 2 & 3: Paste & Activate
+                        // Paste Area
                         Container(
-                          padding: const EdgeInsets.all(12),
+                          padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
                             color: const Color(0xFF0D0D0E),
-                            borderRadius: BorderRadius.circular(16),
+                            borderRadius: BorderRadius.circular(14),
                             border: Border.all(
                               color: Colors.white.withValues(alpha: 0.08),
                             ),
                           ),
                           child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               TextField(
                                 controller: _pasteJsonController,
-                                maxLines: 3,
+                                maxLines: 2,
                                 style: const TextStyle(
                                   fontFamily: AppFonts.sfProText,
                                   fontSize: 12,
                                   color: Color(0xFFEDEDED),
                                 ),
                                 decoration: InputDecoration(
-                                  hintText: 'Step 2: Paste ChatGPT JSON code block here...',
+                                  hintText: '2. Paste JSON response here...',
                                   hintStyle: TextStyle(
                                     fontFamily: AppFonts.sfProText,
                                     fontSize: 12,
@@ -743,35 +719,38 @@ Do not include any other text outside the JSON code block.
                                 ),
                               ),
                               if (_jsonErrorText != null) ...[
-                                const SizedBox(height: 6),
-                                Text(
-                                  _jsonErrorText!,
-                                  style: const TextStyle(
-                                    fontFamily: AppFonts.sfProText,
-                                    fontSize: 11,
-                                    color: Color(0xFFFF453A),
+                                const SizedBox(height: 4),
+                                Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: Text(
+                                    _jsonErrorText!,
+                                    style: const TextStyle(
+                                      fontFamily: AppFonts.sfProText,
+                                      fontSize: 11,
+                                      color: Color(0xFFFF453A),
+                                    ),
                                   ),
                                 ),
                               ],
-                              const SizedBox(height: 8),
+                              const SizedBox(height: 6),
                               GestureDetector(
                                 onTap: _importJsonRules,
                                 child: Container(
                                   width: double.infinity,
-                                  padding: const EdgeInsets.symmetric(vertical: 10),
+                                  padding: const EdgeInsets.symmetric(vertical: 9),
                                   decoration: BoxDecoration(
                                     color: const Color(0xFF2C2C2E),
-                                    borderRadius: BorderRadius.circular(12),
+                                    borderRadius: BorderRadius.circular(10),
                                     border: Border.all(
-                                      color: Colors.white.withValues(alpha: 0.12),
+                                      color: Colors.white.withValues(alpha: 0.10),
                                     ),
                                   ),
                                   alignment: Alignment.center,
                                   child: const Text(
-                                    '⚡ Step 3: Activate Custom Rules',
+                                    'Apply Rules',
                                     style: TextStyle(
                                       fontFamily: AppFonts.sfProText,
-                                      fontSize: 13,
+                                      fontSize: 12,
                                       fontWeight: FontWeight.w600,
                                       color: Color(0xFFEDEDED),
                                     ),
@@ -785,22 +764,23 @@ Do not include any other text outside the JSON code block.
                     ),
                   ),
 
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 18),
 
-                  // ── 4. Category Pills Filter ──
+                  // ── 3. Category Pills Filter ──
                   SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     physics: const BouncingScrollPhysics(),
                     child: Row(
                       children: [
-                        _buildCategoryPill('all', '✦ All Words'),
+                        _buildCategoryPill('all', 'All', CupertinoIcons.square_grid_2x2),
                         const SizedBox(width: 8),
                         ValueListenableBuilder<List<CustomSmartWord>>(
                           valueListenable: NotesService.instance.customSmartWordsNotifier,
                           builder: (context, cList, _) {
                             return _buildCategoryPill(
                               'custom',
-                              '🎯 Custom (${cList.length})',
+                              'Custom (${cList.length})',
+                              CupertinoIcons.slider_horizontal_3,
                             );
                           },
                         ),
@@ -810,7 +790,8 @@ Do not include any other text outside the JSON code block.
                             padding: const EdgeInsets.only(right: 8),
                             child: _buildCategoryPill(
                               c.title.toLowerCase(),
-                              '${c.emoji} ${c.title}',
+                              c.title,
+                              c.icon,
                             ),
                           );
                         }),
@@ -818,11 +799,11 @@ Do not include any other text outside the JSON code block.
                     ),
                   ),
 
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 14),
 
-                  // ── 5. Search Bar ──
+                  // ── 4. Search Bar ──
                   Container(
-                    height: 40,
+                    height: 38,
                     decoration: BoxDecoration(
                       color: const Color(0xFF141416),
                       borderRadius: BorderRadius.circular(12),
@@ -830,12 +811,12 @@ Do not include any other text outside the JSON code block.
                         color: Colors.white.withValues(alpha: 0.08),
                       ),
                     ),
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
                     child: Row(
                       children: [
                         Icon(
                           CupertinoIcons.search,
-                          size: 15,
+                          size: 14,
                           color: Colors.white.withValues(alpha: 0.4),
                         ),
                         const SizedBox(width: 8),
@@ -853,7 +834,7 @@ Do not include any other text outside the JSON code block.
                               color: Color(0xFFEDEDED),
                             ),
                             decoration: InputDecoration(
-                              hintText: 'Search words, slang, or styles...',
+                              hintText: 'Search words...',
                               hintStyle: TextStyle(
                                 fontFamily: AppFonts.sfProText,
                                 fontSize: 13,
@@ -871,8 +852,8 @@ Do not include any other text outside the JSON code block.
                               setState(() => _searchQuery = '');
                             },
                             child: const Icon(
-                              Icons.close_rounded,
-                              size: 15,
+                              CupertinoIcons.clear_thick_circled,
+                              size: 14,
                               color: Color(0xFF8E8E93),
                             ),
                           ),
@@ -880,9 +861,9 @@ Do not include any other text outside the JSON code block.
                     ),
                   ),
 
-                  const SizedBox(height: 18),
+                  const SizedBox(height: 16),
 
-                  // ── 6. Words Catalog Presentation (Specimen Cards) ──
+                  // ── 5. Word Catalog Display ──
                   if (_selectedCategory == 'all' || _selectedCategory == 'custom') ...[
                     ValueListenableBuilder<List<CustomSmartWord>>(
                       valueListenable: NotesService.instance.customSmartWordsNotifier,
@@ -893,14 +874,14 @@ Do not include any other text outside the JSON code block.
 
                         if (filteredCustom.isEmpty && _selectedCategory == 'custom') {
                           return Container(
-                            padding: const EdgeInsets.all(32),
+                            padding: const EdgeInsets.all(28),
                             alignment: Alignment.center,
                             child: const Text(
-                              'No custom rules yet.\nUse the AI generator above or tap + to add your first word!',
+                              'No custom words yet.\nGenerate with AI or tap + above.',
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 fontFamily: AppFonts.sfProText,
-                                fontSize: 13,
+                                fontSize: 12,
                                 color: Color(0xFF8E8E93),
                                 height: 1.4,
                               ),
@@ -916,15 +897,21 @@ Do not include any other text outside the JSON code block.
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                const Text(
-                                  'CUSTOM DYNAMIC RULES',
-                                  style: TextStyle(
-                                    fontFamily: AppFonts.sfProText,
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w700,
-                                    letterSpacing: 1.1,
-                                    color: Color(0xFF8E8E93),
-                                  ),
+                                const Row(
+                                  children: [
+                                    Icon(CupertinoIcons.slider_horizontal_3, size: 12, color: Color(0xFF8E8E93)),
+                                    SizedBox(width: 6),
+                                    Text(
+                                      'CUSTOM RULES',
+                                      style: TextStyle(
+                                        fontFamily: AppFonts.sfProText,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w700,
+                                        letterSpacing: 1.0,
+                                        color: Color(0xFF8E8E93),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                                 GestureDetector(
                                   onTap: () {
@@ -933,7 +920,7 @@ Do not include any other text outside the JSON code block.
                                     HapticFeedback.lightImpact();
                                   },
                                   child: const Text(
-                                    'Clear All',
+                                    'Clear',
                                     style: TextStyle(
                                       fontFamily: AppFonts.sfProText,
                                       fontSize: 11,
@@ -943,7 +930,7 @@ Do not include any other text outside the JSON code block.
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 10),
+                            const SizedBox(height: 8),
                             Wrap(
                               spacing: 8,
                               runSpacing: 8,
@@ -961,7 +948,6 @@ Do not include any other text outside the JSON code block.
                                 return _buildInteractiveWordCard(
                                   word: item.word,
                                   style: style,
-                                  fontLabel: item.fontFamily ?? 'Beatrice',
                                   onDelete: () {
                                     NotesService.instance.removeCustomSmartWord(item.word);
                                     setState(() {});
@@ -970,7 +956,7 @@ Do not include any other text outside the JSON code block.
                                 );
                               }).toList(),
                             ),
-                            const SizedBox(height: 24),
+                            const SizedBox(height: 20),
                           ],
                         );
                       },
@@ -991,21 +977,21 @@ Do not include any other text outside the JSON code block.
                     if (filteredWords.isEmpty) return const SizedBox.shrink();
 
                     return Padding(
-                      padding: const EdgeInsets.only(bottom: 24),
+                      padding: const EdgeInsets.only(bottom: 20),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Row(
                             children: [
-                              Text(cat.emoji, style: const TextStyle(fontSize: 15)),
+                              Icon(cat.icon, size: 12, color: const Color(0xFF8E8E93)),
                               const SizedBox(width: 6),
                               Text(
                                 cat.title.toUpperCase(),
                                 style: const TextStyle(
                                   fontFamily: AppFonts.sfProText,
-                                  fontSize: 11,
+                                  fontSize: 10,
                                   fontWeight: FontWeight.w700,
-                                  letterSpacing: 1.1,
+                                  letterSpacing: 1.0,
                                   color: Color(0xFF8E8E93),
                                 ),
                               ),
@@ -1020,7 +1006,7 @@ Do not include any other text outside the JSON code block.
                               ),
                             ],
                           ),
-                          const SizedBox(height: 10),
+                          const SizedBox(height: 8),
                           Wrap(
                             spacing: 8,
                             runSpacing: 8,
@@ -1028,7 +1014,6 @@ Do not include any other text outside the JSON code block.
                               return _buildInteractiveWordCard(
                                 word: w,
                                 style: cat.style,
-                                fontLabel: cat.style.fontFamily ?? 'Font',
                               );
                             }).toList(),
                           ),
@@ -1037,7 +1022,7 @@ Do not include any other text outside the JSON code block.
                     );
                   }),
 
-                  const SizedBox(height: 48),
+                  const SizedBox(height: 40),
                 ],
               ),
             ),
@@ -1047,7 +1032,7 @@ Do not include any other text outside the JSON code block.
     );
   }
 
-  Widget _buildCategoryPill(String key, String title) {
+  Widget _buildCategoryPill(String key, String title, IconData icon) {
     final isSelected = _selectedCategory == key;
     return GestureDetector(
       onTap: () {
@@ -1057,23 +1042,34 @@ Do not include any other text outside the JSON code block.
         });
       },
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
         decoration: BoxDecoration(
           color: isSelected ? Colors.white : const Color(0xFF141416),
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isSelected ? Colors.white : Colors.white.withValues(alpha: 0.10),
           ),
         ),
-        child: Text(
-          title,
-          style: TextStyle(
-            fontFamily: AppFonts.sfProText,
-            fontSize: 12,
-            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-            color: isSelected ? Colors.black : const Color(0xFFEDEDED),
-          ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 11,
+              color: isSelected ? Colors.black : const Color(0xFF8E8E93),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              title,
+              style: TextStyle(
+                fontFamily: AppFonts.sfProText,
+                fontSize: 12,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                color: isSelected ? Colors.black : const Color(0xFFEDEDED),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -1082,12 +1078,11 @@ Do not include any other text outside the JSON code block.
   Widget _buildInteractiveWordCard({
     required String word,
     required SpanStyle style,
-    required String fontLabel,
     VoidCallback? onDelete,
   }) {
     final TextStyle wordStyle = TextStyle(
       fontFamily: style.fontFamily,
-      fontSize: 14,
+      fontSize: 13,
       fontWeight: style.fontWeight,
       fontStyle: style.isItalic == true ? FontStyle.italic : FontStyle.normal,
       decoration: style.isUnderline == true ? TextDecoration.underline : TextDecoration.none,
@@ -1096,19 +1091,18 @@ Do not include any other text outside the JSON code block.
 
     return GestureDetector(
       onTap: () {
-        // Tapping word adds it into sandbox!
         final current = _sandboxController.text;
         _sandboxController.text = current.isEmpty ? word : '$current $word';
         _sandboxController.selection = TextSelection.collapsed(offset: _sandboxController.text.length);
         HapticFeedback.lightImpact();
       },
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
           color: style.highlightColorValue != null
               ? Color(style.highlightColorValue!)
               : const Color(0xFF141416),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(10),
           border: Border.all(
             color: Colors.white.withValues(alpha: 0.12),
             width: 1.0,
@@ -1119,13 +1113,13 @@ Do not include any other text outside the JSON code block.
           children: [
             Text(word, style: wordStyle),
             if (onDelete != null) ...[
-              const SizedBox(width: 8),
+              const SizedBox(width: 6),
               GestureDetector(
                 onTap: onDelete,
-                child: Icon(
-                  Icons.close_rounded,
-                  size: 13,
-                  color: Colors.white.withValues(alpha: 0.6),
+                child: const Icon(
+                  CupertinoIcons.xmark,
+                  size: 11,
+                  color: Color(0xFF8E8E93),
                 ),
               ),
             ],
