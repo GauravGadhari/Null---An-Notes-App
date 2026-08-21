@@ -335,7 +335,7 @@ class SettingsScreen extends StatelessWidget {
                     child: Column(
                       children: [
                         Text(
-                          'NULL v1.2.0',
+                          'NULL v1.0.3',
                           style: TextStyle(
                             fontFamily: AppFonts.sfProText,
                             fontSize: 11,
