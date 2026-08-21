@@ -21,12 +21,14 @@ class NotesService {
   static const String _smartWordsEnabledKey = 'smart_words_enabled';
   static const String _suggestAddTimestampKey = 'suggest_add_timestamp';
   static const String _customSmartWordsKey = 'custom_smart_words';
+  static const String _disabledSmartWordCategoriesKey = 'disabled_smart_categories';
 
   final ValueNotifier<bool> openOnNewNoteNotifier = ValueNotifier<bool>(true);
   final ValueNotifier<int> lastActivePageIndexNotifier = ValueNotifier<int>(0);
   final ValueNotifier<bool> smartWordsEnabledNotifier = ValueNotifier<bool>(true);
   final ValueNotifier<bool> suggestAddTimestampNotifier = ValueNotifier<bool>(true);
   final ValueNotifier<List<CustomSmartWord>> customSmartWordsNotifier = ValueNotifier<List<CustomSmartWord>>([]);
+  final ValueNotifier<Set<String>> disabledSmartCategoriesNotifier = ValueNotifier<Set<String>>({});
 
   /// Initializes Hive storage and hydrates saved notes and preferences from disk
   Future<void> init() async {
@@ -60,6 +62,12 @@ class NotesService {
           }
         }
         customSmartWordsNotifier.value = list;
+      }
+
+      final rawDisabledCategories = _box?.get(_disabledSmartWordCategoriesKey);
+      if (rawDisabledCategories != null && rawDisabledCategories is List) {
+        disabledSmartCategoriesNotifier.value =
+            rawDisabledCategories.map((e) => e.toString().toLowerCase()).toSet();
       }
     } catch (_) {
       // In isolated unit tests or cold boots, fail gracefully
@@ -108,6 +116,25 @@ class NotesService {
 
   void clearCustomSmartWords() {
     saveCustomSmartWords([]);
+  }
+
+  void disableSmartWordCategory(String categoryTitle) {
+    final updated = Set<String>.from(disabledSmartCategoriesNotifier.value);
+    updated.add(categoryTitle.toLowerCase());
+    disabledSmartCategoriesNotifier.value = updated;
+    _box?.put(_disabledSmartWordCategoriesKey, updated.toList());
+  }
+
+  void enableSmartWordCategory(String categoryTitle) {
+    final updated = Set<String>.from(disabledSmartCategoriesNotifier.value);
+    updated.remove(categoryTitle.toLowerCase());
+    disabledSmartCategoriesNotifier.value = updated;
+    _box?.put(_disabledSmartWordCategoriesKey, updated.toList());
+  }
+
+  void resetSmartWordCategories() {
+    disabledSmartCategoriesNotifier.value = {};
+    _box?.put(_disabledSmartWordCategoriesKey, []);
   }
 
   int getInitialPageIndex() {

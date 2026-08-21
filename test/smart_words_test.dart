@@ -194,5 +194,26 @@ void main() {
       // Restore
       NotesService.instance.smartWordsEnabledNotifier.value = true;
     });
+
+    test('disabling a built-in category stops matching its words until restored', () {
+      final engine = SmartWordsEngine.instance;
+      const text = 'marinette and adrien';
+
+      // Initially matches
+      final initialMatches = engine.findMatches(text);
+      expect(initialMatches.any((m) => m.word.toLowerCase() == 'marinette'), isTrue);
+
+      // Disable 'Miraculous Ladybug' category
+      NotesService.instance.disableSmartWordCategory('Miraculous Ladybug');
+
+      final matchesAfterDisable = engine.findMatches(text);
+      expect(matchesAfterDisable.any((m) => m.word.toLowerCase() == 'marinette'), isFalse);
+      expect(matchesAfterDisable.any((m) => m.word.toLowerCase() == 'adrien'), isTrue);
+
+      // Reset
+      NotesService.instance.resetSmartWordCategories();
+      final matchesAfterReset = engine.findMatches(text);
+      expect(matchesAfterReset.any((m) => m.word.toLowerCase() == 'marinette'), isTrue);
+    });
   });
 }

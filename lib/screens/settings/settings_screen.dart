@@ -37,8 +37,8 @@ class SettingsScreen extends StatelessWidget {
           SliverToBoxAdapter(
             child: Padding(
               padding: EdgeInsets.only(
-                left: 28.0,
-                right: 28.0,
+                left: 24.0,
+                right: 24.0,
                 top: topPadding,
                 bottom: 120.0,
               ),
@@ -49,18 +49,18 @@ class SettingsScreen extends StatelessWidget {
                     'settings',
                     style: TextStyle(
                       fontFamily: AppFonts.sfProDisplay,
-                      fontSize: 46,
+                      fontSize: 44,
                       fontWeight: FontWeight.w300,
                       letterSpacing: -1.2,
                       color: Color(0xFFEDEDED),
                     ),
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 8),
                   const Text(
                     'pure dark.\nzero friction.\njust your thoughts.',
                     style: TextStyle(
                       fontFamily: AppFonts.sfProDisplay,
-                      fontSize: 20,
+                      fontSize: 19,
                       fontWeight: FontWeight.w300,
                       color: Color(0xFF55555A),
                       height: 1.35,
@@ -68,378 +68,175 @@ class SettingsScreen extends StatelessWidget {
                     ),
                   ),
 
-                  const SizedBox(height: 44),
+                  const SizedBox(height: 38),
 
-                  // ── 1. Launch Behavior Toggle ──
-                  ValueListenableBuilder<bool>(
-                    valueListenable: NotesService.instance.openOnNewNoteNotifier,
-                    builder: (context, openOnNewNote, _) {
-                      return Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF141416).withValues(alpha: 0.85),
-                          borderRadius: BorderRadius.circular(24),
-                          border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.12),
-                            width: 1.0,
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    'Open to New Note',
-                                    style: TextStyle(
-                                      fontFamily: AppFonts.sfProDisplay,
-                                      fontSize: 17,
-                                      fontWeight: FontWeight.w500,
-                                      color: Color(0xFFEDEDED),
-                                      letterSpacing: -0.2,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 5),
-                                  Text(
-                                    openOnNewNote
-                                        ? 'Opens clean draft on launch'
-                                        : 'Resumes where you left off',
-                                    style: const TextStyle(
-                                      fontFamily: AppFonts.sfProText,
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w400,
-                                      color: Color(0xFF8E8E93),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            GestureDetector(
-                              behavior: HitTestBehavior.opaque,
-                              onTap: () {
-                                NotesService.instance.setOpenOnNewNote(!openOnNewNote);
-                              },
-                              child: AnimatedContainer(
-                                duration: const Duration(milliseconds: 250),
-                                curve: Curves.easeOutCubic,
-                                width: 50,
-                                height: 30,
-                                padding: const EdgeInsets.all(3),
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(15),
-                                  color: openOnNewNote
-                                      ? const Color(0xFFEDEDED)
-                                      : const Color(0xFF2C2C2E),
-                                ),
-                                alignment: openOnNewNote
-                                    ? Alignment.centerRight
-                                    : Alignment.centerLeft,
-                                child: Container(
-                                  width: 24,
-                                  height: 24,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: openOnNewNote
-                                        ? const Color(0xFF000000)
-                                        : const Color(0xFF8E8E93),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black.withValues(alpha: 0.3),
-                                        blurRadius: 4,
-                                        offset: const Offset(0, 1),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // ── 2. Smart Words Styling Toggle ──
-                  ValueListenableBuilder<bool>(
-                    valueListenable: NotesService.instance.smartWordsEnabledNotifier,
-                    builder: (context, smartWordsEnabled, _) {
-                      return Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF141416).withValues(alpha: 0.85),
-                          borderRadius: BorderRadius.circular(24),
-                          border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.12),
-                            width: 1.0,
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    'Smart Words Styling',
-                                    style: TextStyle(
-                                      fontFamily: AppFonts.sfProDisplay,
-                                      fontSize: 17,
-                                      fontWeight: FontWeight.w500,
-                                      color: Color(0xFFEDEDED),
-                                      letterSpacing: -0.2,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 5),
-                                  Text(
-                                    smartWordsEnabled
-                                        ? 'Expressive styles for emotions & slang'
-                                        : 'Pure unformatted text baseline',
-                                    style: const TextStyle(
-                                      fontFamily: AppFonts.sfProText,
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w400,
-                                      color: Color(0xFF8E8E93),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            GestureDetector(
-                              behavior: HitTestBehavior.opaque,
-                              onTap: () {
-                                NotesService.instance.setSmartWordsEnabled(!smartWordsEnabled);
-                              },
-                              child: AnimatedContainer(
-                                duration: const Duration(milliseconds: 250),
-                                curve: Curves.easeOutCubic,
-                                width: 50,
-                                height: 30,
-                                padding: const EdgeInsets.all(3),
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(15),
-                                  color: smartWordsEnabled
-                                      ? const Color(0xFFEDEDED)
-                                      : const Color(0xFF2C2C2E),
-                                ),
-                                alignment: smartWordsEnabled
-                                    ? Alignment.centerRight
-                                    : Alignment.centerLeft,
-                                child: Container(
-                                  width: 24,
-                                  height: 24,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: smartWordsEnabled
-                                        ? const Color(0xFF000000)
-                                        : const Color(0xFF8E8E93),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black.withValues(alpha: 0.3),
-                                        blurRadius: 4,
-                                        offset: const Offset(0, 1),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // ── 3. Smart Words Catalog & AI Import Tile ──
-                  GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onTap: () {
-                      HapticFeedback.lightImpact();
-                      Navigator.push(
-                        context,
-                        CupertinoPageRoute(
-                          builder: (_) => const SmartWordsScreen(),
-                        ),
-                      );
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF141416).withValues(alpha: 0.85),
-                        borderRadius: BorderRadius.circular(24),
-                        border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.12),
-                          width: 1.0,
-                        ),
+                  // ── SECTION 1: GENERAL GROUP ──
+                  _buildSectionHeader('GENERAL'),
+                  const SizedBox(height: 8),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF141416).withValues(alpha: 0.90),
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.12),
+                        width: 1.0,
                       ),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                    ),
+                    child: Column(
+                      children: [
+                        // Open to New Note
+                        ValueListenableBuilder<bool>(
+                          valueListenable: NotesService.instance.openOnNewNoteNotifier,
+                          builder: (context, openOnNewNote, _) {
+                            return _buildSettingToggleRow(
+                              title: 'Open to New Note',
+                              subtitle: openOnNewNote
+                                  ? 'Opens clean draft on launch'
+                                  : 'Resumes where you left off',
+                              icon: CupertinoIcons.plus_app,
+                              value: openOnNewNote,
+                              onChanged: (val) => NotesService.instance.setOpenOnNewNote(val),
+                            );
+                          },
+                        ),
+                        _buildDivider(),
+                        // Suggest Add Timestamp
+                        ValueListenableBuilder<bool>(
+                          valueListenable: NotesService.instance.suggestAddTimestampNotifier,
+                          builder: (context, suggestAddTimestamp, _) {
+                            return _buildSettingToggleRow(
+                              title: 'Suggest Add Timestamp',
+                              subtitle: suggestAddTimestamp
+                                  ? 'Shows "+ add timestamp" while editing'
+                                  : 'Never prompts timestamp button',
+                              icon: CupertinoIcons.clock,
+                              value: suggestAddTimestamp,
+                              onChanged: (val) => NotesService.instance.setSuggestAddTimestamp(val),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 28),
+
+                  // ── SECTION 2: TYPOGRAPHY & SMART WORDS GROUP ──
+                  _buildSectionHeader('TYPOGRAPHY & INTELLIGENCE'),
+                  const SizedBox(height: 8),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF141416).withValues(alpha: 0.90),
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.12),
+                        width: 1.0,
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        // Smart Words Styling Toggle
+                        ValueListenableBuilder<bool>(
+                          valueListenable: NotesService.instance.smartWordsEnabledNotifier,
+                          builder: (context, smartWordsEnabled, _) {
+                            return _buildSettingToggleRow(
+                              title: 'Smart Words Styling',
+                              subtitle: smartWordsEnabled
+                                  ? 'Expressive styles for emotions & slang'
+                                  : 'Pure unformatted text baseline',
+                              icon: CupertinoIcons.textformat_alt,
+                              value: smartWordsEnabled,
+                              onChanged: (val) => NotesService.instance.setSmartWordsEnabled(val),
+                            );
+                          },
+                        ),
+                        _buildDivider(),
+                        // Smart Words Studio Navigation
+                        GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onTap: () {
+                            HapticFeedback.lightImpact();
+                            Navigator.push(
+                              context,
+                              CupertinoPageRoute(
+                                builder: (_) => const SmartWordsScreen(),
+                              ),
+                            );
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+                            child: Row(
                               children: [
-                                const Row(
-                                  children: [
-                                    Text(
-                                      'Smart Words Catalog',
-                                      style: TextStyle(
-                                        fontFamily: AppFonts.sfProDisplay,
-                                        fontSize: 17,
-                                        fontWeight: FontWeight.w500,
-                                        color: Color(0xFFEDEDED),
-                                        letterSpacing: -0.2,
-                                      ),
-                                    ),
-                                    SizedBox(width: 6),
-                                    Text('✨', style: TextStyle(fontSize: 14)),
-                                  ],
+                                Container(
+                                  width: 32,
+                                  height: 32,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withValues(alpha: 0.08),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: const Icon(
+                                    CupertinoIcons.sparkles,
+                                    size: 16,
+                                    color: Color(0xFFEDEDED),
+                                  ),
                                 ),
-                                const SizedBox(height: 5),
-                                ValueListenableBuilder<List<CustomSmartWord>>(
-                                  valueListenable: NotesService.instance.customSmartWordsNotifier,
-                                  builder: (context, customList, _) {
-                                    return Text(
-                                      customList.isEmpty
-                                          ? 'View all styled words & AI ChatGPT import'
-                                          : '${customList.length} custom rules • Tap to view & import',
-                                      style: const TextStyle(
-                                        fontFamily: AppFonts.sfProText,
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w400,
-                                        color: Color(0xFF8E8E93),
+                                const SizedBox(width: 14),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const Text(
+                                        'Smart Words Catalog',
+                                        style: TextStyle(
+                                          fontFamily: AppFonts.sfProDisplay,
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w500,
+                                          color: Color(0xFFEDEDED),
+                                          letterSpacing: -0.2,
+                                        ),
                                       ),
-                                    );
-                                  },
+                                      const SizedBox(height: 3),
+                                      ValueListenableBuilder<List<CustomSmartWord>>(
+                                        valueListenable: NotesService.instance.customSmartWordsNotifier,
+                                        builder: (context, customList, _) {
+                                          return Text(
+                                            customList.isEmpty
+                                                ? 'View full catalog & AI ChatGPT generator'
+                                                : '${customList.length} custom rules • Tap to view & edit',
+                                            style: const TextStyle(
+                                              fontFamily: AppFonts.sfProText,
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w400,
+                                              color: Color(0xFF8E8E93),
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const Icon(
+                                  CupertinoIcons.chevron_forward,
+                                  size: 16,
+                                  color: Color(0xFF8E8E93),
                                 ),
                               ],
                             ),
                           ),
-                          const Icon(
-                            CupertinoIcons.chevron_forward,
-                            size: 18,
-                            color: Color(0xFF8E8E93),
-                          ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   ),
 
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 32),
 
-                  // ── 4. Suggest Add Timestamp in Editor ──
-                  ValueListenableBuilder<bool>(
-                    valueListenable: NotesService.instance.suggestAddTimestampNotifier,
-                    builder: (context, suggestAddTimestamp, _) {
-                      return Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF141416).withValues(alpha: 0.85),
-                          borderRadius: BorderRadius.circular(24),
-                          border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.12),
-                            width: 1.0,
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    'Suggest Add Timestamp',
-                                    style: TextStyle(
-                                      fontFamily: AppFonts.sfProDisplay,
-                                      fontSize: 17,
-                                      fontWeight: FontWeight.w500,
-                                      color: Color(0xFFEDEDED),
-                                      letterSpacing: -0.2,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 5),
-                                  Text(
-                                    suggestAddTimestamp
-                                        ? 'Shows "+ Add timestamp" button while editing'
-                                        : 'Never prompts to add timestamp',
-                                    style: const TextStyle(
-                                      fontFamily: AppFonts.sfProText,
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w400,
-                                      color: Color(0xFF8E8E93),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            GestureDetector(
-                              behavior: HitTestBehavior.opaque,
-                              onTap: () {
-                                NotesService.instance.setSuggestAddTimestamp(!suggestAddTimestamp);
-                              },
-                              child: AnimatedContainer(
-                                duration: const Duration(milliseconds: 250),
-                                curve: Curves.easeOutCubic,
-                                width: 50,
-                                height: 30,
-                                padding: const EdgeInsets.all(3),
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(15),
-                                  color: suggestAddTimestamp
-                                      ? const Color(0xFFEDEDED)
-                                      : const Color(0xFF2C2C2E),
-                                ),
-                                alignment: suggestAddTimestamp
-                                    ? Alignment.centerRight
-                                    : Alignment.centerLeft,
-                                child: Container(
-                                  width: 24,
-                                  height: 24,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: suggestAddTimestamp
-                                        ? const Color(0xFF000000)
-                                        : const Color(0xFF8E8E93),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black.withValues(alpha: 0.3),
-                                        blurRadius: 4,
-                                        offset: const Offset(0, 1),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
-
-                  const SizedBox(height: 38),
-
-                  // ── 5. Developer & Craft Section ──
-                  const Text(
-                    'DEVELOPER',
-                    style: TextStyle(
-                      fontFamily: AppFonts.sfProDisplay,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 1.2,
-                      color: Color(0xFF636366),
-                    ),
-                  ),
-
-                  const SizedBox(height: 14),
-
+                  // ── SECTION 3: DEVELOPER GROUP ──
+                  _buildSectionHeader('DEVELOPER'),
+                  const SizedBox(height: 8),
                   Container(
-                    padding: const EdgeInsets.all(22),
+                    padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF141416).withValues(alpha: 0.85),
+                      color: const Color(0xFF141416).withValues(alpha: 0.90),
                       borderRadius: BorderRadius.circular(24),
                       border: Border.all(
                         color: Colors.white.withValues(alpha: 0.12),
@@ -505,58 +302,24 @@ class SettingsScreen extends StatelessWidget {
                           ],
                         ),
 
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 18),
 
-                        Container(
-                          width: double.infinity,
-                          height: 1.0,
-                          color: Colors.white.withValues(alpha: 0.08),
-                        ),
-
-                        const SizedBox(height: 14),
-
-                        // Interactive Social / Link Chips
+                        // Action Buttons: GitHub & Portfolio
                         Row(
                           children: [
                             Expanded(
-                              child: _buildDevActionChip(
-                                icon: CupertinoIcons.link,
+                              child: _buildActionButton(
+                                icon: CupertinoIcons.chevron_left_slash_chevron_right,
                                 label: 'GitHub',
                                 onTap: () => _openUrl('https://github.com/GauravGadhari'),
                               ),
                             ),
-                            const SizedBox(width: 8),
+                            const SizedBox(width: 10),
                             Expanded(
-                              child: _buildDevActionChip(
+                              child: _buildActionButton(
                                 icon: CupertinoIcons.globe,
                                 label: 'Portfolio',
-                                onTap: () => _openUrl('https://this-is-gaurav.vercel.app'),
-                              ),
-                            ),
-                          ],
-                        ),
-
-                        const SizedBox(height: 16),
-
-                        // Footer Note
-                        const Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              '100% Offline & Private',
-                              style: TextStyle(
-                                fontFamily: AppFonts.sfProText,
-                                fontSize: 11,
-                                color: Color(0xFF636366),
-                              ),
-                            ),
-                            Text(
-                              'Null v1.0.2',
-                              style: TextStyle(
-                                fontFamily: AppFonts.sfProText,
-                                fontSize: 11,
-                                color: Color(0xFF48484A),
-                                fontWeight: FontWeight.w500,
+                                onTap: () => _openUrl('https://gauravgadhari.dev'),
                               ),
                             ),
                           ],
@@ -565,7 +328,34 @@ class SettingsScreen extends StatelessWidget {
                     ),
                   ),
 
-                  const SizedBox(height: 60),
+                  const SizedBox(height: 40),
+
+                  // Subtle Footer Brand mark
+                  Center(
+                    child: Column(
+                      children: [
+                        Text(
+                          'NULL v1.2.0',
+                          style: TextStyle(
+                            fontFamily: AppFonts.sfProText,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 1.5,
+                            color: Colors.white.withValues(alpha: 0.25),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Crafted with obsessive precision',
+                          style: TextStyle(
+                            fontFamily: AppFonts.sfProText,
+                            fontSize: 11,
+                            color: Colors.white.withValues(alpha: 0.18),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -575,34 +365,161 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildDevActionChip({
+  Widget _buildSectionHeader(String title) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 4),
+      child: Text(
+        title,
+        style: const TextStyle(
+          fontFamily: AppFonts.sfProText,
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 1.0,
+          color: Color(0xFF636366),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDivider() {
+    return Container(
+      height: 1.0,
+      margin: const EdgeInsets.symmetric(horizontal: 18),
+      color: Colors.white.withValues(alpha: 0.07),
+    );
+  }
+
+  Widget _buildSettingToggleRow({
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required bool value,
+    required ValueChanged<bool> onChanged,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+      child: Row(
+        children: [
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(
+              icon,
+              size: 16,
+              color: const Color(0xFFEDEDED),
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontFamily: AppFonts.sfProDisplay,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    color: Color(0xFFEDEDED),
+                    letterSpacing: -0.2,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  subtitle,
+                  style: const TextStyle(
+                    fontFamily: AppFonts.sfProText,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w400,
+                    color: Color(0xFF8E8E93),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () {
+              HapticFeedback.lightImpact();
+              onChanged(!value);
+            },
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 250),
+              curve: Curves.easeOutCubic,
+              width: 48,
+              height: 28,
+              padding: const EdgeInsets.all(3),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(14),
+                color: value
+                    ? const Color(0xFFEDEDED)
+                    : const Color(0xFF2C2C2E),
+              ),
+              alignment: value ? Alignment.centerRight : Alignment.centerLeft,
+              child: Container(
+                width: 22,
+                height: 22,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: value ? const Color(0xFF000000) : const Color(0xFF8E8E93),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.3),
+                      blurRadius: 4,
+                      offset: const Offset(0, 1),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionButton({
     required IconData icon,
     required String label,
     required VoidCallback onTap,
   }) {
     return GestureDetector(
-      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      onTap: () {
+        HapticFeedback.lightImpact();
+        onTap();
+      },
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        padding: const EdgeInsets.symmetric(vertical: 11),
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.05),
+          color: const Color(0xFF1E1E22),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: Colors.white.withValues(alpha: 0.09),
+            color: Colors.white.withValues(alpha: 0.10),
+            width: 1.0,
           ),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 14, color: Colors.white.withValues(alpha: 0.7)),
-            const SizedBox(width: 6),
+            Icon(
+              icon,
+              size: 14,
+              color: const Color(0xFFEDEDED),
+            ),
+            const SizedBox(width: 8),
             Text(
               label,
               style: const TextStyle(
                 fontFamily: AppFonts.sfProText,
-                fontSize: 12,
+                fontSize: 13,
                 fontWeight: FontWeight.w500,
                 color: Color(0xFFEDEDED),
+                letterSpacing: -0.1,
               ),
             ),
           ],

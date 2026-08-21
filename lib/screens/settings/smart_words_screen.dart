@@ -93,6 +93,69 @@ Return ONLY the JSON code block without filler text.
     super.dispose();
   }
 
+  Future<bool> _showConfirmationDialog({
+    required String title,
+    required String message,
+    required String confirmLabel,
+    bool isDestructive = true,
+  }) async {
+    HapticFeedback.lightImpact();
+    final result = await showCupertinoDialog<bool>(
+      context: context,
+      builder: (ctx) {
+        return CupertinoTheme(
+          data: const CupertinoThemeData(brightness: Brightness.dark),
+          child: CupertinoAlertDialog(
+            title: Text(
+              title,
+              style: const TextStyle(
+                fontFamily: AppFonts.sfProDisplay,
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            content: Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: Text(
+                message,
+                style: const TextStyle(
+                  fontFamily: AppFonts.sfProText,
+                  fontSize: 13,
+                  color: Color(0xFF8E8E93),
+                ),
+              ),
+            ),
+            actions: [
+              CupertinoDialogAction(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text(
+                  'Cancel',
+                  style: TextStyle(
+                    fontFamily: AppFonts.sfProText,
+                    color: Color(0xFFEDEDED),
+                  ),
+                ),
+              ),
+              CupertinoDialogAction(
+                isDestructiveAction: isDestructive,
+                onPressed: () => Navigator.pop(ctx, true),
+                child: Text(
+                  confirmLabel,
+                  style: TextStyle(
+                    fontFamily: AppFonts.sfProText,
+                    fontWeight: FontWeight.w600,
+                    color: isDestructive ? const Color(0xFFFF453A) : const Color(0xFF0A84FF),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+    return result ?? false;
+  }
+
   void _copyPrompt() {
     Clipboard.setData(const ClipboardData(text: _chatGptPrompt));
     HapticFeedback.mediumImpact();
@@ -473,11 +536,18 @@ Return ONLY the JSON code block without filler text.
                       children: [
                         if (isCustom && initialWord != null) ...[
                           GestureDetector(
-                            onTap: () {
-                              NotesService.instance.removeCustomSmartWord(initialWord.word);
-                              Navigator.pop(modalCtx);
-                              setState(() {});
-                              HapticFeedback.lightImpact();
+                            onTap: () async {
+                              final confirmed = await _showConfirmationDialog(
+                                title: 'Delete "${initialWord.word}"?',
+                                message: 'This smart word rule will be permanently deleted.',
+                                confirmLabel: 'Delete Rule',
+                              );
+                              if (confirmed && modalCtx.mounted) {
+                                NotesService.instance.removeCustomSmartWord(initialWord.word);
+                                Navigator.pop(modalCtx);
+                                setState(() {});
+                                HapticFeedback.mediumImpact();
+                              }
                             },
                             child: Container(
                               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -590,6 +660,7 @@ Return ONLY the JSON code block without filler text.
   @override
   Widget build(BuildContext context) {
     final categories = SmartWordsEngine.instance.getBuiltInCategories();
+    final disabledCategories = NotesService.instance.disabledSmartCategoriesNotifier.value;
 
     return Scaffold(
       backgroundColor: Colors.black,
@@ -886,7 +957,7 @@ Return ONLY the JSON code block without filler text.
 
                   const SizedBox(height: 18),
 
-                  // ── 3. Category Pills Filter ──
+                  // ── 3. Category Pills Filter & Reset Button ──
                   SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     physics: const BouncingScrollPhysics(),
@@ -915,6 +986,48 @@ Return ONLY the JSON code block without filler text.
                             ),
                           );
                         }),
+                        if (disabledCategories.isNotEmpty) ...[
+                          GestureDetector(
+                            onTap: () async {
+                              final confirmed = await _showConfirmationDialog(
+                                title: 'Restore All Default Groups?',
+                                message: 'This will restore all ${disabledCategories.length} hidden default word groups.',
+                                confirmLabel: 'Restore Groups',
+                                isDestructive: false,
+                              );
+                              if (confirmed) {
+                                NotesService.instance.resetSmartWordCategories();
+                                setState(() {});
+                                HapticFeedback.mediumImpact();
+                              }
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF1E1E22),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: Colors.white.withValues(alpha: 0.15),
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(CupertinoIcons.arrow_counterclockwise, size: 11, color: Color(0xFFEDEDED)),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    'Restore Defaults (${disabledCategories.length})',
+                                    style: const TextStyle(
+                                      fontFamily: AppFonts.sfProText,
+                                      fontSize: 12,
+                                      color: Color(0xFFEDEDED),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ),
@@ -1034,10 +1147,17 @@ Return ONLY the JSON code block without filler text.
                                   ],
                                 ),
                                 GestureDetector(
-                                  onTap: () {
-                                    NotesService.instance.clearCustomSmartWords();
-                                    setState(() {});
-                                    HapticFeedback.lightImpact();
+                                  onTap: () async {
+                                    final confirmed = await _showConfirmationDialog(
+                                      title: 'Clear All Custom Rules?',
+                                      message: 'This will delete all ${cList.length} custom smart words permanently.',
+                                      confirmLabel: 'Clear All',
+                                    );
+                                    if (confirmed) {
+                                      NotesService.instance.clearCustomSmartWords();
+                                      setState(() {});
+                                      HapticFeedback.mediumImpact();
+                                    }
                                   },
                                   child: const Text(
                                     'Clear',
@@ -1072,10 +1192,17 @@ Return ONLY the JSON code block without filler text.
                                     initialWord: item,
                                     isCustom: true,
                                   ),
-                                  onDelete: () {
-                                    NotesService.instance.removeCustomSmartWord(item.word);
-                                    setState(() {});
-                                    HapticFeedback.lightImpact();
+                                  onDelete: () async {
+                                    final confirmed = await _showConfirmationDialog(
+                                      title: 'Delete "${item.word}"?',
+                                      message: 'This custom smart word rule will be removed.',
+                                      confirmLabel: 'Delete',
+                                    );
+                                    if (confirmed) {
+                                      NotesService.instance.removeCustomSmartWord(item.word);
+                                      setState(() {});
+                                      HapticFeedback.lightImpact();
+                                    }
                                   },
                                 );
                               }).toList(),
@@ -1126,6 +1253,29 @@ Return ONLY the JSON code block without filler text.
                                   fontFamily: AppFonts.sfProText,
                                   fontSize: 11,
                                   color: Color(0xFF636366),
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              GestureDetector(
+                                onTap: () async {
+                                  final confirmed = await _showConfirmationDialog(
+                                    title: 'Delete "${cat.title}" Group?',
+                                    message: 'Smart words from this group will no longer be styled or highlighted in your notes.',
+                                    confirmLabel: 'Delete Group',
+                                  );
+                                  if (confirmed) {
+                                    NotesService.instance.disableSmartWordCategory(cat.title);
+                                    setState(() {});
+                                    HapticFeedback.mediumImpact();
+                                  }
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.all(4),
+                                  child: const Icon(
+                                    CupertinoIcons.trash,
+                                    size: 13,
+                                    color: Color(0xFF8E8E93),
+                                  ),
                                 ),
                               ),
                             ],

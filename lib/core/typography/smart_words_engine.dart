@@ -170,8 +170,8 @@ class SmartWordsEngine {
   );
 
   /// Returns catalog of all built-in smart categories
-  List<SmartWordCategory> getBuiltInCategories() {
-    return const [
+  List<SmartWordCategory> getBuiltInCategories({bool includeDisabled = false}) {
+    const list = [
       SmartWordCategory(
         title: 'Love & Affection',
         icon: CupertinoIcons.heart_fill,
@@ -243,6 +243,10 @@ class SmartWordsEngine {
         style: _miraculousLoreStyle,
       ),
     ];
+
+    if (includeDisabled) return list;
+    final disabled = NotesService.instance.disabledSmartCategoriesNotifier.value;
+    return list.where((c) => !disabled.contains(c.title.toLowerCase())).toList();
   }
 
   /// Scans unformatted text and returns all non-overlapping smart matches.
@@ -282,7 +286,9 @@ class SmartWordsEngine {
       }
     }
 
-    // 2. Scan Built-in Defaults
+    // 2. Scan Built-in Defaults (only if category not disabled)
+    final disabled = NotesService.instance.disabledSmartCategoriesNotifier.value;
+
     void scanDefault(RegExp pattern, SpanStyle style) {
       for (final m in pattern.allMatches(text)) {
         defaultMatches.add(SmartWordMatch(
@@ -295,16 +301,16 @@ class SmartWordsEngine {
       }
     }
 
-    scanDefault(_miraculousLadybugPattern, _miraculousLadybugStyle);
-    scanDefault(_catNoirPattern, _catNoirStyle);
-    scanDefault(_miraculousLorePattern, _miraculousLoreStyle);
-    scanDefault(_lovePattern, _loveStyle);
-    scanDefault(_intensityPattern, _intensityStyle);
-    scanDefault(_slangPattern, _slangStyle);
-    scanDefault(_wealthPattern, _wealthStyle);
-    scanDefault(_manifestPattern, _manifestStyle);
-    scanDefault(_voidPattern, _voidStyle);
-    scanDefault(_identityPattern, _identityStyle);
+    if (!disabled.contains('miraculous ladybug')) scanDefault(_miraculousLadybugPattern, _miraculousLadybugStyle);
+    if (!disabled.contains('cat noir')) scanDefault(_catNoirPattern, _catNoirStyle);
+    if (!disabled.contains('miraculous lore')) scanDefault(_miraculousLorePattern, _miraculousLoreStyle);
+    if (!disabled.contains('love & affection')) scanDefault(_lovePattern, _loveStyle);
+    if (!disabled.contains('intensity & drama')) scanDefault(_intensityPattern, _intensityStyle);
+    if (!disabled.contains('gen z slang')) scanDefault(_slangPattern, _slangStyle);
+    if (!disabled.contains('wealth & ambition')) scanDefault(_wealthPattern, _wealthStyle);
+    if (!disabled.contains('manifestation')) scanDefault(_manifestPattern, _manifestStyle);
+    if (!disabled.contains('void & 3am')) scanDefault(_voidPattern, _voidStyle);
+    if (!disabled.contains('identity & self')) scanDefault(_identityPattern, _identityStyle);
 
     // Combine with custom having top precedence
     final allMatches = <SmartWordMatch>[...customMatches];
