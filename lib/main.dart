@@ -392,15 +392,21 @@ class _NullUniversalShellState extends State<NullUniversalShell>
         final isFocused = NotesService.instance.isEditorFocusedNotifier.value;
         final hasToolbar = _toolbarMorphController.value > 0.01;
 
+        // 1. If in active editor mode, exit focus and dismiss toolbar
         if (isFocused || hasToolbar) {
-          // Exit active editor mode cleanly without closing the app
           NotesService.instance.onDismissKeyboard?.call();
           FocusManager.instance.primaryFocus?.unfocus();
           _toolbarMorphController.reverse();
           return;
         }
 
-        // When resting in normal view, allow standard app close
+        // 2. If in awake state, smoothly transition to sleep mode
+        if (_state == EditorState.awake && !_isSleepingAnim) {
+          _putToSleep();
+          return;
+        }
+
+        // 3. If already in sleep mode, close / minimize the app
         SystemNavigator.pop();
       },
       child: Scaffold(
