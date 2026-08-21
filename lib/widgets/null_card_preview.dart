@@ -37,14 +37,167 @@ class NullCardPreview extends StatelessWidget {
     this.scaleFactor = 1.0,
   });
 
-  String _formatTime(DateTime time) {
-    int hour = time.hour;
-    final int minute = time.minute;
-    final String period = hour >= 12 ? 'PM' : 'AM';
-    hour = hour % 12;
+  Widget _buildCardTimeHeader(QuoteItem quote, DateTime time) {
+    int hour = time.hour % 12;
     if (hour == 0) hour = 12;
-    final String minuteStr = minute < 10 ? '0$minute' : '$minute';
-    return "It's\n$hour:$minuteStr $period";
+    final String minuteStr = time.minute < 10 ? '0${time.minute}' : '${time.minute}';
+    final String period = time.hour >= 12 ? 'PM' : 'AM';
+    final style = quote.timeStyle;
+
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+    if (style == 1) {
+      // Style 1: Editorial Serif
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'written at',
+            style: TextStyle(
+              fontFamily: AppFonts.beatrice,
+              fontSize: 14.0 * scaleFactor,
+              fontStyle: FontStyle.italic,
+              color: Colors.white.withValues(alpha: 0.45),
+            ),
+          ),
+          SizedBox(height: 2.0 * scaleFactor),
+          Text(
+            '$hour:$minuteStr $period',
+            style: TextStyle(
+              fontFamily: AppFonts.timesNewRoman,
+              fontSize: 26.0 * scaleFactor,
+              fontStyle: FontStyle.italic,
+              color: Colors.white.withValues(alpha: 0.85),
+            ),
+          ),
+          SizedBox(height: 8.0 * scaleFactor),
+          Container(
+            width: 28.0 * scaleFactor,
+            height: 1.0 * scaleFactor,
+            color: Colors.white.withValues(alpha: 0.25),
+          ),
+          SizedBox(height: 18.0 * scaleFactor),
+        ],
+      );
+    } else if (style == 2) {
+      // Style 2: Calendar Date
+      final weekday = days[(time.weekday - 1).clamp(0, 6)];
+      final month = months[(time.month - 1).clamp(0, 11)];
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '$weekday, $month ${time.day}'.toUpperCase(),
+            style: TextStyle(
+              fontFamily: AppFonts.sfProText,
+              fontSize: 11.0 * scaleFactor,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 1.0 * scaleFactor,
+              color: Colors.white.withValues(alpha: 0.45),
+            ),
+          ),
+          SizedBox(height: 2.0 * scaleFactor),
+          Text(
+            '$hour:$minuteStr $period',
+            style: TextStyle(
+              fontFamily: AppFonts.sfProDisplay,
+              fontSize: 26.0 * scaleFactor,
+              fontWeight: FontWeight.w300,
+              color: Colors.white.withValues(alpha: 0.85),
+            ),
+          ),
+          SizedBox(height: 8.0 * scaleFactor),
+          Container(
+            width: 4.0 * scaleFactor,
+            height: 4.0 * scaleFactor,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.25),
+              shape: BoxShape.circle,
+            ),
+          ),
+          SizedBox(height: 18.0 * scaleFactor),
+        ],
+      );
+    } else if (style == 3) {
+      // Style 3: Minimal Zen
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '$hour:$minuteStr $period',
+            style: TextStyle(
+              fontFamily: AppFonts.sfProDisplay,
+              fontSize: 20.0 * scaleFactor,
+              fontWeight: FontWeight.w200,
+              color: Colors.white.withValues(alpha: 0.55),
+            ),
+          ),
+          SizedBox(height: 18.0 * scaleFactor),
+        ],
+      );
+    } else if (style == 4) {
+      // Style 4: Digital 24H
+      final h24 = time.hour.toString().padLeft(2, '0');
+      final m24 = time.minute.toString().padLeft(2, '0');
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '// 24H TIMESTAMP',
+            style: TextStyle(
+              fontFamily: AppFonts.sfProText,
+              fontSize: 9.5 * scaleFactor,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 1.5 * scaleFactor,
+              color: Colors.white.withValues(alpha: 0.40),
+            ),
+          ),
+          SizedBox(height: 2.0 * scaleFactor),
+          Text(
+            '$h24:$m24',
+            style: TextStyle(
+              fontFamily: AppFonts.sfProRounded,
+              fontSize: 28.0 * scaleFactor,
+              fontWeight: FontWeight.w600,
+              color: Colors.white.withValues(alpha: 0.85),
+            ),
+          ),
+          SizedBox(height: 8.0 * scaleFactor),
+          Container(
+            width: 22.0 * scaleFactor,
+            height: 1.5 * scaleFactor,
+            color: const Color(0xFF64D2FF).withValues(alpha: 0.35),
+          ),
+          SizedBox(height: 18.0 * scaleFactor),
+        ],
+      );
+    }
+
+    // Default Style 0: Classic Null
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          "It's\n$hour:$minuteStr $period",
+          style: TextStyle(
+            fontFamily: AppFonts.sfProDisplay,
+            fontSize: 16.0 * scaleFactor,
+            color: Colors.white.withValues(alpha: 0.45),
+            height: 1.25,
+            fontWeight: FontWeight.w300,
+            letterSpacing: 0.5 * scaleFactor,
+          ),
+        ),
+        SizedBox(height: 12.0 * scaleFactor),
+        Container(
+          width: 24.0 * scaleFactor,
+          height: 2.0 * scaleFactor,
+          color: Colors.white.withValues(alpha: 0.18),
+        ),
+        SizedBox(height: 24.0 * scaleFactor),
+      ],
+    );
   }
 
   @override
@@ -58,13 +211,12 @@ class NullCardPreview extends StatelessWidget {
       fontFamily: quote.fontFamily.isNotEmpty ? quote.fontFamily : AppFonts.sfProDisplay,
       fontSize: baseFontSize,
       color: Colors.white,
-      height: 1.18,
-      letterSpacing: -0.8 * scaleFactor,
       fontWeight: quote.fontWeight,
+      letterSpacing: quote.letterSpacing * scaleFactor,
+      height: quote.height,
     );
 
-    // Build rich text with controller to render both user spans and smart words styling
-    final controller = NullRichTextController(
+    final NullRichTextController controller = NullRichTextController(
       text: displayText,
       spans: note.spans,
     );
@@ -91,24 +243,7 @@ class NullCardPreview extends StatelessWidget {
         children: [
           // 1. Top Section: Optional Time Header
           if (showTimestamp && quote.showTime) ...[
-            Text(
-              _formatTime(note.createdAt),
-              style: TextStyle(
-                fontFamily: AppFonts.sfProDisplay,
-                fontSize: 16.0 * scaleFactor,
-                color: Colors.white.withValues(alpha: 0.45),
-                height: 1.25,
-                fontWeight: FontWeight.w300,
-                letterSpacing: 0.5 * scaleFactor,
-              ),
-            ),
-            SizedBox(height: 12.0 * scaleFactor),
-            Container(
-              width: 24.0 * scaleFactor,
-              height: 2.0 * scaleFactor,
-              color: Colors.white.withValues(alpha: 0.18),
-            ),
-            SizedBox(height: 24.0 * scaleFactor),
+            _buildCardTimeHeader(quote, note.createdAt),
           ] else ...[
             SizedBox(height: 12.0 * scaleFactor),
           ],

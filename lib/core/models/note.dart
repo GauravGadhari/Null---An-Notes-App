@@ -12,6 +12,7 @@ class QuoteItem {
   final double letterSpacing;
   final double height;
   final int? backgroundColorValue;
+  final int timeStyle; // 0: Classic Null, 1: Editorial Serif, 2: Calendar Date, 3: Minimal Zen, 4: Digital 24H
 
   static const List<int> backgroundPalette = [
     0xFF000000, // Pure OLED Obsidian (Default)
@@ -33,6 +34,7 @@ class QuoteItem {
     this.letterSpacing = -1.0,
     this.height = 1.18,
     this.backgroundColorValue,
+    this.timeStyle = 0,
   });
 
   Map<String, dynamic> toJson() => {
@@ -46,6 +48,7 @@ class QuoteItem {
         'letterSpacing': letterSpacing,
         'height': height,
         'bgColor': backgroundColorValue,
+        'timeStyle': timeStyle,
       };
 
   factory QuoteItem.fromJson(Map<String, dynamic> json) => QuoteItem(
@@ -66,6 +69,7 @@ class QuoteItem {
         letterSpacing: (json['letterSpacing'] as num?)?.toDouble() ?? -1.0,
         height: (json['height'] as num?)?.toDouble() ?? 1.18,
         backgroundColorValue: json['bgColor'] as int?,
+        timeStyle: json['timeStyle'] as int? ?? 0,
       );
 
   Color get backgroundColor =>

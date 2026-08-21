@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../core/controllers/null_rich_text_controller.dart';
 import '../../core/fonts/app_fonts.dart';
 import '../../core/models/note.dart';
@@ -418,6 +420,34 @@ class _EditorScreenState extends State<EditorScreen> {
     super.dispose();
   }
 
+  void _cycleTimeStyle() {
+    final nextStyle = (_quote.timeStyle + 1) % 5;
+    setState(() {
+      _quote = QuoteItem(
+        mainText: _quote.mainText,
+        dimPrompt: _quote.dimPrompt,
+        showTime: _quote.showTime,
+        showDivider: _quote.showDivider,
+        fontFamily: _quote.fontFamily,
+        fontSize: _quote.fontSize,
+        fontWeight: _quote.fontWeight,
+        letterSpacing: _quote.letterSpacing,
+        height: _quote.height,
+        backgroundColorValue: _quote.backgroundColorValue,
+        timeStyle: nextStyle,
+      );
+    });
+
+    if (_hasCreatedNote) {
+      final note = NotesService.instance.getNote(widget.pageIndex);
+      if (note != null) {
+        note.quote = _quote;
+        NotesService.instance.saveNow();
+      }
+    }
+    _recordSnapshot();
+  }
+
   String _formatHourMinute(DateTime dt) {
     int hour = dt.hour % 12;
     if (hour == 0) hour = 12;
@@ -427,6 +457,22 @@ class _EditorScreenState extends State<EditorScreen> {
 
   String _formatAmPm(DateTime dt) {
     return dt.hour >= 12 ? 'PM' : 'AM';
+  }
+
+  String _format24H(DateTime dt) {
+    final h = dt.hour.toString().padLeft(2, '0');
+    final m = dt.minute.toString().padLeft(2, '0');
+    return '$h:$m';
+  }
+
+  String _getMonthName(int month) {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return months[(month - 1).clamp(0, 11)];
+  }
+
+  String _getWeekdayName(int weekday) {
+    const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+    return days[(weekday - 1).clamp(0, 6)];
   }
 
   String _formatTimeAgo(DateTime dt) {
@@ -442,6 +488,459 @@ class _EditorScreenState extends State<EditorScreen> {
     } else {
       return '${_formatHourMinute(dt)} ${_formatAmPm(dt)}';
     }
+  }
+
+  Widget _buildStyleChip(String label, int styleIndex, BuildContext modalCtx) {
+    final isSelected = _quote.timeStyle == styleIndex;
+    return GestureDetector(
+      onTap: () {
+        Navigator.pop(modalCtx);
+        setState(() {
+          _quote = QuoteItem(
+            mainText: _quote.mainText,
+            dimPrompt: _quote.dimPrompt,
+            showTime: _quote.showTime,
+            showDivider: _quote.showDivider,
+            fontFamily: _quote.fontFamily,
+            fontSize: _quote.fontSize,
+            fontWeight: _quote.fontWeight,
+            letterSpacing: _quote.letterSpacing,
+            height: _quote.height,
+            backgroundColorValue: _quote.backgroundColorValue,
+            timeStyle: styleIndex,
+          );
+        });
+        if (_hasCreatedNote) {
+          final note = NotesService.instance.getNote(widget.pageIndex);
+          if (note != null) {
+            note.quote = _quote;
+            NotesService.instance.saveNow();
+          }
+        }
+        HapticFeedback.lightImpact();
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? Colors.white : Colors.white.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected ? Colors.white : Colors.white.withValues(alpha: 0.12),
+            width: 1,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontFamily: AppFonts.sfProText,
+            fontSize: 13,
+            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+            color: isSelected ? Colors.black : const Color(0xFFEDEDED),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMenuActionItem({
+    required IconData icon,
+    required String title,
+    required VoidCallback onTap,
+    bool isDestructive = false,
+  }) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Row(
+          children: [
+            Icon(
+              icon,
+              size: 20,
+              color: isDestructive ? const Color(0xFFFF453A) : const Color(0xFFEDEDED),
+            ),
+            const SizedBox(width: 12),
+            Text(
+              title,
+              style: TextStyle(
+                fontFamily: AppFonts.sfProText,
+                fontSize: 15,
+                fontWeight: FontWeight.w400,
+                color: isDestructive ? const Color(0xFFFF453A) : const Color(0xFFEDEDED),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showTimestampMenu() {
+    HapticFeedback.mediumImpact();
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.black.withValues(alpha: 0.65),
+      builder: (ctx) {
+        return Container(
+          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+          decoration: BoxDecoration(
+            color: const Color(0xFF141416),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.14),
+              width: 1.2,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.5),
+                blurRadius: 30,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Timestamp Options',
+                    style: TextStyle(
+                      fontFamily: AppFonts.sfProDisplay,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFFEDEDED),
+                      letterSpacing: -0.3,
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: () => Navigator.pop(ctx),
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.08),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.close_rounded,
+                        size: 16,
+                        color: Color(0xFF8E8E93),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+
+              // Style Selector
+              const Text(
+                'STYLES (TAP TO SELECT OR MULTI-TAP IN NOTE)',
+                style: TextStyle(
+                  fontFamily: AppFonts.sfProText,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF636366),
+                  letterSpacing: 1.2,
+                ),
+              ),
+              const SizedBox(height: 10),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                child: Row(
+                  children: [
+                    _buildStyleChip('Classic', 0, ctx),
+                    const SizedBox(width: 8),
+                    _buildStyleChip('Editorial', 1, ctx),
+                    const SizedBox(width: 8),
+                    _buildStyleChip('Journal', 2, ctx),
+                    const SizedBox(width: 8),
+                    _buildStyleChip('Minimal', 3, ctx),
+                    const SizedBox(width: 8),
+                    _buildStyleChip('24H Digital', 4, ctx),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 18),
+              Container(
+                width: double.infinity,
+                height: 1,
+                color: Colors.white.withValues(alpha: 0.08),
+              ),
+              const SizedBox(height: 14),
+
+              // Action 1: Update to Current Time
+              _buildMenuActionItem(
+                icon: CupertinoIcons.clock,
+                title: 'Update to Current Time',
+                onTap: () {
+                  Navigator.pop(ctx);
+                  setState(() {
+                    _displayTime = DateTime.now();
+                  });
+                  if (_hasCreatedNote) {
+                    final note = NotesService.instance.getNote(widget.pageIndex);
+                    if (note != null) {
+                      note.createdAt = _displayTime;
+                      NotesService.instance.saveNow();
+                    }
+                  }
+                  HapticFeedback.lightImpact();
+                },
+              ),
+
+              const SizedBox(height: 8),
+
+              // Action 2: Remove / Hide Timestamp
+              _buildMenuActionItem(
+                icon: CupertinoIcons.eye_slash,
+                title: 'Remove Timestamp',
+                isDestructive: true,
+                onTap: () {
+                  Navigator.pop(ctx);
+                  setState(() {
+                    _quote = QuoteItem(
+                      mainText: _quote.mainText,
+                      dimPrompt: _quote.dimPrompt,
+                      showTime: false,
+                      showDivider: _quote.showDivider,
+                      fontFamily: _quote.fontFamily,
+                      fontSize: _quote.fontSize,
+                      fontWeight: _quote.fontWeight,
+                      letterSpacing: _quote.letterSpacing,
+                      height: _quote.height,
+                      backgroundColorValue: _quote.backgroundColorValue,
+                      timeStyle: _quote.timeStyle,
+                    );
+                  });
+                  if (_hasCreatedNote) {
+                    final note = NotesService.instance.getNote(widget.pageIndex);
+                    if (note != null) {
+                      note.quote = _quote;
+                      NotesService.instance.saveNow();
+                    }
+                  }
+                  HapticFeedback.mediumImpact();
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildTimestampHeader() {
+    final style = _quote.timeStyle;
+
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: _cycleTimeStyle,
+      onLongPress: _showTimestampMenu,
+      child: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 260),
+        switchInCurve: Curves.easeOutCubic,
+        switchOutCurve: Curves.easeInCubic,
+        transitionBuilder: (child, animation) {
+          return FadeTransition(
+            opacity: animation,
+            child: child,
+          );
+        },
+        child: KeyedSubtree(
+          key: ValueKey('timestamp_style_$style'),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (style == 0) ...[
+                // Style 0: Classic Null (Stacked Big Time)
+                const Text(
+                  "It's",
+                  style: TextStyle(
+                    fontFamily: AppFonts.sfProText,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w400,
+                    color: Color(0xFF636366),
+                    letterSpacing: -0.2,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.baseline,
+                  textBaseline: TextBaseline.alphabetic,
+                  children: [
+                    Text(
+                      _formatHourMinute(_displayTime),
+                      style: const TextStyle(
+                        fontFamily: AppFonts.sfProDisplay,
+                        fontSize: 70,
+                        fontWeight: FontWeight.w200,
+                        letterSpacing: -2.0,
+                        color: Color(0xFFB5B5BA),
+                        height: 1.02,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      _formatAmPm(_displayTime),
+                      style: const TextStyle(
+                        fontFamily: AppFonts.sfProText,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w400,
+                        letterSpacing: 0.5,
+                        color: Color(0xFF55555A),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  width: 26,
+                  height: 2.5,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF3A3A3D),
+                    borderRadius: BorderRadius.circular(1.5),
+                  ),
+                ),
+              ] else if (style == 1) ...[
+                // Style 1: Editorial Serif (Vogue / Fashion)
+                const Text(
+                  "written at",
+                  style: TextStyle(
+                    fontFamily: AppFonts.beatrice,
+                    fontSize: 18,
+                    fontStyle: FontStyle.italic,
+                    color: Color(0xFF8E8E93),
+                    letterSpacing: 0.2,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  "${_formatHourMinute(_displayTime)} ${_formatAmPm(_displayTime)}",
+                  style: const TextStyle(
+                    fontFamily: AppFonts.timesNewRoman,
+                    fontSize: 52,
+                    fontStyle: FontStyle.italic,
+                    color: Color(0xFFEDEDED),
+                    letterSpacing: -1.0,
+                    height: 1.05,
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Container(
+                  width: 38,
+                  height: 1.2,
+                  color: const Color(0xFF48484A),
+                ),
+              ] else if (style == 2) ...[
+                // Style 2: Journal / Calendar Date & Day
+                Text(
+                  "${_getWeekdayName(_displayTime.weekday)}, ${_getMonthName(_displayTime.month)} ${_displayTime.day}",
+                  style: const TextStyle(
+                    fontFamily: AppFonts.sfProText,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 1.2,
+                    color: Color(0xFF8E8E93),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.baseline,
+                  textBaseline: TextBaseline.alphabetic,
+                  children: [
+                    Text(
+                      _formatHourMinute(_displayTime),
+                      style: const TextStyle(
+                        fontFamily: AppFonts.sfProDisplay,
+                        fontSize: 54,
+                        fontWeight: FontWeight.w300,
+                        letterSpacing: -1.5,
+                        color: Color(0xFFEDEDED),
+                        height: 1.05,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      _formatAmPm(_displayTime),
+                      style: const TextStyle(
+                        fontFamily: AppFonts.sfProText,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w400,
+                        color: Color(0xFF636366),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  width: 5,
+                  height: 5,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF3A3A3D),
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ] else if (style == 3) ...[
+                // Style 3: Minimal Zen (Whisper)
+                Text(
+                  "${_formatHourMinute(_displayTime)} ${_formatAmPm(_displayTime)}",
+                  style: const TextStyle(
+                    fontFamily: AppFonts.sfProDisplay,
+                    fontSize: 42,
+                    fontWeight: FontWeight.w200,
+                    letterSpacing: -0.5,
+                    color: Color(0xFF8E8E93),
+                    height: 1.1,
+                  ),
+                ),
+              ] else if (style == 4) ...[
+                // Style 4: Cyber Noir (24H Digital System)
+                const Text(
+                  "// 24H TIMESTAMP",
+                  style: TextStyle(
+                    fontFamily: AppFonts.sfProText,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 2.0,
+                    color: Color(0xFF55555A),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  _format24H(_displayTime),
+                  style: const TextStyle(
+                    fontFamily: AppFonts.sfProRounded,
+                    fontSize: 58,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: -1.0,
+                    color: Color(0xFFD1D1D6),
+                    height: 1.05,
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Container(
+                  width: 32,
+                  height: 2.0,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF64D2FF).withValues(alpha: 0.35),
+                    borderRadius: BorderRadius.circular(1.0),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -484,61 +983,67 @@ class _EditorScreenState extends State<EditorScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Optional Time Display Header
+                          // Tappable Multi-Style Timestamp Header
                           if (_quote.showTime) ...[
-                            // "It's" prefix
-                            const Text(
-                              "It's",
-                              style: TextStyle(
-                                fontFamily: AppFonts.sfProText,
-                                fontSize: 22,
-                                fontWeight: FontWeight.w400,
-                                color: Color(0xFF636366),
-                                letterSpacing: -0.2,
-                              ),
-                            ),
-
-                            const SizedBox(height: 4),
-
-                            // Time display: "10:58 PM"
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.baseline,
-                              textBaseline: TextBaseline.alphabetic,
-                              children: [
-                                Text(
-                                  _formatHourMinute(_displayTime),
-                                  style: const TextStyle(
-                                    fontFamily: AppFonts.sfProDisplay,
-                                    fontSize: 70,
-                                    fontWeight: FontWeight.w200,
-                                    letterSpacing: -2.0,
-                                    color: Color(0xFFB5B5BA),
-                                    height: 1.02,
+                            _buildTimestampHeader(),
+                          ] else ...[
+                            GestureDetector(
+                              behavior: HitTestBehavior.opaque,
+                              onTap: () {
+                                setState(() {
+                                  _quote = QuoteItem(
+                                    mainText: _quote.mainText,
+                                    dimPrompt: _quote.dimPrompt,
+                                    showTime: true,
+                                    showDivider: _quote.showDivider,
+                                    fontFamily: _quote.fontFamily,
+                                    fontSize: _quote.fontSize,
+                                    fontWeight: _quote.fontWeight,
+                                    letterSpacing: _quote.letterSpacing,
+                                    height: _quote.height,
+                                    backgroundColorValue: _quote.backgroundColorValue,
+                                    timeStyle: _quote.timeStyle,
+                                  );
+                                });
+                                if (_hasCreatedNote) {
+                                  final note = NotesService.instance.getNote(widget.pageIndex);
+                                  if (note != null) {
+                                    note.quote = _quote;
+                                    NotesService.instance.saveNow();
+                                  }
+                                }
+                                HapticFeedback.lightImpact();
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.05),
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(
+                                    color: Colors.white.withValues(alpha: 0.08),
+                                    width: 1,
                                   ),
                                 ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  _formatAmPm(_displayTime),
-                                  style: const TextStyle(
-                                    fontFamily: AppFonts.sfProText,
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w400,
-                                    letterSpacing: 0.5,
-                                    color: Color(0xFF55555A),
-                                  ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      CupertinoIcons.clock,
+                                      size: 13,
+                                      color: Colors.white.withValues(alpha: 0.35),
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      '+ add timestamp',
+                                      style: TextStyle(
+                                        fontFamily: AppFonts.sfProText,
+                                        fontSize: 12,
+                                        color: Colors.white.withValues(alpha: 0.35),
+                                        letterSpacing: 0.2,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                              ],
-                            ),
-
-                            const SizedBox(height: 16),
-
-                            // Divider hyphen/line
-                            Container(
-                              width: 26,
-                              height: 2.5,
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF3A3A3D),
-                                borderRadius: BorderRadius.circular(1.5),
                               ),
                             ),
                           ],
