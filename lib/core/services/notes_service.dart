@@ -443,6 +443,16 @@ class NotesService {
     }
   }
 
+  void updateNoteBlocks(int index, List<NoteBlock> blocks, String text, List<String> images) {
+    if (index >= 0 && index < notesNotifier.value.length) {
+      final note = notesNotifier.value[index];
+      note.blocks = List.from(blocks);
+      note.text = text;
+      note.images = List.from(images);
+      _scheduleSave();
+    }
+  }
+
   void updateNoteQuote(int index, QuoteItem quote) {
     if (index >= 0 && index < notesNotifier.value.length) {
       notesNotifier.value[index].quote = quote;
@@ -455,6 +465,7 @@ class NotesService {
     required QuoteItem quote,
     List<SpanStyle>? spans,
     List<String>? images,
+    List<NoteBlock>? blocks,
   }) {
     final newNote = Note(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
@@ -463,6 +474,7 @@ class NotesService {
       quote: quote,
       spans: spans,
       images: images,
+      blocks: blocks,
     );
     final list = List<Note>.from(notesNotifier.value)..add(newNote);
     notesNotifier.value = list;

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:math' as math;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -30,24 +31,45 @@ class EditorScreen extends StatefulWidget {
   State<EditorScreen> createState() => _EditorScreenState();
 }
 
+abstract class _EditorBlockItem {
+  final String id;
+  _EditorBlockItem(this.id);
+}
+
+class _TextEditorBlockItem extends _EditorBlockItem {
+  final NullRichTextController controller;
+  final FocusNode focusNode;
+
+  _TextEditorBlockItem({
+    required String id,
+    required this.controller,
+    required this.focusNode,
+  }) : super(id);
+}
+
+class _ImageEditorBlockItem extends _EditorBlockItem {
+  final String imagePath;
+
+  _ImageEditorBlockItem({
+    required String id,
+    required this.imagePath,
+  }) : super(id);
+}
+
 class _EditorScreenState extends State<EditorScreen> {
   late DateTime _displayTime;
   Timer? _timer;
   late QuoteItem _quote;
-  List<String> _images = [];
+  List<_EditorBlockItem> _blocks = [];
 
-  late final NullRichTextController _textController;
-  final FocusNode _focusNode = FocusNode();
   bool _isFocused = false;
   bool _hasCreatedNote = false;
 
-  // Unified Undo/Redo History Stack (Captures Text + Word Spans + Images + Base Styles)
+  // Unified Undo/Redo History Stack (Captures Text Blocks + Image Blocks + Spans + Styles)
   final List<_EditorSnapshot> _undoStack = [];
   final List<_EditorSnapshot> _redoStack = [];
   bool _isApplyingHistory = false;
   Timer? _textDebounceTimer;
-  String _lastRecordedText = '';
-  TextSelection _lastSelection = const TextSelection.collapsed(offset: -1);
 
   static const List<String> _curatedFonts = [
     AppFonts.sfProDisplay,
@@ -79,33 +101,26 @@ class _EditorScreenState extends State<EditorScreen> {
       final note = notes[widget.pageIndex];
       _displayTime = note.createdAt;
       _quote = note.quote;
-      _images = List.from(note.images);
       _hasCreatedNote = true;
 
-      // Migrate legacy images into text if not already tokenized
-      String initialText = note.text;
-      for (final img in _images) {
-        if (!initialText.contains('[img:$img]')) {
-          initialText = initialText.isEmpty ? '[img:$img]' : '$initialText\n[img:$img]';
+      if (note.blocks.isNotEmpty) {
+        for (final b in note.blocks) {
+          if (b.isText) {
+            _blocks.add(_createTextBlock(id: b.id, text: b.content, spans: b.spans));
+          } else if (b.isImage) {
+            _blocks.add(_ImageEditorBlockItem(id: b.id, imagePath: b.content));
+          }
         }
+      } else {
+        _blocks.add(_createTextBlock(text: note.text, spans: note.spans));
       }
-
-      _textController = NullRichTextController(
-        text: initialText,
-        spans: note.spans,
-        onSpansChanged: _onSpansChanged,
-        imageSpanBuilder: _buildInlineImageSpan,
-      );
     } else {
       // Brand New Blank Editor Page
       _displayTime = DateTime.now();
       _quote = NotesService.instance.activeDraftQuote;
-      _images = [];
       _hasCreatedNote = false;
-      _textController = NullRichTextController(
-        onSpansChanged: _onSpansChanged,
-        imageSpanBuilder: _buildInlineImageSpan,
-      );
+      _blocks.add(_createTextBlock(text: '', spans: []));
+
       NotesService.instance.activeDraftQuoteNotifier.addListener(_onDraftQuoteRefreshed);
 
       // Live clock updates for the active blank editor
@@ -118,37 +133,99 @@ class _EditorScreenState extends State<EditorScreen> {
       });
     }
 
+    if (_blocks.isEmpty) {
+      _blocks.add(_createTextBlock(text: '', spans: []));
+    }
+
     // Initialize baseline snapshot
     _recordSnapshot();
 
-    _textController.addListener(_onTextChanged);
-    _focusNode.addListener(_handleFocusChanged);
     NotesService.instance.registerFocusCallback(widget.pageIndex, _requestFocus);
   }
 
+  _TextEditorBlockItem _createTextBlock({
+    String? id,
+    required String text,
+    List<SpanStyle>? spans,
+  }) {
+    final blockId = id ?? 'tb_${DateTime.now().microsecondsSinceEpoch}_${math.Random().nextInt(10000)}';
+    final controller = NullRichTextController(
+      text: text,
+      spans: spans,
+    );
+    final focusNode = FocusNode();
+    final block = _TextEditorBlockItem(
+      id: blockId,
+      controller: controller,
+      focusNode: focusNode,
+    );
+
+    controller.addListener(() => _onBlockTextChanged(block));
+    focusNode.addListener(_handleFocusChanged);
+    controller.onSpansChanged = (_) {
+      if (!_isApplyingHistory) {
+        _recordSnapshot();
+      }
+      _updateActiveToolbarFont();
+      _syncToNotesService();
+    };
+
+    return block;
+  }
+
   void _requestFocus() {
-    if (mounted) {
-      _focusNode.requestFocus();
+    if (mounted && _blocks.isNotEmpty) {
+      for (int i = _blocks.length - 1; i >= 0; i--) {
+        if (_blocks[i] is _TextEditorBlockItem) {
+          (_blocks[i] as _TextEditorBlockItem).focusNode.requestFocus();
+          return;
+        }
+      }
     }
+  }
+
+  _TextEditorBlockItem? get _activeFocusedBlock {
+    for (final b in _blocks) {
+      if (b is _TextEditorBlockItem && b.focusNode.hasFocus) {
+        return b;
+      }
+    }
+    for (final b in _blocks) {
+      if (b is _TextEditorBlockItem) return b;
+    }
+    return null;
   }
 
   void _recordSnapshot() {
     if (_isApplyingHistory) return;
 
-    final currentText = _textController.text;
-    final currentSpans = _textController.spans;
-    final currentSelection = _textController.selection;
-
-    if (_undoStack.isNotEmpty &&
-        _undoStack.last.matches(currentText, currentSpans, _images, _quote)) {
+    if (_undoStack.isNotEmpty && _undoStack.last.matches(_blocks, _quote)) {
       return;
     }
 
+    final blockSnapshots = <_NoteBlockSnapshot>[];
+    for (final b in _blocks) {
+      if (b is _TextEditorBlockItem) {
+        blockSnapshots.add(_NoteBlockSnapshot(
+          id: b.id,
+          type: 'text',
+          content: b.controller.text,
+          spans: List.from(b.controller.spans),
+          selection: b.controller.selection,
+        ));
+      } else if (b is _ImageEditorBlockItem) {
+        blockSnapshots.add(_NoteBlockSnapshot(
+          id: b.id,
+          type: 'image',
+          content: b.imagePath,
+          spans: const [],
+          selection: const TextSelection.collapsed(offset: -1),
+        ));
+      }
+    }
+
     _undoStack.add(_EditorSnapshot(
-      text: currentText,
-      selection: currentSelection,
-      spans: List.from(currentSpans),
-      images: List.from(_images),
+      blocks: blockSnapshots,
       quote: _quote,
     ));
 
@@ -183,52 +260,69 @@ class _EditorScreenState extends State<EditorScreen> {
   void _restoreSnapshot(_EditorSnapshot snapshot) {
     setState(() {
       _quote = snapshot.quote;
-      _images = List.from(snapshot.images);
+
+      final currentMap = {for (final b in _blocks) b.id: b};
+      final newBlocks = <_EditorBlockItem>[];
+
+      for (final snap in snapshot.blocks) {
+        if (snap.type == 'text') {
+          if (currentMap.containsKey(snap.id) && currentMap[snap.id] is _TextEditorBlockItem) {
+            final tb = currentMap[snap.id] as _TextEditorBlockItem;
+            tb.controller.value = TextEditingValue(
+              text: snap.content,
+              selection: snap.selection,
+            );
+            tb.controller.spans = List.from(snap.spans);
+            newBlocks.add(tb);
+          } else {
+            final tb = _createTextBlock(
+              id: snap.id,
+              text: snap.content,
+              spans: snap.spans,
+            );
+            tb.controller.selection = snap.selection;
+            newBlocks.add(tb);
+          }
+        } else if (snap.type == 'image') {
+          newBlocks.add(_ImageEditorBlockItem(id: snap.id, imagePath: snap.content));
+        }
+      }
+
+      // Dispose removed blocks
+      for (final oldB in _blocks) {
+        if (!newBlocks.any((nb) => nb.id == oldB.id)) {
+          if (oldB is _TextEditorBlockItem) {
+            oldB.focusNode.dispose();
+            oldB.controller.dispose();
+          }
+        }
+      }
+
+      _blocks = newBlocks.isNotEmpty ? newBlocks : [_createTextBlock(text: '', spans: [])];
     });
 
-    _textController.value = TextEditingValue(
-      text: snapshot.text,
-      selection: snapshot.selection,
-    );
-    _textController.spans = snapshot.spans;
-
-    if (_hasCreatedNote) {
-      NotesService.instance.updateNoteText(widget.pageIndex, snapshot.text);
-      NotesService.instance.updateNoteSpans(widget.pageIndex, snapshot.spans);
-      NotesService.instance.updateNoteImages(widget.pageIndex, snapshot.images);
-      final note = NotesService.instance.getNote(widget.pageIndex);
-      if (note != null) {
-        note.quote = snapshot.quote;
-      }
-    }
-    _updateActiveToolbarFont();
-  }
-
-  void _onSpansChanged(List<SpanStyle> spans) {
-    if (_hasCreatedNote) {
-      NotesService.instance.updateNoteSpans(widget.pageIndex, spans);
-    }
-    if (!_isApplyingHistory) {
-      _recordSnapshot();
-    }
+    _syncToNotesService();
     _updateActiveToolbarFont();
   }
 
   void _updateActiveToolbarFont() {
     if (!mounted) return;
-    final currentFont = (_textController.selection.isValid && !_textController.selection.isCollapsed)
-        ? (_textController.getEffectiveFontAtSelection(_quote.fontFamily) ?? _quote.fontFamily)
+    final active = _activeFocusedBlock;
+    if (active == null) return;
+    final currentFont = (active.controller.selection.isValid && !active.controller.selection.isCollapsed)
+        ? (active.controller.getEffectiveFontAtSelection(_quote.fontFamily) ?? _quote.fontFamily)
         : _quote.fontFamily;
     NotesService.instance.activeEditorFontNotifier.value = currentFont;
   }
 
   void _handleFocusChanged() {
     if (!mounted) return;
+    final anyFocused = _blocks.any((b) => b is _TextEditorBlockItem && b.focusNode.hasFocus);
     setState(() {
-      _isFocused = _focusNode.hasFocus;
+      _isFocused = anyFocused;
     });
 
-    if (_focusNode.hasFocus) {
+    if (anyFocused) {
       _updateActiveToolbarFont();
       NotesService.instance.activeBackgroundColorNotifier.value =
           _quote.backgroundColorValue ?? 0xFF000000;
@@ -241,7 +335,13 @@ class _EditorScreenState extends State<EditorScreen> {
       NotesService.instance.onCycleAlignment = _cycleAlignment;
       NotesService.instance.onAttachImage = _handleImageTap;
       NotesService.instance.onImageLongPress = _handleImageLongPress;
-      NotesService.instance.onDismissKeyboard = () => _focusNode.unfocus();
+      NotesService.instance.onDismissKeyboard = () {
+        for (final b in _blocks) {
+          if (b is _TextEditorBlockItem) {
+            b.focusNode.unfocus();
+          }
+        }
+      };
       NotesService.instance.isEditorFocusedNotifier.value = true;
     } else {
       NotesService.instance.isEditorFocusedNotifier.value = false;
@@ -265,7 +365,7 @@ class _EditorScreenState extends State<EditorScreen> {
     HapticFeedback.lightImpact();
   }
 
-  // --- Image Handling: Recent Action on Tap & Action Sheet on Hold ---
+  // --- Image Handling: Native Block Insertion & Smart Media Preferences ---
 
   void _handleImageTap() {
     final recent = NotesService.instance.recentMediaSourceNotifier.value;
@@ -337,173 +437,196 @@ class _EditorScreenState extends State<EditorScreen> {
   }
 
   void _insertImageAtCursor(String path) {
-    final currentText = _textController.text;
-    final selection = _textController.selection;
-    int offset = selection.isValid ? selection.baseOffset : currentText.length;
-    if (offset < 0 || offset > currentText.length) {
-      offset = currentText.length;
-    }
-
-    final prefix = (offset > 0 && !currentText.endsWith('\n')) ? '\n' : '';
-    final suffix = (offset < currentText.length && !currentText.startsWith('\n')) ? '\n' : '\n';
-    final token = '$prefix[img:$path]$suffix';
-
-    final newText = currentText.replaceRange(offset, offset, token);
-    final newCursor = offset + token.length;
-
-    _textController.value = TextEditingValue(
-      text: newText,
-      selection: TextSelection.collapsed(offset: newCursor),
-    );
-
-    _images = _extractImagesFromText(newText);
-
-    if (!_hasCreatedNote) {
-      _hasCreatedNote = true;
-      _timer?.cancel();
-      NotesService.instance.activeDraftQuoteNotifier.removeListener(_onDraftQuoteRefreshed);
-      NotesService.instance.createNote(
-        text: newText,
-        quote: _quote,
-        spans: _textController.spans,
-        images: _images,
-      );
-      NotesService.instance.refreshActiveDraftQuote();
-    } else {
-      NotesService.instance.updateNoteText(widget.pageIndex, newText);
-      NotesService.instance.updateNoteImages(widget.pageIndex, _images);
-    }
-
-    _recordSnapshot();
     HapticFeedback.lightImpact();
-  }
 
-  List<String> _extractImagesFromText(String text) {
-    final regex = RegExp(r'\[img:([^\]]+)\]');
-    final matches = regex.allMatches(text);
-    return matches.map((m) => m.group(1)!).toList();
-  }
-
-  void _removeInlineImage(int start, int end, String path) {
-    HapticFeedback.lightImpact();
-    final currentText = _textController.text;
-    final token = '[img:$path]';
-    int tokenStart = currentText.indexOf(token);
-    if (tokenStart == -1) {
-      if (start >= 0 && end <= currentText.length) {
-        tokenStart = start;
-      } else {
-        return;
+    // 1. Find active focused text block
+    int activeIndex = -1;
+    for (int i = 0; i < _blocks.length; i++) {
+      final b = _blocks[i];
+      if (b is _TextEditorBlockItem && b.focusNode.hasFocus) {
+        activeIndex = i;
+        break;
       }
     }
-    int tokenEnd = tokenStart + token.length;
 
-    int cleanStart = tokenStart;
-    int cleanEnd = tokenEnd;
-    if (cleanStart > 0 && currentText[cleanStart - 1] == '\n') {
-      cleanStart--;
-    }
-    if (cleanEnd < currentText.length && currentText[cleanEnd] == '\n') {
-      cleanEnd++;
+    if (activeIndex == -1) {
+      for (int i = _blocks.length - 1; i >= 0; i--) {
+        if (_blocks[i] is _TextEditorBlockItem) {
+          activeIndex = i;
+          break;
+        }
+      }
+      if (activeIndex == -1) {
+        final newText = _createTextBlock(text: '', spans: []);
+        _blocks.add(newText);
+        activeIndex = _blocks.length - 1;
+      }
     }
 
-    final newText = currentText.replaceRange(cleanStart, cleanEnd, '');
-    _textController.value = TextEditingValue(
-      text: newText,
-      selection: TextSelection.collapsed(offset: cleanStart.clamp(0, newText.length)),
+    final activeBlock = _blocks[activeIndex] as _TextEditorBlockItem;
+    final currentText = activeBlock.controller.text;
+    final selection = activeBlock.controller.selection;
+    final cursor = selection.isValid ? selection.baseOffset : currentText.length;
+    final splitOffset = cursor.clamp(0, currentText.length);
+
+    final textBefore = currentText.substring(0, splitOffset);
+    final textAfter = currentText.substring(splitOffset);
+
+    // Split spans cleanly
+    final spansBefore = activeBlock.controller.spans
+        .where((s) => s.end <= splitOffset)
+        .toList();
+    final spansAfter = activeBlock.controller.spans
+        .where((s) => s.start >= splitOffset)
+        .map((s) => s.copyWith(start: s.start - splitOffset, end: s.end - splitOffset))
+        .toList();
+
+    activeBlock.controller.text = textBefore;
+    activeBlock.controller.spans = spansBefore;
+
+    final imageBlock = _ImageEditorBlockItem(
+      id: 'img_${DateTime.now().microsecondsSinceEpoch}',
+      imagePath: path,
+    );
+    final textAfterBlock = _createTextBlock(
+      text: textAfter,
+      spans: spansAfter,
     );
 
-    _images = _extractImagesFromText(newText);
+    setState(() {
+      _blocks.insert(activeIndex + 1, imageBlock);
+      _blocks.insert(activeIndex + 2, textAfterBlock);
+    });
 
-    if (_hasCreatedNote) {
-      NotesService.instance.updateNoteText(widget.pageIndex, newText);
-      NotesService.instance.updateNoteImages(widget.pageIndex, _images);
-    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        textAfterBlock.focusNode.requestFocus();
+        textAfterBlock.controller.selection = const TextSelection.collapsed(offset: 0);
+      }
+    });
+
+    _syncToNotesService();
     _recordSnapshot();
   }
 
-  InlineSpan _buildInlineImageSpan(
-    BuildContext context,
-    String imagePath,
-    int tokenStart,
-    int tokenEnd,
-  ) {
-    return WidgetSpan(
-      alignment: PlaceholderAlignment.middle,
-      child: _buildInlineImageCard(imagePath, tokenStart, tokenEnd),
-    );
+  void _removeImageBlock(int index) {
+    if (index < 0 || index >= _blocks.length) return;
+    final item = _blocks[index];
+    if (item is! _ImageEditorBlockItem) return;
+
+    HapticFeedback.lightImpact();
+
+    _TextEditorBlockItem? prevText;
+    _TextEditorBlockItem? nextText;
+
+    if (index > 0 && _blocks[index - 1] is _TextEditorBlockItem) {
+      prevText = _blocks[index - 1] as _TextEditorBlockItem;
+    }
+    if (index + 1 < _blocks.length && _blocks[index + 1] is _TextEditorBlockItem) {
+      nextText = _blocks[index + 1] as _TextEditorBlockItem;
+    }
+
+    setState(() {
+      if (prevText != null && nextText != null) {
+        final pText = prevText.controller.text;
+        final nText = nextText.controller.text;
+        final delimiter = (pText.isNotEmpty && nText.isNotEmpty) ? '\n' : '';
+        final mergedText = '$pText$delimiter$nText';
+
+        final shiftedSpans = nextText.controller.spans.map((s) => s.copyWith(
+          start: s.start + pText.length + delimiter.length,
+          end: s.end + pText.length + delimiter.length,
+        )).toList();
+
+        prevText.controller.text = mergedText;
+        prevText.controller.spans = [...prevText.controller.spans, ...shiftedSpans];
+
+        nextText.focusNode.dispose();
+        nextText.controller.dispose();
+
+        _blocks.removeAt(index + 1); // remove nextText
+        _blocks.removeAt(index); // remove image
+        prevText.focusNode.requestFocus();
+        prevText.controller.selection = TextSelection.collapsed(offset: pText.length);
+      } else {
+        _blocks.removeAt(index);
+        if (_blocks.isEmpty) {
+          _blocks.add(_createTextBlock(text: '', spans: []));
+        }
+      }
+    });
+
+    _syncToNotesService();
+    _recordSnapshot();
   }
 
-  Widget _buildInlineImageCard(String path, int tokenStart, int tokenEnd) {
-    final file = File(path);
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 14.0),
-      child: Stack(
-        children: [
-          GestureDetector(
-            onTap: () => _openFullscreenImage(path),
-            child: Container(
-              width: double.infinity,
-              constraints: const BoxConstraints(maxHeight: 380),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.12),
-                  width: 1.0,
-                ),
-                color: const Color(0xFF141416),
-              ),
-              clipBehavior: Clip.antiAlias,
-              child: file.existsSync()
-                  ? Image.file(
-                      file,
-                      fit: BoxFit.cover,
-                      width: double.infinity,
-                    )
-                  : const SizedBox(
-                      height: 120,
-                      child: Center(
-                        child: Icon(
-                          CupertinoIcons.photo,
-                          color: Color(0xFF636366),
-                          size: 32,
-                        ),
-                      ),
-                    ),
-            ),
-          ),
-          // Cross / Delete button: ONLY shown in editor mode (_isFocused)
-          if (_isFocused)
-            Positioned(
-              top: 10,
-              right: 10,
-              child: GestureDetector(
-                onTap: () => _removeInlineImage(tokenStart, tokenEnd, path),
-                child: Container(
-                  width: 32,
-                  height: 32,
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.70),
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.20),
-                      width: 1.0,
-                    ),
-                  ),
-                  child: const Icon(
-                    CupertinoIcons.xmark,
-                    size: 14,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
+  void _syncToNotesService() {
+    final noteBlocks = <NoteBlock>[];
+    final images = <String>[];
+    final textParts = <String>[];
+    List<SpanStyle> firstSpans = [];
+
+    for (final b in _blocks) {
+      if (b is _TextEditorBlockItem) {
+        noteBlocks.add(NoteBlock(
+          id: b.id,
+          type: 'text',
+          content: b.controller.text,
+          spans: b.controller.spans,
+        ));
+        if (b.controller.text.isNotEmpty) {
+          textParts.add(b.controller.text);
+        }
+        if (firstSpans.isEmpty && b.controller.spans.isNotEmpty) {
+          firstSpans = b.controller.spans;
+        }
+      } else if (b is _ImageEditorBlockItem) {
+        noteBlocks.add(NoteBlock(
+          id: b.id,
+          type: 'image',
+          content: b.imagePath,
+        ));
+        images.add(b.imagePath);
+      }
+    }
+
+    final fullText = textParts.join('\n\n');
+
+    if (!_hasCreatedNote) {
+      final hasContent = fullText.isNotEmpty || images.isNotEmpty;
+      if (hasContent) {
+        _hasCreatedNote = true;
+        _timer?.cancel();
+        NotesService.instance.activeDraftQuoteNotifier.removeListener(_onDraftQuoteRefreshed);
+        NotesService.instance.createNote(
+          text: fullText,
+          quote: _quote,
+          spans: firstSpans,
+          images: images,
+          blocks: noteBlocks,
+        );
+        NotesService.instance.refreshActiveDraftQuote();
+      }
+    } else {
+      NotesService.instance.updateNoteBlocks(widget.pageIndex, noteBlocks, fullText, images);
+    }
   }
 
-  void _openFullscreenImage(String path) {
+  void _onBlockTextChanged(_TextEditorBlockItem block) {
+    _syncToNotesService();
+    _updateActiveToolbarFont();
+
+    if (!_isApplyingHistory) {
+      _textDebounceTimer?.cancel();
+      _textDebounceTimer = Timer(const Duration(milliseconds: 300), () {
+        if (mounted) {
+          _recordSnapshot();
+        }
+      });
+    }
+  }
+
+  void _openFullscreenImage(String path, int index) {
     HapticFeedback.lightImpact();
     Navigator.push(
       context,
@@ -515,7 +638,7 @@ class _EditorScreenState extends State<EditorScreen> {
             imagePath: path,
             onDelete: () {
               Navigator.pop(context);
-              _removeInlineImage(-1, -1, path);
+              _removeImageBlock(index);
             },
           );
         },
@@ -560,16 +683,15 @@ class _EditorScreenState extends State<EditorScreen> {
 
   void _cycleFont() {
     // 1. Selection-Based Word Formatting (If words are highlighted/selected)
-    if (_textController.selection.isValid && !_textController.selection.isCollapsed) {
-      final currentFont = _textController.getEffectiveFontAtSelection(_quote.fontFamily) ?? _quote.fontFamily;
+    final active = _activeFocusedBlock;
+    if (active != null && active.controller.selection.isValid && !active.controller.selection.isCollapsed) {
+      final currentFont = active.controller.getEffectiveFontAtSelection(_quote.fontFamily) ?? _quote.fontFamily;
       final currentIndex = _curatedFonts.indexOf(currentFont);
       final nextIndex = (currentIndex + 1) % _curatedFonts.length;
       final nextFont = _curatedFonts[nextIndex];
 
-      _textController.applyStyleToSelection(fontFamily: nextFont);
-      if (_hasCreatedNote) {
-        NotesService.instance.updateNoteSpans(widget.pageIndex, _textController.spans);
-      }
+      active.controller.applyStyleToSelection(fontFamily: nextFont);
+      _syncToNotesService();
       _updateActiveToolbarFont();
       return;
     }
@@ -594,17 +716,16 @@ class _EditorScreenState extends State<EditorScreen> {
       );
     });
 
-    if (_hasCreatedNote) {
-      NotesService.instance.updateNoteQuote(widget.pageIndex, _quote);
-    }
+    _syncToNotesService();
     _updateActiveToolbarFont();
     _recordSnapshot();
   }
 
   void _cycleFontSize() {
     // 1. Selection-Based Word Formatting (If words are highlighted/selected)
-    if (_textController.selection.isValid && !_textController.selection.isCollapsed) {
-      final currentSize = _textController.getEffectiveFontSizeAtSelection(_quote.fontSize);
+    final active = _activeFocusedBlock;
+    if (active != null && active.controller.selection.isValid && !active.controller.selection.isCollapsed) {
+      final currentSize = active.controller.getEffectiveFontSizeAtSelection(_quote.fontSize);
       int nextIndex = 0;
       for (int i = 0; i < _fontSizes.length; i++) {
         if ((_fontSizes[i] - currentSize).abs() < 2.0) {
@@ -614,10 +735,8 @@ class _EditorScreenState extends State<EditorScreen> {
       }
       final nextSize = _fontSizes[nextIndex];
 
-      _textController.applyStyleToSelection(fontSize: nextSize);
-      if (_hasCreatedNote) {
-        NotesService.instance.updateNoteSpans(widget.pageIndex, _textController.spans);
-      }
+      active.controller.applyStyleToSelection(fontSize: nextSize);
+      _syncToNotesService();
       return;
     }
 
@@ -647,61 +766,16 @@ class _EditorScreenState extends State<EditorScreen> {
       );
     });
 
-    if (_hasCreatedNote) {
-      NotesService.instance.updateNoteQuote(widget.pageIndex, _quote);
-    }
+    _syncToNotesService();
     _recordSnapshot();
   }
 
   void _onDraftQuoteRefreshed() {
-    if (!_hasCreatedNote && _textController.text.isEmpty && mounted) {
+    if (!_hasCreatedNote && _blocks.length == 1 && (_blocks.first as _TextEditorBlockItem).controller.text.isEmpty && mounted) {
       setState(() {
         _quote = NotesService.instance.activeDraftQuote;
       });
       _recordSnapshot();
-    }
-  }
-
-  void _onTextChanged() {
-    final text = _textController.text;
-    final selection = _textController.selection;
-
-    final textChanged = text != _lastRecordedText;
-    final selectionChanged = selection != _lastSelection;
-
-    if (textChanged) {
-      _lastRecordedText = text;
-      if (_hasCreatedNote) {
-        // Update existing note text directly in memory
-        NotesService.instance.updateNoteText(widget.pageIndex, text);
-      } else if (text.isNotEmpty) {
-        // User typed the first character in the brand new editor -> create note!
-        _hasCreatedNote = true;
-        _timer?.cancel();
-        NotesService.instance.activeDraftQuoteNotifier.removeListener(_onDraftQuoteRefreshed);
-        NotesService.instance.createNote(
-          text: text,
-          quote: _quote,
-          spans: _textController.spans,
-          images: _images,
-        );
-        // Spawn new draft quote for the next page
-        NotesService.instance.refreshActiveDraftQuote();
-      }
-
-      if (!_isApplyingHistory) {
-        _textDebounceTimer?.cancel();
-        _textDebounceTimer = Timer(const Duration(milliseconds: 300), () {
-          if (mounted) {
-            _recordSnapshot();
-          }
-        });
-      }
-    }
-
-    if (selectionChanged) {
-      _lastSelection = selection;
-      _updateActiveToolbarFont();
     }
   }
 
@@ -710,14 +784,17 @@ class _EditorScreenState extends State<EditorScreen> {
     _timer?.cancel();
     _textDebounceTimer?.cancel();
     NotesService.instance.unregisterFocusCallback(widget.pageIndex);
-    if (_focusNode.hasFocus) {
+    if (_isFocused) {
       NotesService.instance.isEditorFocusedNotifier.value = false;
     }
     NotesService.instance.activeDraftQuoteNotifier.removeListener(_onDraftQuoteRefreshed);
-    _textController.removeListener(_onTextChanged);
-    _textController.dispose();
-    _focusNode.removeListener(_handleFocusChanged);
-    _focusNode.dispose();
+    for (final b in _blocks) {
+      if (b is _TextEditorBlockItem) {
+        b.focusNode.removeListener(_handleFocusChanged);
+        b.focusNode.dispose();
+        b.controller.dispose();
+      }
+    }
     super.dispose();
   }
 
@@ -1837,8 +1914,10 @@ class _EditorScreenState extends State<EditorScreen> {
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: () {
-        if (_focusNode.hasFocus) {
-          _focusNode.unfocus();
+        for (final b in _blocks) {
+          if (b is _TextEditorBlockItem && b.focusNode.hasFocus) {
+            b.focusNode.unfocus();
+          }
         }
       },
       child: AnimatedContainer(
@@ -1932,58 +2011,16 @@ class _EditorScreenState extends State<EditorScreen> {
 
                           const SizedBox(height: 28),
 
-                          // Main Quote / Note Body with In-Between Dim Placeholder
-                          TextField(
-                            controller: _textController,
-                            focusNode: _focusNode,
-                            textAlign: _quote.textAlign,
-                            maxLines: null,
-                            keyboardType: TextInputType.multiline,
-                            scrollPhysics: const NeverScrollableScrollPhysics(),
-                            cursorColor: Colors.white,
-                            cursorWidth: 2.0,
-                            contextMenuBuilder: (BuildContext context, EditableTextState editableTextState) {
-                              return NullSelectionContextMenu(
-                                editableTextState: editableTextState,
-                                controller: _textController,
-                                quote: _quote,
-                                onFormatChanged: () {
-                                  _recordSnapshot();
-                                  _updateActiveToolbarFont();
-                                  if (_hasCreatedNote) {
-                                    NotesService.instance.updateNoteSpans(widget.pageIndex, _textController.spans);
-                                  }
-                                },
-                              );
-                            },
-                            style: TextStyle(
-                              fontFamily: _quote.fontFamily,
-                              fontSize: _quote.fontSize,
-                              fontWeight: _quote.fontWeight,
-                              color: const Color(0xFFEDEDED),
-                              letterSpacing: _quote.letterSpacing,
-                              height: _quote.height,
-                            ),
-                            decoration: InputDecoration(
-                              hintText: _quote.mainText,
-                              hintStyle: TextStyle(
-                                fontFamily: _quote.fontFamily,
-                                fontSize: _quote.fontSize,
-                                fontWeight: _quote.fontWeight,
-                                color: _isFocused
-                                    ? const Color(0xFF48484C)
-                                    : const Color(0xFF9E9EA4), // In-between white & dark dim
-                                letterSpacing: _quote.letterSpacing,
-                                height: _quote.height,
-                              ),
-                              border: InputBorder.none,
-                              isDense: true,
-                              contentPadding: EdgeInsets.zero,
-                            ),
-                          ),
+                          // Main Quote / Note Blocks Flow
+                          for (int i = 0; i < _blocks.length; i++) ...[
+                            if (_blocks[i] is _ImageEditorBlockItem)
+                              _buildNativeImageCard(_blocks[i] as _ImageEditorBlockItem, i)
+                            else if (_blocks[i] is _TextEditorBlockItem)
+                              _buildTextBlock(_blocks[i] as _TextEditorBlockItem, i),
+                          ],
 
                           // Bottom-Right Timestamp Tag on Saved Notes: "~ 2m ago"
-                          if (_hasCreatedNote && _textController.text.isNotEmpty) ...[
+                          if (_hasCreatedNote && _hasAnyContent) ...[
                             const SizedBox(height: 18),
                             Align(
                               alignment: Alignment.centerRight,
@@ -2080,7 +2117,7 @@ class _EditorScreenState extends State<EditorScreen> {
             ValueListenableBuilder<List<CustomSmartWord>>(
               valueListenable: NotesService.instance.customSmartWordsNotifier,
               builder: (context, customWords, _) {
-                if (customWords.isNotEmpty || (_hasCreatedNote && _textController.text.isNotEmpty)) {
+                if (customWords.isNotEmpty || (_hasCreatedNote && _hasAnyContent)) {
                   return const SizedBox.shrink();
                 }
 
@@ -2137,54 +2174,180 @@ class _EditorScreenState extends State<EditorScreen> {
       ),
     );
   }
+
+  bool get _hasAnyContent {
+    for (final b in _blocks) {
+      if (b is _TextEditorBlockItem && b.controller.text.isNotEmpty) return true;
+      if (b is _ImageEditorBlockItem) return true;
+    }
+    return false;
+  }
+
+  Widget _buildTextBlock(_TextEditorBlockItem block, int index) {
+    final isOnly = _blocks.length == 1 && block.controller.text.isEmpty;
+    final hint = isOnly
+        ? _quote.mainText
+        : (index == 0 && block.controller.text.isEmpty ? _quote.mainText : null);
+
+    return TextField(
+      controller: block.controller,
+      focusNode: block.focusNode,
+      textAlign: _quote.textAlign,
+      maxLines: null,
+      keyboardType: TextInputType.multiline,
+      scrollPhysics: const NeverScrollableScrollPhysics(),
+      cursorColor: Colors.white,
+      cursorWidth: 2.0,
+      contextMenuBuilder: (BuildContext context, EditableTextState editableTextState) {
+        return NullSelectionContextMenu(
+          editableTextState: editableTextState,
+          controller: block.controller,
+          quote: _quote,
+          onFormatChanged: () {
+            _recordSnapshot();
+            _updateActiveToolbarFont();
+            _syncToNotesService();
+          },
+        );
+      },
+      style: TextStyle(
+        fontFamily: _quote.fontFamily,
+        fontSize: _quote.fontSize,
+        fontWeight: _quote.fontWeight,
+        color: const Color(0xFFEDEDED),
+        letterSpacing: _quote.letterSpacing,
+        height: _quote.height,
+      ),
+      decoration: InputDecoration(
+        hintText: hint,
+        hintStyle: TextStyle(
+          fontFamily: _quote.fontFamily,
+          fontSize: _quote.fontSize,
+          fontWeight: _quote.fontWeight,
+          color: _isFocused
+              ? const Color(0xFF48484C)
+              : const Color(0xFF9E9EA4),
+          letterSpacing: _quote.letterSpacing,
+          height: _quote.height,
+        ),
+        border: InputBorder.none,
+        isDense: true,
+        contentPadding: const EdgeInsets.symmetric(vertical: 4.0),
+      ),
+    );
+  }
+
+  Widget _buildNativeImageCard(_ImageEditorBlockItem block, int index) {
+    final file = File(block.imagePath);
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12.0),
+      child: Stack(
+        children: [
+          GestureDetector(
+            onTap: () => _openFullscreenImage(block.imagePath, index),
+            child: Container(
+              width: double.infinity,
+              constraints: const BoxConstraints(maxHeight: 380),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.12),
+                  width: 1.0,
+                ),
+                color: const Color(0xFF141416),
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: file.existsSync()
+                  ? Image.file(
+                      file,
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                    )
+                  : const SizedBox(
+                      height: 120,
+                      child: Center(
+                        child: Icon(
+                          CupertinoIcons.photo,
+                          color: Color(0xFF636366),
+                          size: 32,
+                        ),
+                      ),
+                    ),
+            ),
+          ),
+          if (_isFocused)
+            Positioned(
+              top: 10,
+              right: 10,
+              child: GestureDetector(
+                onTap: () => _removeImageBlock(index),
+                child: Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.70),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.20),
+                      width: 1.0,
+                    ),
+                  ),
+                  child: const Icon(
+                    CupertinoIcons.xmark,
+                    size: 14,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _NoteBlockSnapshot {
+  final String id;
+  final String type;
+  final String content;
+  final List<SpanStyle> spans;
+  final TextSelection selection;
+
+  _NoteBlockSnapshot({
+    required this.id,
+    required this.type,
+    required this.content,
+    required this.spans,
+    required this.selection,
+  });
 }
 
 class _EditorSnapshot {
-  final String text;
-  final TextSelection selection;
-  final List<SpanStyle> spans;
-  final List<String> images;
+  final List<_NoteBlockSnapshot> blocks;
   final QuoteItem quote;
 
   _EditorSnapshot({
-    required this.text,
-    required this.selection,
-    required this.spans,
-    required this.images,
+    required this.blocks,
     required this.quote,
   });
 
-  bool matches(
-    String currentText,
-    List<SpanStyle> currentSpans,
-    List<String> currentImages,
-    QuoteItem currentQuote,
-  ) {
-    if (text != currentText) return false;
+  bool matches(List<_EditorBlockItem> currentBlocks, QuoteItem currentQuote) {
     if (quote.fontFamily != currentQuote.fontFamily ||
         quote.fontSize != currentQuote.fontSize ||
         quote.backgroundColorValue != currentQuote.backgroundColorValue ||
         quote.textAlignIndex != currentQuote.textAlignIndex) {
       return false;
     }
-    if (images.length != currentImages.length) return false;
-    for (int i = 0; i < images.length; i++) {
-      if (images[i] != currentImages[i]) return false;
-    }
-    if (spans.length != currentSpans.length) return false;
-    for (int i = 0; i < spans.length; i++) {
-      final a = spans[i];
-      final b = currentSpans[i];
-      if (a.start != b.start ||
-          a.end != b.end ||
-          a.fontFamily != b.fontFamily ||
-          a.fontSize != b.fontSize ||
-          a.colorValue != b.colorValue ||
-          a.highlightColorValue != b.highlightColorValue ||
-          a.fontWeightIndex != b.fontWeightIndex ||
-          a.isItalic != b.isItalic ||
-          a.isUnderline != b.isUnderline) {
-        return false;
+    if (blocks.length != currentBlocks.length) return false;
+    for (int i = 0; i < blocks.length; i++) {
+      final snap = blocks[i];
+      final cur = currentBlocks[i];
+      if (snap.id != cur.id) return false;
+      if (cur is _TextEditorBlockItem) {
+        if (snap.type != 'text' || snap.content != cur.controller.text) return false;
+        if (snap.spans.length != cur.controller.spans.length) return false;
+      } else if (cur is _ImageEditorBlockItem) {
+        if (snap.type != 'image' || snap.content != cur.imagePath) return false;
       }
     }
     return true;

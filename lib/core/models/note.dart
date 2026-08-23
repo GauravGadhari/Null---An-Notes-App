@@ -154,6 +154,56 @@ class QuoteItem {
       backgroundColorValue != null ? Color(backgroundColorValue!) : const Color(0xFF000000);
 }
 
+class NoteBlock {
+  final String id;
+  final String type; // 'text' or 'image'
+  final String content; // text string for 'text', local file path for 'image'
+  final List<SpanStyle> spans;
+
+  const NoteBlock({
+    required this.id,
+    required this.type,
+    required this.content,
+    this.spans = const [],
+  });
+
+  bool get isText => type == 'text';
+  bool get isImage => type == 'image';
+
+  NoteBlock copyWith({
+    String? id,
+    String? type,
+    String? content,
+    List<SpanStyle>? spans,
+  }) {
+    return NoteBlock(
+      id: id ?? this.id,
+      type: type ?? this.type,
+      content: content ?? this.content,
+      spans: spans ?? this.spans,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'type': type,
+        'content': content,
+        'spans': spans.map((s) => s.toJson()).toList(),
+      };
+
+  factory NoteBlock.fromJson(Map<String, dynamic> json) {
+    return NoteBlock(
+      id: json['id'] as String? ?? UniqueKey().toString(),
+      type: json['type'] as String? ?? 'text',
+      content: json['content'] as String? ?? '',
+      spans: (json['spans'] as List<dynamic>?)
+              ?.map((e) => SpanStyle.fromJson(Map<String, dynamic>.from(e as Map)))
+              .toList() ??
+          const [],
+    );
+  }
+}
+
 class Note {
   final String id;
   String text;
@@ -161,6 +211,7 @@ class Note {
   QuoteItem quote;
   List<SpanStyle> spans;
   List<String> images;
+  List<NoteBlock> blocks;
 
   Note({
     required this.id,
@@ -169,8 +220,10 @@ class Note {
     required this.quote,
     List<SpanStyle>? spans,
     List<String>? images,
+    List<NoteBlock>? blocks,
   })  : spans = spans ?? [],
-        images = images ?? [];
+        images = images ?? [],
+        blocks = blocks ?? [];
 
   Map<String, dynamic> toJson() => {
         'id': id,
@@ -179,6 +232,7 @@ class Note {
         'quote': quote.toJson(),
         'spans': spans.map((s) => s.toJson()).toList(),
         'images': images,
+        'blocks': blocks.map((b) => b.toJson()).toList(),
       };
 
   factory Note.fromJson(Map<String, dynamic> json) {
@@ -195,19 +249,103 @@ class Note {
       );
     }
 
+    final rawText = json['text'] as String? ?? '';
+    final rawSpans = (json['spans'] as List<dynamic>?)
+            ?.map((e) => SpanStyle.fromJson(Map<String, dynamic>.from(e as Map)))
+            .toList() ??
+        <SpanStyle>[];
+    final rawImages = (json['images'] as List<dynamic>?)
+            ?.map((e) => e.toString())
+            .toList() ??
+        <String>[];
+
+    List<NoteBlock> noteBlocks = [];
+    if (json['blocks'] != null && json['blocks'] is List && (json['blocks'] as List).isNotEmpty) {
+      noteBlocks = (json['blocks'] as List)
+          .map((e) => NoteBlock.fromJson(Map<String, dynamic>.from(e as Map)))
+          .toList();
+    } else {
+      // Legacy note backward compatibility migration
+      final imgRegex = RegExp(r'\[img:([^\]]+)\]');
+      final matches = imgRegex.allMatches(rawText).toList();
+
+      if (matches.isNotEmpty) {
+        int cursor = 0;
+        int blockCount = 0;
+        for (final m in matches) {
+          if (m.start > cursor) {
+            final seg = rawText.substring(cursor, m.start).trim();
+            if (seg.isNotEmpty || cursor == 0) {
+              noteBlocks.add(NoteBlock(
+                id: 'b_${blockCount++}',
+                type: 'text',
+                content: seg,
+              ));
+            }
+          }
+          final imgPath = m.group(1)!;
+          noteBlocks.add(NoteBlock(
+            id: 'b_${blockCount++}',
+            type: 'image',
+            content: imgPath,
+          ));
+          if (!rawImages.contains(imgPath)) {
+            rawImages.add(imgPath);
+          }
+          cursor = m.end;
+        }
+        if (cursor < rawText.length) {
+          final seg = rawText.substring(cursor).trim();
+          if (seg.isNotEmpty) {
+            noteBlocks.add(NoteBlock(
+              id: 'b_${blockCount++}',
+              type: 'text',
+              content: seg,
+            ));
+          }
+        }
+      } else if (rawImages.isNotEmpty) {
+        int blockCount = 0;
+        for (final img in rawImages) {
+          noteBlocks.add(NoteBlock(
+            id: 'b_${blockCount++}',
+            type: 'image',
+            content: img,
+          ));
+        }
+        noteBlocks.add(NoteBlock(
+          id: 'b_${blockCount++}',
+          type: 'text',
+          content: rawText,
+          spans: rawSpans,
+        ));
+      } else {
+        noteBlocks.add(NoteBlock(
+          id: 'b_0',
+          type: 'text',
+          content: rawText,
+          spans: rawSpans,
+        ));
+      }
+    }
+
+    // Clean human-readable text representation without raw [img:...] tokens
+    final cleanText = noteBlocks
+        .where((b) => b.isText)
+        .map((b) => b.content)
+        .where((t) => t.isNotEmpty)
+        .join('\n\n');
+
+    final cleanImages = noteBlocks.where((b) => b.isImage).map((b) => b.content).toList();
+
     return Note(
       id: json['id'] as String? ?? DateTime.now().millisecondsSinceEpoch.toString(),
-      text: json['text'] as String? ?? '',
+      text: cleanText.isNotEmpty ? cleanText : rawText.replaceAll(RegExp(r'\[img:[^\]]+\]'), '').trim(),
       createdAt: DateTime.tryParse(json['createdAt'] as String? ?? '') ?? DateTime.now(),
       quote: quoteItem,
-      spans: (json['spans'] as List<dynamic>?)
-              ?.map((e) => SpanStyle.fromJson(Map<String, dynamic>.from(e as Map)))
-              .toList() ??
-          [],
-      images: (json['images'] as List<dynamic>?)
-              ?.map((e) => e.toString())
-              .toList() ??
-          [],
+      spans: rawSpans,
+      images: cleanImages.isNotEmpty ? cleanImages : rawImages,
+      blocks: noteBlocks,
     );
   }
 }
