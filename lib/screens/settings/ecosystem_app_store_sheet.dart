@@ -184,7 +184,7 @@ class _AppStoreProductSheet extends StatelessWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 const Text(
-                                  '21 Days Of Habit',
+                                  '21 Days of Habit',
                                   style: TextStyle(
                                     fontFamily: AppFonts.sfProDisplay,
                                     fontSize: 20,
@@ -379,7 +379,7 @@ class _AppStoreProductSheet extends StatelessWidget {
                       ),
                       const SizedBox(height: 10),
                       const Text(
-                        'Science proves it takes 21 days to form a neural pathway. 21 Days Of Habit combines ultra-clean visual progress, streak recovery shields, and zero-distraction focus to turn your ambitions into daily discipline.',
+                        'Science proves it takes 21 days to form a neural pathway. 21 Days of Habit combines ultra-clean visual progress, streak recovery shields, and zero-distraction focus to turn your ambitions into daily discipline.',
                         style: TextStyle(
                           fontFamily: AppFonts.sfProText,
                           fontSize: 14,
@@ -482,7 +482,7 @@ class _AppStoreProductSheet extends StatelessWidget {
                           ),
                           SizedBox(width: 8),
                           Text(
-                            'Get 21 Days Of Habit',
+                            'Get 21 Days of Habit',
                             style: TextStyle(
                               fontFamily: AppFonts.sfProDisplay,
                               fontSize: 16,

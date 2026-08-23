@@ -333,115 +333,109 @@ class SettingsScreen extends StatelessWidget {
                   // ── SECTION 4: LIGHT ECOSYSTEM APPS ──
                   _buildSectionHeader('LIGHT ECOSYSTEM'),
                   const SizedBox(height: 10),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF141416).withValues(alpha: 0.90),
-                      borderRadius: BorderRadius.circular(24),
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.12),
-                        width: 1.0,
+                  GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () {
+                      HapticFeedback.lightImpact();
+                      show21DaysAppStoreSheet(context);
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF141416).withValues(alpha: 0.90),
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.12),
+                          width: 1.0,
+                        ),
                       ),
-                    ),
-                    child: Column(
-                      children: [
-                        GestureDetector(
-                          behavior: HitTestBehavior.opaque,
-                          onTap: () {
-                            HapticFeedback.lightImpact();
-                            show21DaysAppStoreSheet(context);
-                          },
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                            child: Row(
-                              children: [
-                                Container(
-                                  width: 44,
-                                  height: 44,
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFF1C1C1E),
-                                    borderRadius: BorderRadius.circular(11),
-                                    border: Border.all(
-                                      color: Colors.white.withValues(alpha: 0.15),
-                                      width: 1.0,
-                                    ),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black.withValues(alpha: 0.4),
-                                        blurRadius: 8,
-                                        offset: const Offset(0, 2),
-                                      ),
-                                    ],
-                                  ),
-                                  clipBehavior: Clip.antiAlias,
-                                  child: Image.network(
-                                    'https://play-lh.googleusercontent.com/06RZZwjcaJDy_NtNYrJzlP7WgHSxoL7SuqdxGuPOdLBps2TKItVsoIy0z-ablDK3hKJ_C7FzHWbZv-2N01nebZQ=w240-h480-rw',
-                                    fit: BoxFit.cover,
-                                    loadingBuilder: (context, child, progress) {
-                                      if (progress == null) return child;
-                                      return Container(
-                                        color: const Color(0xFF1C1C1E),
-                                        alignment: Alignment.center,
-                                        child: const CupertinoActivityIndicator(radius: 8),
-                                      );
-                                    },
-                                    errorBuilder: (context, error, stackTrace) => Container(
-                                      color: const Color(0xFF1C1C1E),
-                                      alignment: Alignment.center,
-                                      child: const Icon(
-                                        CupertinoIcons.calendar,
-                                        size: 20,
-                                        color: Color(0xFFEDEDED),
-                                      ),
-                                    ),
-                                  ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 44,
+                            height: 44,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF1C1C1E),
+                              borderRadius: BorderRadius.circular(11),
+                              border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.15),
+                                width: 1.0,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.4),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
                                 ),
-                                const SizedBox(width: 14),
-                                const Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        '21 Days Of Habit',
-                                        style: TextStyle(
-                                          fontFamily: AppFonts.sfProDisplay,
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w600,
-                                          color: Color(0xFFEDEDED),
-                                          letterSpacing: -0.2,
-                                        ),
-                                      ),
-                                      SizedBox(height: 3),
-                                      Text(
-                                        'Build lasting routines & streak mastery',
-                                        style: TextStyle(
-                                          fontFamily: AppFonts.sfProText,
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w400,
-                                          color: Color(0xFF8E8E93),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                Container(
-                                  width: 32,
-                                  height: 32,
+                              ],
+                            ),
+                            clipBehavior: Clip.antiAlias,
+                            child: Image.network(
+                              'https://play-lh.googleusercontent.com/06RZZwjcaJDy_NtNYrJzlP7WgHSxoL7SuqdxGuPOdLBps2TKItVsoIy0z-ablDK3hKJ_C7FzHWbZv-2N01nebZQ=w240-h480-rw',
+                              fit: BoxFit.cover,
+                              loadingBuilder: (context, child, progress) {
+                                if (progress == null) return child;
+                                return Container(
+                                  color: const Color(0xFF1C1C1E),
                                   alignment: Alignment.center,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: Colors.white.withValues(alpha: 0.08),
-                                  ),
-                                  child: const Icon(
-                                    CupertinoIcons.info,
-                                    size: 16,
+                                  child: const CupertinoActivityIndicator(radius: 8),
+                                );
+                              },
+                              errorBuilder: (context, error, stackTrace) => Container(
+                                color: const Color(0xFF1C1C1E),
+                                alignment: Alignment.center,
+                                child: const Icon(
+                                  CupertinoIcons.calendar,
+                                  size: 20,
+                                  color: Color(0xFFEDEDED),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 14),
+                          const Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  '21 Days of Habit',
+                                  style: TextStyle(
+                                    fontFamily: AppFonts.sfProDisplay,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
                                     color: Color(0xFFEDEDED),
+                                    letterSpacing: -0.2,
+                                  ),
+                                ),
+                                SizedBox(height: 3),
+                                Text(
+                                  'Build lasting routines & streak mastery',
+                                  style: TextStyle(
+                                    fontFamily: AppFonts.sfProText,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w400,
+                                    color: Color(0xFF8E8E93),
                                   ),
                                 ),
                               ],
                             ),
                           ),
-                        ),
-                      ],
+                          Container(
+                            width: 32,
+                            height: 32,
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.white.withValues(alpha: 0.08),
+                            ),
+                            child: const Icon(
+                              CupertinoIcons.info,
+                              size: 16,
+                              color: Color(0xFFEDEDED),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
 
