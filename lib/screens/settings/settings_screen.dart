@@ -120,91 +120,102 @@ class SettingsScreen extends StatelessWidget {
                     ),
                   ),
 
-                  const SizedBox(height: 36),
+                  // ── SECTION 2: SECURITY & PRIVACY GROUP (Only shown if device supports biometrics) ──
+                  ValueListenableBuilder<bool>(
+                    valueListenable: SecurityService.instance.isBiometricsAvailableNotifier,
+                    builder: (context, isBioAvailable, _) {
+                      if (!isBioAvailable) return const SizedBox.shrink();
 
-                  // ── SECTION 2: SECURITY & PRIVACY GROUP ──
-                  _buildSectionHeader('SECURITY & PRIVACY'),
-                  const SizedBox(height: 10),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF141416).withValues(alpha: 0.90),
-                      borderRadius: BorderRadius.circular(24),
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.12),
-                        width: 1.0,
-                      ),
-                    ),
-                    child: Column(
-                      children: [
-                        // Master App Lock Toggle
-                        ValueListenableBuilder<bool>(
-                          valueListenable: SecurityService.instance.isAppLockEnabledNotifier,
-                          builder: (context, appLockEnabled, _) {
-                            return _buildSettingToggleRow(
-                              title: 'App Lock',
-                              subtitle: appLockEnabled
-                                  ? 'Biometric unlock required on launch'
-                                  : 'Instant access without lock',
-                              icon: CupertinoIcons.lock_shield,
-                              value: appLockEnabled,
-                              onChanged: (val) async {
-                                await SecurityService.instance.setAppLockEnabled(val);
-                              },
-                            );
-                          },
-                        ),
-                        _buildDivider(),
-                        // Note Lock System Explanation / Info
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                          child: Row(
-                            children: [
-                              Container(
-                                width: 34,
-                                height: 34,
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withValues(alpha: 0.08),
-                                  borderRadius: BorderRadius.circular(9),
-                                ),
-                                child: const Icon(
-                                  CupertinoIcons.lock_fill,
-                                  size: 17,
-                                  color: Color(0xFFEDEDED),
-                                ),
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(height: 36),
+                          _buildSectionHeader('SECURITY & PRIVACY'),
+                          const SizedBox(height: 10),
+                          Container(
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF141416).withValues(alpha: 0.90),
+                              borderRadius: BorderRadius.circular(24),
+                              border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.12),
+                                width: 1.0,
                               ),
-                              const SizedBox(width: 14),
-                              const Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Note Lock System',
-                                      style: TextStyle(
-                                        fontFamily: AppFonts.sfProDisplay,
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w500,
-                                        color: Color(0xFFEDEDED),
-                                        letterSpacing: -0.2,
-                                      ),
-                                    ),
-                                    SizedBox(height: 3),
-                                    Text(
-                                      'Tap the lock icon in toolbar to secure private notes with Biometrics',
-                                      style: TextStyle(
-                                        fontFamily: AppFonts.sfProText,
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w400,
-                                        color: Color(0xFF8E8E93),
-                                      ),
-                                    ),
-                                  ],
+                            ),
+                            child: Column(
+                              children: [
+                                // Master App Lock Toggle
+                                ValueListenableBuilder<bool>(
+                                  valueListenable: SecurityService.instance.isAppLockEnabledNotifier,
+                                  builder: (context, appLockEnabled, _) {
+                                    return _buildSettingToggleRow(
+                                      title: 'App Lock',
+                                      subtitle: appLockEnabled
+                                          ? 'Biometric unlock required on launch'
+                                          : 'Instant access without lock',
+                                      icon: CupertinoIcons.lock_shield,
+                                      value: appLockEnabled,
+                                      onChanged: (val) async {
+                                        await SecurityService.instance.setAppLockEnabled(val);
+                                      },
+                                    );
+                                  },
                                 ),
-                              ),
-                            ],
+                                _buildDivider(),
+                                // Note Lock System Explanation / Info
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        width: 34,
+                                        height: 34,
+                                        decoration: BoxDecoration(
+                                          color: Colors.white.withValues(alpha: 0.08),
+                                          borderRadius: BorderRadius.circular(9),
+                                        ),
+                                        child: const Icon(
+                                          CupertinoIcons.lock_fill,
+                                          size: 17,
+                                          color: Color(0xFFEDEDED),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 14),
+                                      const Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              'Note Lock System',
+                                              style: TextStyle(
+                                                fontFamily: AppFonts.sfProDisplay,
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.w500,
+                                                color: Color(0xFFEDEDED),
+                                                letterSpacing: -0.2,
+                                              ),
+                                            ),
+                                            SizedBox(height: 3),
+                                            Text(
+                                              'Tap the lock icon in the top right to secure private notes with Biometrics',
+                                              style: TextStyle(
+                                                fontFamily: AppFonts.sfProText,
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w400,
+                                                color: Color(0xFF8E8E93),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
+                        ],
+                      );
+                    },
                   ),
 
                   const SizedBox(height: 36),

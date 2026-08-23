@@ -13,20 +13,25 @@ class SecurityService {
   final LocalAuthentication _auth = LocalAuthentication();
   late Box _securityBox;
 
+  final ValueNotifier<bool> isBiometricsAvailableNotifier = ValueNotifier<bool>(false);
   final ValueNotifier<bool> isAppLockEnabledNotifier = ValueNotifier<bool>(false);
   final ValueNotifier<bool> isAppUnlockedNotifier = ValueNotifier<bool>(true);
   final ValueNotifier<Set<String>> unlockedNoteIdsNotifier = ValueNotifier<Set<String>>({});
 
+  bool get isBiometricsAvailable => isBiometricsAvailableNotifier.value;
   bool get isAppLockEnabled => isAppLockEnabledNotifier.value;
   bool get isAppUnlocked => isAppUnlockedNotifier.value;
 
   Future<void> init() async {
     _securityBox = await Hive.openBox('null_security');
+    final available = await canCheckBiometrics();
+    isBiometricsAvailableNotifier.value = available;
+
     final enabled = _securityBox.get('app_lock_enabled', defaultValue: false) as bool;
     isAppLockEnabledNotifier.value = enabled;
 
-    // If master app lock is enabled, start locked until biometrics pass
-    if (enabled) {
+    // If master app lock is enabled and biometrics available, start locked until biometrics pass
+    if (enabled && available) {
       isAppUnlockedNotifier.value = false;
     } else {
       isAppUnlockedNotifier.value = true;
@@ -71,11 +76,7 @@ class SecurityService {
     if (authenticated) {
       await _securityBox.put('app_lock_enabled', enable);
       isAppLockEnabledNotifier.value = enable;
-      if (enable) {
-        isAppUnlockedNotifier.value = true;
-      } else {
-        isAppUnlockedNotifier.value = true;
-      }
+      isAppUnlockedNotifier.value = true;
       HapticFeedback.mediumImpact();
       return true;
     } else {
@@ -97,9 +98,15 @@ class SecurityService {
   }
 
   void lockApp() {
-    if (isAppLockEnabled) {
+    if (isAppLockEnabled && isBiometricsAvailable) {
       isAppUnlockedNotifier.value = false;
-      // Re-lock all individual notes on background/sleep
+    }
+    // Re-lock all individual notes on background/sleep
+    unlockedNoteIdsNotifier.value = {};
+  }
+
+  void relockAllNotes() {
+    if (unlockedNoteIdsNotifier.value.isNotEmpty) {
       unlockedNoteIdsNotifier.value = {};
     }
   }

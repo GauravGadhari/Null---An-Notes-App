@@ -1949,7 +1949,14 @@ class _EditorScreenState extends State<EditorScreen> {
         child: ValueListenableBuilder<Set<String>>(
           valueListenable: SecurityService.instance.unlockedNoteIdsNotifier,
           builder: (context, unlockedIds, _) {
-            final isNoteObscured = note != null && note.isLocked && !unlockedIds.contains(note.id);
+            final isNoteObscured = note != null &&
+                note.isLocked &&
+                SecurityService.instance.isBiometricsAvailable &&
+                !unlockedIds.contains(note.id);
+
+            if (isNoteObscured) {
+              return _buildLockedNoteShield(note);
+            }
 
             return Stack(
               children: [
@@ -1971,9 +1978,6 @@ class _EditorScreenState extends State<EditorScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              if (isNoteObscured) ...[
-                                _buildLockedNoteShield(note),
-                              ] else ...[
                                 // Tappable Multi-Style Timestamp Header
                                 if (_quote.showTime) ...[
                                   _buildTimestampHeader(),
@@ -2083,7 +2087,6 @@ class _EditorScreenState extends State<EditorScreen> {
                                     ),
                                   ),
                                 ],
-                              ],
 
                               const SizedBox(height: 24),
                             ],
@@ -2209,103 +2212,39 @@ class _EditorScreenState extends State<EditorScreen> {
   }
 
   Widget _buildLockedNoteShield(Note note) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 36.0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Container(
-              width: 68,
-              height: 68,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: const Color(0xFF141416),
-                border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.18),
-                  width: 1.2,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.5),
-                    blurRadius: 20,
-                    spreadRadius: 4,
-                  ),
-                ],
-              ),
-              child: const Icon(
-                CupertinoIcons.lock_fill,
-                size: 28,
-                color: Color(0xFFEDEDED),
-              ),
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () async {
+        final success = await SecurityService.instance.unlockNote(note.id);
+        if (success && mounted) {
+          setState(() {});
+        }
+      },
+      child: Center(
+        child: Container(
+          width: 72,
+          height: 72,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: const Color(0xFF141416),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.18),
+              width: 1.2,
             ),
-            const SizedBox(height: 20),
-            const Text(
-              'locked note',
-              style: TextStyle(
-                fontFamily: AppFonts.sfProDisplay,
-                fontSize: 24,
-                fontWeight: FontWeight.w400,
-                letterSpacing: -0.6,
-                color: Color(0xFFEDEDED),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.white.withValues(alpha: 0.08),
+                blurRadius: 20,
+                spreadRadius: 2,
               ),
-            ),
-            const SizedBox(height: 6),
-            const Text(
-              'biometric authentication required to view',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontFamily: AppFonts.sfProText,
-                fontSize: 13,
-                fontWeight: FontWeight.w400,
-                color: Color(0xFF8E8E93),
-                letterSpacing: 0.1,
-              ),
-            ),
-            const SizedBox(height: 24),
-            GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: () async {
-                final success = await SecurityService.instance.unlockNote(note.id);
-                if (success && mounted) {
-                  setState(() {});
-                }
-              },
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1C1C1E),
-                  borderRadius: BorderRadius.circular(22),
-                  border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.22),
-                    width: 1.0,
-                  ),
-                ),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      CupertinoIcons.lock_shield_fill,
-                      size: 16,
-                      color: Color(0xFFEDEDED),
-                    ),
-                    SizedBox(width: 8),
-                    Text(
-                      'Unlock Note',
-                      style: TextStyle(
-                        fontFamily: AppFonts.sfProText,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFFEDEDED),
-                        letterSpacing: -0.1,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
+            ],
+          ),
+          alignment: Alignment.center,
+          child: const Icon(
+            CupertinoIcons.lock_fill,
+            size: 34,
+            color: Color(0xFFEDEDED),
+          ),
         ),
       ),
     );

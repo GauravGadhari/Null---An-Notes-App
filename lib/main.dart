@@ -476,6 +476,7 @@ class _NullUniversalShellState extends State<NullUniversalShell>
                 physics: const BouncingScrollPhysics(),
                 itemCount: totalPages,
                 onPageChanged: (index) {
+                  SecurityService.instance.relockAllNotes();
                   NotesService.instance.setLastActivePage(index);
                   final note = NotesService.instance.getNote(index);
                   if (note != null) {
@@ -793,7 +794,7 @@ class _NullUniversalShellState extends State<NullUniversalShell>
                       ),
                     ),
 
-                  // --- Top-Right Actions: Lock Note + Share / Export Studio (Smoothly appears/disappears on focus) ---
+                  // --- Top-Right Actions: Lock Note (if biometrics available) + Share / Export Studio (Smoothly appears/disappears on focus) ---
                   if (_toolbarMorphController.value > 0.01)
                     Positioned(
                       top: 16 + statusBarHeight,
@@ -805,46 +806,53 @@ class _NullUniversalShellState extends State<NullUniversalShell>
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              // 1. Lock / Unlock Note Button
+                              // 1. Lock / Unlock Note Button (Only visible if device has biometrics available)
                               ValueListenableBuilder<bool>(
-                                valueListenable: NotesService.instance.activeNoteLockedNotifier,
-                                builder: (context, isLocked, _) {
-                                  return GestureDetector(
-                                    behavior: HitTestBehavior.opaque,
-                                    onTap: () {
-                                      NotesService.instance.onToggleNoteLock?.call();
-                                    },
-                                    child: Container(
-                                      width: 38,
-                                      height: 38,
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFF141416).withValues(alpha: 0.85),
-                                        shape: BoxShape.circle,
-                                        border: Border.all(
-                                          color: isLocked
-                                              ? const Color(0xFFFFD60A).withValues(alpha: 0.6)
-                                              : Colors.white.withValues(alpha: 0.18),
-                                          width: 1.2,
-                                        ),
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: Colors.black.withValues(alpha: 0.4),
-                                            blurRadius: 10,
-                                            offset: const Offset(0, 2),
+                                valueListenable: SecurityService.instance.isBiometricsAvailableNotifier,
+                                builder: (context, isBioAvailable, _) {
+                                  if (!isBioAvailable) return const SizedBox.shrink();
+
+                                  return Padding(
+                                    padding: const EdgeInsets.only(right: 10.0),
+                                    child: ValueListenableBuilder<bool>(
+                                      valueListenable: NotesService.instance.activeNoteLockedNotifier,
+                                      builder: (context, isLocked, _) {
+                                        return GestureDetector(
+                                          behavior: HitTestBehavior.opaque,
+                                          onTap: () {
+                                            NotesService.instance.onToggleNoteLock?.call();
+                                          },
+                                          child: Container(
+                                            width: 38,
+                                            height: 38,
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFF141416).withValues(alpha: 0.85),
+                                              shape: BoxShape.circle,
+                                              border: Border.all(
+                                                color: Colors.white.withValues(alpha: 0.18),
+                                                width: 1.2,
+                                              ),
+                                              boxShadow: [
+                                                BoxShadow(
+                                                  color: Colors.black.withValues(alpha: 0.4),
+                                                  blurRadius: 10,
+                                                  offset: const Offset(0, 2),
+                                                ),
+                                              ],
+                                            ),
+                                            alignment: Alignment.center,
+                                            child: Icon(
+                                              isLocked ? CupertinoIcons.lock_fill : CupertinoIcons.lock_open,
+                                              color: const Color(0xFFEDEDED),
+                                              size: 18,
+                                            ),
                                           ),
-                                        ],
-                                      ),
-                                      alignment: Alignment.center,
-                                      child: Icon(
-                                        isLocked ? CupertinoIcons.lock_fill : CupertinoIcons.lock_open,
-                                        color: isLocked ? const Color(0xFFFFD60A) : const Color(0xFFEDEDED),
-                                        size: 18,
-                                      ),
+                                        );
+                                      },
                                     ),
                                   );
                                 },
                               ),
-                              const SizedBox(width: 10),
 
                               // 2. Share / Export Studio Button
                               GestureDetector(
