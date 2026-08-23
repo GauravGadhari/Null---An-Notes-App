@@ -7,7 +7,7 @@ import '../core/fonts/app_fonts.dart';
 /// Seamlessly morphs between:
 /// 1. Circular glowing ring (32px)
 /// 2. Rectangular page indicator container (72px - 240px)
-/// 3. Floating bottom toolbar container (392px x 54px) when input is focused.
+/// 3. Floating bottom toolbar container (360px x 54px) when input is focused.
 class NullBottomDock extends StatelessWidget {
   final double morphProgress; // 0.0 = Circle, 1.0 = Fully Expanded Indicator Rectangle
   final double toolbarProgress; // 0.0 = Indicator/Circle, 1.0 = Floating Toolbar
@@ -22,7 +22,6 @@ class NullBottomDock extends StatelessWidget {
   final String activeFontFamily;
   final int activeBackgroundColor;
   final int activeTextAlignIndex;
-  final bool isNoteLocked;
 
   // Toolbar action callbacks
   final VoidCallback? onUndo;
@@ -32,7 +31,6 @@ class NullBottomDock extends StatelessWidget {
   final VoidCallback? onAlignmentTap;
   final VoidCallback? onImageTap;
   final VoidCallback? onImageLongPress;
-  final VoidCallback? onLockTap;
   final VoidCallback? onBackgroundTap;
   final VoidCallback? onDismissKeyboard;
 
@@ -48,7 +46,6 @@ class NullBottomDock extends StatelessWidget {
     this.activeFontFamily = AppFonts.sfProDisplay,
     this.activeBackgroundColor = 0xFF000000,
     this.activeTextAlignIndex = 0,
-    this.isNoteLocked = false,
     this.onPageSelected,
     this.onTap,
     this.onUndo,
@@ -58,7 +55,6 @@ class NullBottomDock extends StatelessWidget {
     this.onAlignmentTap,
     this.onImageTap,
     this.onImageLongPress,
-    this.onLockTap,
     this.onBackgroundTap,
     this.onDismissKeyboard,
   });
@@ -133,8 +129,8 @@ class NullBottomDock extends StatelessWidget {
         : 148.0;
     final indicatorWidth = baseSize + morphProgress.clamp(0.0, 1.0) * (targetIndicatorWidth - baseSize);
 
-    // 2. Calculate Toolbar Geometry (392px x 54px pill)
-    const double targetToolbarWidth = 392.0;
+    // 2. Calculate Toolbar Geometry (360px x 54px pill)
+    const double targetToolbarWidth = 360.0;
     const double targetToolbarHeight = 54.0;
 
     final width = (1.0 - shapeT) * indicatorWidth + shapeT * targetToolbarWidth;
@@ -190,78 +186,73 @@ class NullBottomDock extends StatelessWidget {
                   scale: itemsScale,
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 10.0),
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      physics: const BouncingScrollPhysics(),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          // 1. Undo
-                          _ToolbarButton(
-                            icon: Icons.undo_rounded,
-                            onTap: onUndo,
-                          ),
+                    child: NotificationListener<ScrollNotification>(
+                      onNotification: (notification) => true, // Absorb toolbar scrolling so it doesn't bubble up to page dismissals
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        physics: const BouncingScrollPhysics(),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            // 1. Undo
+                            _ToolbarButton(
+                              icon: Icons.undo_rounded,
+                              onTap: onUndo,
+                            ),
 
-                          // 2. Redo
-                          _ToolbarButton(
-                            icon: Icons.redo_rounded,
-                            onTap: onRedo,
-                          ),
+                            // 2. Redo
+                            _ToolbarButton(
+                              icon: Icons.redo_rounded,
+                              onTap: onRedo,
+                            ),
 
-                          // 3. Dynamic Font Pill
-                          _ToolbarFontButton(
-                            fontName: _getFontDisplayName(activeFontFamily),
-                            fontFamily: activeFontFamily,
-                            onTap: onFontTap,
-                          ),
+                            // 3. Dynamic Font Pill
+                            _ToolbarFontButton(
+                              fontName: _getFontDisplayName(activeFontFamily),
+                              fontFamily: activeFontFamily,
+                              onTap: onFontTap,
+                            ),
 
-                          // 4. Font Size Toggle
-                          _ToolbarButton(
-                            icon: Icons.format_size_rounded,
-                            onTap: onSizeTap,
-                          ),
+                            // 4. Font Size Toggle
+                            _ToolbarButton(
+                              icon: Icons.format_size_rounded,
+                              onTap: onSizeTap,
+                            ),
 
-                          // 5. Text Alignment Cycle (Left -> Center -> Right)
-                          _ToolbarButton(
-                            icon: _getAlignmentIcon(activeTextAlignIndex),
-                            onTap: onAlignmentTap,
-                          ),
+                            // 5. Text Alignment Cycle (Left -> Center -> Right)
+                            _ToolbarButton(
+                              icon: _getAlignmentIcon(activeTextAlignIndex),
+                              onTap: onAlignmentTap,
+                            ),
 
-                          // 6. Attach Image (Tap: Recent Action, Hold: Action Sheet)
-                          _ToolbarButton(
-                            icon: CupertinoIcons.photo,
-                            onTap: onImageTap,
-                            onLongPress: onImageLongPress,
-                          ),
+                            // 6. Attach Image (Tap: Recent Action, Hold: Action Sheet)
+                            _ToolbarButton(
+                              icon: CupertinoIcons.photo,
+                              onTap: onImageTap,
+                              onLongPress: onImageLongPress,
+                            ),
 
-                          // 7. Lock / Unlock Note Toggle
-                          _ToolbarButton(
-                            icon: isNoteLocked ? CupertinoIcons.lock_fill : CupertinoIcons.lock_open,
-                            isActive: isNoteLocked,
-                            activeColor: const Color(0xFFFFD60A),
-                            onTap: onLockTap,
-                          ),
+                            // 7. Background Color Swatch
+                            _ToolbarBackgroundButton(
+                              activeColorValue: activeBackgroundColor,
+                              onTap: onBackgroundTap,
+                            ),
 
-                          // 8. Background Color Swatch
-                          _ToolbarBackgroundButton(
-                            activeColorValue: activeBackgroundColor,
-                            onTap: onBackgroundTap,
-                          ),
+                            // Divider
+                            Container(
+                              width: 1.0,
+                              height: 16.0,
+                              color: Colors.white.withValues(alpha: 0.18),
+                            ),
 
-                          // Divider
-                          Container(
-                            width: 1.0,
-                            height: 16.0,
-                            color: Colors.white.withValues(alpha: 0.18),
-                          ),
-
-                          // 9. Dismiss Keyboard
-                          _ToolbarButton(
-                            icon: Icons.keyboard_hide_rounded,
-                            onTap: onDismissKeyboard,
-                          ),
-                        ],
+                            // 8. Dismiss Keyboard
+                            _ToolbarButton(
+                              icon: Icons.keyboard_hide_rounded,
+                              onTap: onDismissKeyboard,
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -410,15 +401,11 @@ class _ToolbarButton extends StatelessWidget {
   final IconData icon;
   final VoidCallback? onTap;
   final VoidCallback? onLongPress;
-  final bool isActive;
-  final Color? activeColor;
 
   const _ToolbarButton({
     required this.icon,
     this.onTap,
     this.onLongPress,
-    this.isActive = false,
-    this.activeColor,
   });
 
   @override
@@ -434,7 +421,7 @@ class _ToolbarButton extends StatelessWidget {
         child: Icon(
           icon,
           size: 21,
-          color: isActive ? (activeColor ?? const Color(0xFFFFD60A)) : const Color(0xFFEDEDED),
+          color: const Color(0xFFEDEDED),
         ),
       ),
     );

@@ -432,8 +432,8 @@ class _NullUniversalShellState extends State<NullUniversalShell>
             return NotificationListener<ScrollNotification>(
         onNotification: (notification) {
           if (_state == EditorState.awake && !_isSleepingAnim) {
-            // Unfocus active editor when horizontal tab swipe begins
-            if (notification.metrics.axis == Axis.horizontal && notification is ScrollStartNotification) {
+            // Unfocus active editor when horizontal tab swipe begins (only top-level PageView at depth == 0)
+            if (notification.depth == 0 && notification.metrics.axis == Axis.horizontal && notification is ScrollStartNotification) {
               if (NotesService.instance.isEditorFocusedNotifier.value) {
                 NotesService.instance.onDismissKeyboard?.call();
                 FocusManager.instance.primaryFocus?.unfocus();
@@ -689,7 +689,6 @@ class _NullUniversalShellState extends State<NullUniversalShell>
                               NotesService.instance.activeEditorFontNotifier,
                               NotesService.instance.activeBackgroundColorNotifier,
                               NotesService.instance.activeTextAlignNotifier,
-                              NotesService.instance.activeNoteLockedNotifier,
                             ]),
                             builder: (context, _) {
                               return NullBottomDock(
@@ -703,7 +702,6 @@ class _NullUniversalShellState extends State<NullUniversalShell>
                                 activeFontFamily: NotesService.instance.activeEditorFontNotifier.value,
                                 activeBackgroundColor: NotesService.instance.activeBackgroundColorNotifier.value,
                                 activeTextAlignIndex: NotesService.instance.activeTextAlignNotifier.value,
-                                isNoteLocked: NotesService.instance.activeNoteLockedNotifier.value,
                                 onPageSelected: (index) {
                                   _pageController.animateToPage(
                                     index,
@@ -719,7 +717,6 @@ class _NullUniversalShellState extends State<NullUniversalShell>
                                 onAlignmentTap: () => NotesService.instance.onCycleAlignment?.call(),
                                 onImageTap: () => NotesService.instance.onAttachImage?.call(),
                                 onImageLongPress: () => NotesService.instance.onImageLongPress?.call(),
-                                onLockTap: () => NotesService.instance.onToggleNoteLock?.call(),
                                 onBackgroundTap: () => NotesService.instance.onCycleBackground?.call(),
                                 onDismissKeyboard: () => NotesService.instance.onDismissKeyboard?.call(),
                               );
@@ -796,7 +793,7 @@ class _NullUniversalShellState extends State<NullUniversalShell>
                       ),
                     ),
 
-                  // --- Top-Right Share / Export Studio Button (Smoothly appears/disappears on focus) ---
+                  // --- Top-Right Actions: Lock Note + Share / Export Studio (Smoothly appears/disappears on focus) ---
                   if (_toolbarMorphController.value > 0.01)
                     Positioned(
                       top: 16 + statusBarHeight,
@@ -805,36 +802,83 @@ class _NullUniversalShellState extends State<NullUniversalShell>
                         opacity: _toolbarMorphController.value.clamp(0.0, 1.0),
                         child: Transform.translate(
                           offset: Offset(18.0 * (1.0 - _toolbarMorphController.value), 0),
-                          child: GestureDetector(
-                            behavior: HitTestBehavior.opaque,
-                            onTap: () {
-                              _openExportStudio();
-                            },
-                            child: Container(
-                              width: 38,
-                              height: 38,
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF141416).withValues(alpha: 0.85),
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: Colors.white.withValues(alpha: 0.18),
-                                  width: 1.2,
-                                ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withValues(alpha: 0.4),
-                                    blurRadius: 10,
-                                    offset: const Offset(0, 2),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              // 1. Lock / Unlock Note Button
+                              ValueListenableBuilder<bool>(
+                                valueListenable: NotesService.instance.activeNoteLockedNotifier,
+                                builder: (context, isLocked, _) {
+                                  return GestureDetector(
+                                    behavior: HitTestBehavior.opaque,
+                                    onTap: () {
+                                      NotesService.instance.onToggleNoteLock?.call();
+                                    },
+                                    child: Container(
+                                      width: 38,
+                                      height: 38,
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFF141416).withValues(alpha: 0.85),
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                          color: isLocked
+                                              ? const Color(0xFFFFD60A).withValues(alpha: 0.6)
+                                              : Colors.white.withValues(alpha: 0.18),
+                                          width: 1.2,
+                                        ),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.black.withValues(alpha: 0.4),
+                                            blurRadius: 10,
+                                            offset: const Offset(0, 2),
+                                          ),
+                                        ],
+                                      ),
+                                      alignment: Alignment.center,
+                                      child: Icon(
+                                        isLocked ? CupertinoIcons.lock_fill : CupertinoIcons.lock_open,
+                                        color: isLocked ? const Color(0xFFFFD60A) : const Color(0xFFEDEDED),
+                                        size: 18,
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                              const SizedBox(width: 10),
+
+                              // 2. Share / Export Studio Button
+                              GestureDetector(
+                                behavior: HitTestBehavior.opaque,
+                                onTap: () {
+                                  _openExportStudio();
+                                },
+                                child: Container(
+                                  width: 38,
+                                  height: 38,
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF141416).withValues(alpha: 0.85),
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: Colors.white.withValues(alpha: 0.18),
+                                      width: 1.2,
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withValues(alpha: 0.4),
+                                        blurRadius: 10,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
                                   ),
-                                ],
+                                  alignment: Alignment.center,
+                                  child: const Icon(
+                                    Icons.ios_share_rounded,
+                                    color: Color(0xFFEDEDED),
+                                    size: 19,
+                                  ),
+                                ),
                               ),
-                              alignment: Alignment.center,
-                              child: const Icon(
-                                Icons.ios_share_rounded,
-                                color: Color(0xFFEDEDED),
-                                size: 19,
-                              ),
-                            ),
+                            ],
                           ),
                         ),
                       ),
