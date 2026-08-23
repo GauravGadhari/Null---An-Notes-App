@@ -22,6 +22,7 @@ class NotesService {
   static const String _suggestAddTimestampKey = 'suggest_add_timestamp';
   static const String _customSmartWordsKey = 'custom_smart_words';
   static const String _disabledSmartWordCategoriesKey = 'disabled_smart_categories';
+  static const String _recentMediaSourceKey = 'recent_media_source';
 
   final ValueNotifier<bool> openOnNewNoteNotifier = ValueNotifier<bool>(true);
   final ValueNotifier<int> lastActivePageIndexNotifier = ValueNotifier<int>(0);
@@ -29,6 +30,7 @@ class NotesService {
   final ValueNotifier<bool> suggestAddTimestampNotifier = ValueNotifier<bool>(true);
   final ValueNotifier<List<CustomSmartWord>> customSmartWordsNotifier = ValueNotifier<List<CustomSmartWord>>([]);
   final ValueNotifier<Set<String>> disabledSmartCategoriesNotifier = ValueNotifier<Set<String>>({});
+  final ValueNotifier<String> recentMediaSourceNotifier = ValueNotifier<String>('gallery');
 
   /// Initializes Hive storage and hydrates saved notes and preferences from disk
   Future<void> init() async {
@@ -69,9 +71,17 @@ class NotesService {
         disabledSmartCategoriesNotifier.value =
             rawDisabledCategories.map((e) => e.toString().toLowerCase()).toSet();
       }
+
+      recentMediaSourceNotifier.value =
+          _box?.get(_recentMediaSourceKey, defaultValue: 'gallery') as String? ?? 'gallery';
     } catch (_) {
       // In isolated unit tests or cold boots, fail gracefully
     }
+  }
+
+  void setRecentMediaSource(String source) {
+    recentMediaSourceNotifier.value = source;
+    _box?.put(_recentMediaSourceKey, source);
   }
 
   void setOpenOnNewNote(bool value) {
@@ -382,6 +392,7 @@ class NotesService {
   VoidCallback? onCycleBackground;
   VoidCallback? onCycleAlignment;
   VoidCallback? onAttachImage;
+  VoidCallback? onImageLongPress;
   VoidCallback? onExport;
   VoidCallback? onDismissKeyboard;
 

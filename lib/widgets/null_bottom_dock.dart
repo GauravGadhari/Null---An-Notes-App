@@ -30,6 +30,7 @@ class NullBottomDock extends StatelessWidget {
   final VoidCallback? onSizeTap;
   final VoidCallback? onAlignmentTap;
   final VoidCallback? onImageTap;
+  final VoidCallback? onImageLongPress;
   final VoidCallback? onBackgroundTap;
   final VoidCallback? onDismissKeyboard;
 
@@ -53,6 +54,7 @@ class NullBottomDock extends StatelessWidget {
     this.onSizeTap,
     this.onAlignmentTap,
     this.onImageTap,
+    this.onImageLongPress,
     this.onBackgroundTap,
     this.onDismissKeyboard,
   });
@@ -250,10 +252,11 @@ class NullBottomDock extends StatelessWidget {
                                 onTap: onAlignmentTap,
                               ),
 
-                              // 6. Attach Image
+                              // 6. Attach Image (Tap: Recent Action, Hold: Action Sheet)
                               _ToolbarButton(
                                 icon: CupertinoIcons.photo,
                                 onTap: onImageTap,
+                                onLongPress: onImageLongPress,
                               ),
 
                               // 7. Background Color Swatch
@@ -431,10 +434,12 @@ class NullBottomDock extends StatelessWidget {
 class _ToolbarButton extends StatelessWidget {
   final IconData icon;
   final VoidCallback? onTap;
+  final VoidCallback? onLongPress;
 
   const _ToolbarButton({
     required this.icon,
     this.onTap,
+    this.onLongPress,
   });
 
   @override
@@ -442,6 +447,7 @@ class _ToolbarButton extends StatelessWidget {
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: onTap,
+      onLongPress: onLongPress,
       child: Container(
         width: 40,
         height: 40,

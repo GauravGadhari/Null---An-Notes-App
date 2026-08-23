@@ -698,6 +698,7 @@ class _NullUniversalShellState extends State<NullUniversalShell>
                                 onSizeTap: () => NotesService.instance.onCycleFontSize?.call(),
                                 onAlignmentTap: () => NotesService.instance.onCycleAlignment?.call(),
                                 onImageTap: () => NotesService.instance.onAttachImage?.call(),
+                                onImageLongPress: () => NotesService.instance.onImageLongPress?.call(),
                                 onBackgroundTap: () => NotesService.instance.onCycleBackground?.call(),
                                 onDismissKeyboard: () => NotesService.instance.onDismissKeyboard?.call(),
                               );

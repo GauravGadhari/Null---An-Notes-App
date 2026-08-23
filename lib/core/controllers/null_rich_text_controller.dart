@@ -4,16 +4,26 @@ import '../models/span_style.dart';
 import '../services/notes_service.dart';
 import '../typography/smart_words_engine.dart';
 
-/// Ultra high-performance RichTextEditingController supporting word/selection-level formatting.
+typedef ImageSpanBuilder = InlineSpan Function(
+  BuildContext context,
+  String imagePath,
+  int tokenStart,
+  int tokenEnd,
+);
+
+/// Ultra high-performance RichTextEditingController supporting word/selection-level formatting
+/// and inline image placement.
 /// Uses native interval slicing for 120fps fluid editing with zero layout jank.
 class NullRichTextController extends TextEditingController {
   List<SpanStyle> _spans = [];
   ValueChanged<List<SpanStyle>>? onSpansChanged;
+  ImageSpanBuilder? imageSpanBuilder;
 
   NullRichTextController({
     super.text,
     List<SpanStyle>? spans,
     this.onSpansChanged,
+    this.imageSpanBuilder,
   }) {
     if (spans != null) {
       _spans = List.from(spans);
@@ -347,7 +357,9 @@ class NullRichTextController extends TextEditingController {
     return subSpans;
   }
 
-  /// High-performance interval slicing text builder with Smart Words typography support
+  static final RegExp _imageTokenRegex = RegExp(r'\[img:([^\]]+)\]');
+
+  /// High-performance interval slicing text builder with Smart Words typography and inline image support
   @override
   TextSpan buildTextSpan({
     required BuildContext context,
@@ -360,22 +372,84 @@ class NullRichTextController extends TextEditingController {
     }
 
     final isSmartWordsEnabled = NotesService.instance.smartWordsEnabledNotifier.value;
+    final imageMatches = _imageTokenRegex.allMatches(text).toList();
 
-    if (_spans.isEmpty) {
+    if (imageMatches.isEmpty || imageSpanBuilder == null) {
+      return _buildTextSpanForRange(context, 0, text.length, baseStyle, isSmartWordsEnabled);
+    }
+
+    // Segment text around [img:path] tokens
+    final rootChildren = <InlineSpan>[];
+    int cursor = 0;
+
+    for (final match in imageMatches) {
+      if (match.start > cursor) {
+        final textSpan = _buildTextSpanForRange(
+          context,
+          cursor,
+          match.start,
+          baseStyle,
+          isSmartWordsEnabled,
+        );
+        rootChildren.add(textSpan);
+      }
+
+      final imagePath = match.group(1)!;
+      final imageSpan = imageSpanBuilder!(context, imagePath, match.start, match.end);
+      rootChildren.add(imageSpan);
+
+      cursor = match.end;
+    }
+
+    if (cursor < text.length) {
+      final textSpan = _buildTextSpanForRange(
+        context,
+        cursor,
+        text.length,
+        baseStyle,
+        isSmartWordsEnabled,
+      );
+      rootChildren.add(textSpan);
+    }
+
+    return TextSpan(children: rootChildren, style: baseStyle);
+  }
+
+  TextSpan _buildTextSpanForRange(
+    BuildContext context,
+    int rangeStart,
+    int rangeEnd,
+    TextStyle baseStyle,
+    bool isSmartWordsEnabled,
+  ) {
+    final rangeText = text.substring(rangeStart, rangeEnd);
+    if (rangeText.isEmpty) {
+      return const TextSpan(text: '');
+    }
+
+    // Filter relevant spans shifted to range offsets
+    final activeSpans = _spans
+        .where((s) => s.end > rangeStart && s.start < rangeEnd)
+        .map((s) => s.copyWith(
+              start: math.max(0, s.start - rangeStart),
+              end: math.min(rangeText.length, s.end - rangeStart),
+            ))
+        .toList();
+
+    if (activeSpans.isEmpty) {
       if (isSmartWordsEnabled) {
         return TextSpan(
-          children: _buildSmartSubSpans(text, baseStyle),
+          children: _buildSmartSubSpans(rangeText, baseStyle),
           style: baseStyle,
         );
       }
-      return TextSpan(style: baseStyle, text: text);
+      return TextSpan(style: baseStyle, text: rangeText);
     }
 
-    // Collect sorted unique split points
-    final points = <int>{0, text.length};
-    for (final s in _spans) {
-      if (s.start >= 0 && s.start <= text.length) points.add(s.start);
-      if (s.end >= 0 && s.end <= text.length) points.add(s.end);
+    final points = <int>{0, rangeText.length};
+    for (final s in activeSpans) {
+      if (s.start >= 0 && s.start <= rangeText.length) points.add(s.start);
+      if (s.end >= 0 && s.end <= rangeText.length) points.add(s.end);
     }
 
     final sortedPoints = points.toList()..sort();
@@ -386,12 +460,11 @@ class NullRichTextController extends TextEditingController {
       final end = sortedPoints[i + 1];
       if (start >= end) continue;
 
-      final chunk = text.substring(start, end);
+      final chunk = rangeText.substring(start, end);
       TextStyle chunkStyle = baseStyle;
       bool hasManualSpan = false;
 
-      // Apply all active manual spans over this chunk
-      for (final span in _spans) {
+      for (final span in activeSpans) {
         if (span.start <= start && span.end >= end) {
           chunkStyle = span.applyTo(chunkStyle);
           hasManualSpan = true;
@@ -399,10 +472,8 @@ class NullRichTextController extends TextEditingController {
       }
 
       if (hasManualSpan) {
-        // Manual user formatting takes 100% precedence
         children.add(TextSpan(text: chunk, style: chunkStyle));
       } else {
-        // Unformatted chunk: apply Smart Words styling if enabled
         if (isSmartWordsEnabled) {
           children.addAll(_buildSmartSubSpans(chunk, baseStyle));
         } else {

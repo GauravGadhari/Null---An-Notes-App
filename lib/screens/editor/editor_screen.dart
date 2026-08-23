@@ -81,10 +81,20 @@ class _EditorScreenState extends State<EditorScreen> {
       _quote = note.quote;
       _images = List.from(note.images);
       _hasCreatedNote = true;
+
+      // Migrate legacy images into text if not already tokenized
+      String initialText = note.text;
+      for (final img in _images) {
+        if (!initialText.contains('[img:$img]')) {
+          initialText = initialText.isEmpty ? '[img:$img]' : '$initialText\n[img:$img]';
+        }
+      }
+
       _textController = NullRichTextController(
-        text: note.text,
+        text: initialText,
         spans: note.spans,
         onSpansChanged: _onSpansChanged,
+        imageSpanBuilder: _buildInlineImageSpan,
       );
     } else {
       // Brand New Blank Editor Page
@@ -94,6 +104,7 @@ class _EditorScreenState extends State<EditorScreen> {
       _hasCreatedNote = false;
       _textController = NullRichTextController(
         onSpansChanged: _onSpansChanged,
+        imageSpanBuilder: _buildInlineImageSpan,
       );
       NotesService.instance.activeDraftQuoteNotifier.addListener(_onDraftQuoteRefreshed);
 
@@ -228,7 +239,8 @@ class _EditorScreenState extends State<EditorScreen> {
       NotesService.instance.onCycleFontSize = _cycleFontSize;
       NotesService.instance.onCycleBackground = _cycleBackground;
       NotesService.instance.onCycleAlignment = _cycleAlignment;
-      NotesService.instance.onAttachImage = _attachImage;
+      NotesService.instance.onAttachImage = _handleImageTap;
+      NotesService.instance.onImageLongPress = _handleImageLongPress;
       NotesService.instance.onDismissKeyboard = () => _focusNode.unfocus();
       NotesService.instance.isEditorFocusedNotifier.value = true;
     } else {
@@ -253,19 +265,43 @@ class _EditorScreenState extends State<EditorScreen> {
     HapticFeedback.lightImpact();
   }
 
-  Future<void> _attachImage() async {
-    HapticFeedback.lightImpact();
-    await showCupertinoModalPopup<void>(
+  // --- Image Handling: Recent Action on Tap & Action Sheet on Hold ---
+
+  void _handleImageTap() {
+    final recent = NotesService.instance.recentMediaSourceNotifier.value;
+    if (recent == 'camera') {
+      _attachImageFromCamera();
+    } else {
+      _attachImageFromGallery();
+    }
+  }
+
+  Future<void> _attachImageFromGallery() async {
+    final path = await MediaService.instance.pickAndPersistImageFromGallery();
+    if (path != null && mounted) {
+      NotesService.instance.setRecentMediaSource('gallery');
+      _insertImageAtCursor(path);
+    }
+  }
+
+  Future<void> _attachImageFromCamera() async {
+    final path = await MediaService.instance.pickAndPersistImageFromCamera();
+    if (path != null && mounted) {
+      NotesService.instance.setRecentMediaSource('camera');
+      _insertImageAtCursor(path);
+    }
+  }
+
+  void _handleImageLongPress() {
+    HapticFeedback.mediumImpact();
+    showCupertinoModalPopup<void>(
       context: context,
       builder: (ctx) => CupertinoActionSheet(
         actions: [
           CupertinoActionSheetAction(
-            onPressed: () async {
+            onPressed: () {
               Navigator.pop(ctx);
-              final path = await MediaService.instance.pickAndPersistImageFromGallery();
-              if (path != null && mounted) {
-                _addImage(path);
-              }
+              _attachImageFromGallery();
             },
             child: const Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -277,12 +313,9 @@ class _EditorScreenState extends State<EditorScreen> {
             ),
           ),
           CupertinoActionSheetAction(
-            onPressed: () async {
+            onPressed: () {
               Navigator.pop(ctx);
-              final path = await MediaService.instance.pickAndPersistImageFromCamera();
-              if (path != null && mounted) {
-                _addImage(path);
-              }
+              _attachImageFromCamera();
             },
             child: const Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -303,41 +336,174 @@ class _EditorScreenState extends State<EditorScreen> {
     );
   }
 
-  void _addImage(String path) {
-    setState(() {
-      _images.add(path);
-    });
-    if (_hasCreatedNote) {
-      NotesService.instance.updateNoteImages(widget.pageIndex, _images);
-    } else {
+  void _insertImageAtCursor(String path) {
+    final currentText = _textController.text;
+    final selection = _textController.selection;
+    int offset = selection.isValid ? selection.baseOffset : currentText.length;
+    if (offset < 0 || offset > currentText.length) {
+      offset = currentText.length;
+    }
+
+    final prefix = (offset > 0 && !currentText.endsWith('\n')) ? '\n' : '';
+    final suffix = (offset < currentText.length && !currentText.startsWith('\n')) ? '\n' : '\n';
+    final token = '$prefix[img:$path]$suffix';
+
+    final newText = currentText.replaceRange(offset, offset, token);
+    final newCursor = offset + token.length;
+
+    _textController.value = TextEditingValue(
+      text: newText,
+      selection: TextSelection.collapsed(offset: newCursor),
+    );
+
+    _images = _extractImagesFromText(newText);
+
+    if (!_hasCreatedNote) {
       _hasCreatedNote = true;
       _timer?.cancel();
       NotesService.instance.activeDraftQuoteNotifier.removeListener(_onDraftQuoteRefreshed);
       NotesService.instance.createNote(
-        text: _textController.text,
+        text: newText,
         quote: _quote,
         spans: _textController.spans,
         images: _images,
       );
       NotesService.instance.refreshActiveDraftQuote();
+    } else {
+      NotesService.instance.updateNoteText(widget.pageIndex, newText);
+      NotesService.instance.updateNoteImages(widget.pageIndex, _images);
     }
+
     _recordSnapshot();
-    HapticFeedback.mediumImpact();
+    HapticFeedback.lightImpact();
   }
 
-  void _removeImage(int index) {
-    if (index < 0 || index >= _images.length) return;
+  List<String> _extractImagesFromText(String text) {
+    final regex = RegExp(r'\[img:([^\]]+)\]');
+    final matches = regex.allMatches(text);
+    return matches.map((m) => m.group(1)!).toList();
+  }
+
+  void _removeInlineImage(int start, int end, String path) {
     HapticFeedback.lightImpact();
-    setState(() {
-      _images.removeAt(index);
-    });
+    final currentText = _textController.text;
+    final token = '[img:$path]';
+    int tokenStart = currentText.indexOf(token);
+    if (tokenStart == -1) {
+      if (start >= 0 && end <= currentText.length) {
+        tokenStart = start;
+      } else {
+        return;
+      }
+    }
+    int tokenEnd = tokenStart + token.length;
+
+    int cleanStart = tokenStart;
+    int cleanEnd = tokenEnd;
+    if (cleanStart > 0 && currentText[cleanStart - 1] == '\n') {
+      cleanStart--;
+    }
+    if (cleanEnd < currentText.length && currentText[cleanEnd] == '\n') {
+      cleanEnd++;
+    }
+
+    final newText = currentText.replaceRange(cleanStart, cleanEnd, '');
+    _textController.value = TextEditingValue(
+      text: newText,
+      selection: TextSelection.collapsed(offset: cleanStart.clamp(0, newText.length)),
+    );
+
+    _images = _extractImagesFromText(newText);
+
     if (_hasCreatedNote) {
+      NotesService.instance.updateNoteText(widget.pageIndex, newText);
       NotesService.instance.updateNoteImages(widget.pageIndex, _images);
     }
     _recordSnapshot();
   }
 
-  void _openFullscreenImage(String path, int index) {
+  InlineSpan _buildInlineImageSpan(
+    BuildContext context,
+    String imagePath,
+    int tokenStart,
+    int tokenEnd,
+  ) {
+    return WidgetSpan(
+      alignment: PlaceholderAlignment.middle,
+      child: _buildInlineImageCard(imagePath, tokenStart, tokenEnd),
+    );
+  }
+
+  Widget _buildInlineImageCard(String path, int tokenStart, int tokenEnd) {
+    final file = File(path);
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 14.0),
+      child: Stack(
+        children: [
+          GestureDetector(
+            onTap: () => _openFullscreenImage(path),
+            child: Container(
+              width: double.infinity,
+              constraints: const BoxConstraints(maxHeight: 380),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.12),
+                  width: 1.0,
+                ),
+                color: const Color(0xFF141416),
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: file.existsSync()
+                  ? Image.file(
+                      file,
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                    )
+                  : const SizedBox(
+                      height: 120,
+                      child: Center(
+                        child: Icon(
+                          CupertinoIcons.photo,
+                          color: Color(0xFF636366),
+                          size: 32,
+                        ),
+                      ),
+                    ),
+            ),
+          ),
+          // Cross / Delete button: ONLY shown in editor mode (_isFocused)
+          if (_isFocused)
+            Positioned(
+              top: 10,
+              right: 10,
+              child: GestureDetector(
+                onTap: () => _removeInlineImage(tokenStart, tokenEnd, path),
+                child: Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.70),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.20),
+                      width: 1.0,
+                    ),
+                  ),
+                  child: const Icon(
+                    CupertinoIcons.xmark,
+                    size: 14,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  void _openFullscreenImage(String path) {
     HapticFeedback.lightImpact();
     Navigator.push(
       context,
@@ -349,7 +515,7 @@ class _EditorScreenState extends State<EditorScreen> {
             imagePath: path,
             onDelete: () {
               Navigator.pop(context);
-              _removeImage(index);
+              _removeInlineImage(-1, -1, path);
             },
           );
         },
@@ -1766,9 +1932,6 @@ class _EditorScreenState extends State<EditorScreen> {
 
                           const SizedBox(height: 28),
 
-                          // Image Attachments List
-                          _buildImageAttachments(),
-
                           // Main Quote / Note Body with In-Between Dim Placeholder
                           TextField(
                             controller: _textController,
@@ -1971,84 +2134,6 @@ class _EditorScreenState extends State<EditorScreen> {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildImageAttachments() {
-    if (_images.isEmpty) return const SizedBox.shrink();
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 24.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: List.generate(_images.length, (index) {
-          final path = _images[index];
-          final file = File(path);
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 14.0),
-            child: Stack(
-              children: [
-                GestureDetector(
-                  onTap: () => _openFullscreenImage(path, index),
-                  child: Container(
-                    width: double.infinity,
-                    constraints: const BoxConstraints(maxHeight: 380),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.12),
-                        width: 1.0,
-                      ),
-                      color: const Color(0xFF141416),
-                    ),
-                    clipBehavior: Clip.antiAlias,
-                    child: file.existsSync()
-                        ? Image.file(
-                            file,
-                            fit: BoxFit.cover,
-                            width: double.infinity,
-                          )
-                        : const SizedBox(
-                            height: 120,
-                            child: Center(
-                              child: Icon(
-                                CupertinoIcons.photo,
-                                color: Color(0xFF636366),
-                                size: 32,
-                              ),
-                            ),
-                          ),
-                  ),
-                ),
-                Positioned(
-                  top: 10,
-                  right: 10,
-                  child: GestureDetector(
-                    onTap: () => _removeImage(index),
-                    child: Container(
-                      width: 32,
-                      height: 32,
-                      decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.70),
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.20),
-                          width: 1.0,
-                        ),
-                      ),
-                      child: const Icon(
-                        CupertinoIcons.xmark,
-                        size: 14,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          );
-        }),
       ),
     );
   }

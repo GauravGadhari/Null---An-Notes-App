@@ -80,6 +80,29 @@ void main() {
     expect(styledSpan.style?.fontStyle, FontStyle.italic);
     expect(styledSpan.style?.decoration, TextDecoration.underline);
   });
+
+  test('NullRichTextController inline image token segmentation test', () {
+    final controller = NullRichTextController(
+      text: 'First thought\n[img:/storage/null_media/img_1.jpg]\nSecond thought',
+      imageSpanBuilder: (context, imagePath, start, end) {
+        return WidgetSpan(
+          child: Text('IMAGE:$imagePath'),
+        );
+      },
+    );
+
+    final span = controller.buildTextSpan(
+      context: DummyBuildContext(),
+      style: const TextStyle(fontFamily: 'SFProDisplay', fontSize: 34.0),
+      withComposing: false,
+    );
+
+    expect(span.children, isNotNull);
+    expect(span.children!.length, 3);
+    expect(span.children![0].toPlainText(), 'First thought\n');
+    expect(span.children![1] is WidgetSpan, isTrue);
+    expect(span.children![2].toPlainText(), '\nSecond thought');
+  });
 }
 
 class DummyBuildContext implements BuildContext {
