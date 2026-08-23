@@ -5,7 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/fonts/app_fonts.dart';
 
 /// Renders an authentic Apple App Store-style Product Page bottom sheet for
-/// cross-promoting "My 21 Days of Habit" from the Light Ecosystem.
+/// cross-promoting "21 Days Of Habit" from the Light Ecosystem with live CDN images.
 void show21DaysAppStoreSheet(BuildContext context) {
   showModalBottomSheet(
     context: context,
@@ -22,13 +22,16 @@ class _AppStoreProductSheet extends StatelessWidget {
   static const String _playStoreUrl =
       'https://play.google.com/store/apps/details?id=com.light_computers.daysofhabbit';
 
-  static const List<String> _screenshots = [
-    'assets/ecosystem/21days/screen_1.png',
-    'assets/ecosystem/21days/screen_2.png',
-    'assets/ecosystem/21days/screen_3.png',
-    'assets/ecosystem/21days/screen_4.png',
-    'assets/ecosystem/21days/screen_5.png',
-    'assets/ecosystem/21days/screen_6.png',
+  static const String _iconUrl =
+      'https://play-lh.googleusercontent.com/06RZZwjcaJDy_NtNYrJzlP7WgHSxoL7SuqdxGuPOdLBps2TKItVsoIy0z-ablDK3hKJ_C7FzHWbZv-2N01nebZQ=w240-h480-rw';
+
+  static const List<String> _screenshotUrls = [
+    'https://play-lh.googleusercontent.com/HbwXUwb5h_YZYJcuzGg8l940d_Sk7cYh91PXjPvHBusWdwILS1QcwCd8rnuG5ZD8DNIZuMSLTMwDGa8d7JBbQQ=w2560-h1440-rw',
+    'https://play-lh.googleusercontent.com/ehx-h4WFAHF8330yKg2FgA7obfacRtuVlIr8UmXc9-4qnoEIqJDLkR-lrHauPkkiPirGZ1mW1DHKH-YAC7zP=w2560-h1440-rw',
+    'https://play-lh.googleusercontent.com/nKilctbM4dgaE2g6RfNRxHnBE65CZNlI74xCYZK974KHaY8Qsk8JJGJNnk0DU6_VNvHrfpLQ3Gr0AYGxHamz1Q=w2560-h1440-rw',
+    'https://play-lh.googleusercontent.com/ZH2LeXmTMbv3lJXzmf6sCglLpYL_EBnCPgqjg0NOO6RdHVRNeNzhoLcjJe2XEYQ5XM9vIfuL6JyfV31Eq5LB8o4=w2560-h1440-rw',
+    'https://play-lh.googleusercontent.com/uc9vv0rO6XpQ0Fv7dSYMvogFuNcb6gOr_6K7dhwtdBzUQ9UFWT1UBBJohxMsAcWWTFe5wBNh9ScmrG3q9kkMm9c=w2560-h1440-rw',
+    'https://play-lh.googleusercontent.com/0mtk7X1UCg7kfVoCksfxEvPtmDsPe4XD5FP92BxFn5tVUdHU1pr_3G3MEkvs3oVgDKlcgraMcNs93uP1IcEv2A=w2560-h1440-rw',
   ];
 
   Future<void> _launchStore(BuildContext context) async {
@@ -41,7 +44,7 @@ class _AppStoreProductSheet extends StatelessWidget {
     } catch (_) {}
   }
 
-  void _openFullscreenScreenshot(BuildContext context, String imagePath) {
+  void _openFullscreenScreenshot(BuildContext context, String imageUrl) {
     HapticFeedback.lightImpact();
     Navigator.push(
       context,
@@ -60,9 +63,23 @@ class _AppStoreProductSheet extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 48.0),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(24),
-                    child: Image.asset(
-                      imagePath,
+                    child: Image.network(
+                      imageUrl,
                       fit: BoxFit.contain,
+                      loadingBuilder: (context, child, progress) {
+                        if (progress == null) return child;
+                        return const Center(
+                          child: CupertinoActivityIndicator(
+                            radius: 14,
+                            color: Color(0xFFEDEDED),
+                          ),
+                        );
+                      },
+                      errorBuilder: (context, error, stackTrace) => const Icon(
+                        CupertinoIcons.photo,
+                        size: 48,
+                        color: Color(0xFF8E8E93),
+                      ),
                     ),
                   ),
                 ),
@@ -137,9 +154,26 @@ class _AppStoreProductSheet extends StatelessWidget {
                               ],
                             ),
                             clipBehavior: Clip.antiAlias,
-                            child: Image.asset(
-                              'assets/ecosystem/21days/icon.png',
+                            child: Image.network(
+                              _iconUrl,
                               fit: BoxFit.cover,
+                              loadingBuilder: (context, child, progress) {
+                                if (progress == null) return child;
+                                return Container(
+                                  color: const Color(0xFF1C1C1E),
+                                  alignment: Alignment.center,
+                                  child: const CupertinoActivityIndicator(radius: 10),
+                                );
+                              },
+                              errorBuilder: (context, error, stackTrace) => Container(
+                                color: const Color(0xFF1C1C1E),
+                                alignment: Alignment.center,
+                                child: const Icon(
+                                  CupertinoIcons.calendar,
+                                  size: 32,
+                                  color: Color(0xFFEDEDED),
+                                ),
+                              ),
                             ),
                           ),
                           const SizedBox(width: 16),
@@ -150,7 +184,7 @@ class _AppStoreProductSheet extends StatelessWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 const Text(
-                                  'My 21 Days of Habit',
+                                  '21 Days Of Habit',
                                   style: TextStyle(
                                     fontFamily: AppFonts.sfProDisplay,
                                     fontSize: 20,
@@ -272,16 +306,16 @@ class _AppStoreProductSheet extends StatelessWidget {
                         child: ListView.separated(
                           scrollDirection: Axis.horizontal,
                           physics: const BouncingScrollPhysics(),
-                          itemCount: _screenshots.length,
+                          itemCount: _screenshotUrls.length,
                           separatorBuilder: (context, index) => const SizedBox(width: 14),
                           itemBuilder: (context, index) {
-                            final imagePath = _screenshots[index];
+                            final imageUrl = _screenshotUrls[index];
 
                             return GestureDetector(
                               behavior: HitTestBehavior.opaque,
                               onTap: () => _openFullscreenScreenshot(
                                 context,
-                                imagePath,
+                                imageUrl,
                               ),
                               child: Container(
                                 width: 136,
@@ -301,9 +335,26 @@ class _AppStoreProductSheet extends StatelessWidget {
                                   ],
                                 ),
                                 clipBehavior: Clip.antiAlias,
-                                child: Image.asset(
-                                  imagePath,
+                                child: Image.network(
+                                  imageUrl,
                                   fit: BoxFit.cover,
+                                  loadingBuilder: (context, child, progress) {
+                                    if (progress == null) return child;
+                                    return Container(
+                                      color: const Color(0xFF1C1C1E),
+                                      alignment: Alignment.center,
+                                      child: const CupertinoActivityIndicator(radius: 12),
+                                    );
+                                  },
+                                  errorBuilder: (context, error, stackTrace) => Container(
+                                    color: const Color(0xFF1C1C1E),
+                                    alignment: Alignment.center,
+                                    child: const Icon(
+                                      CupertinoIcons.photo,
+                                      size: 24,
+                                      color: Color(0xFF636366),
+                                    ),
+                                  ),
                                 ),
                               ),
                             );
@@ -328,7 +379,7 @@ class _AppStoreProductSheet extends StatelessWidget {
                       ),
                       const SizedBox(height: 10),
                       const Text(
-                        'Science proves it takes 21 days to form a neural pathway. My 21 Days of Habit combines ultra-clean visual progress, streak recovery shields, and zero-distraction focus to turn your ambitions into daily discipline.',
+                        'Science proves it takes 21 days to form a neural pathway. 21 Days Of Habit combines ultra-clean visual progress, streak recovery shields, and zero-distraction focus to turn your ambitions into daily discipline.',
                         style: TextStyle(
                           fontFamily: AppFonts.sfProText,
                           fontSize: 14,
@@ -431,7 +482,7 @@ class _AppStoreProductSheet extends StatelessWidget {
                           ),
                           SizedBox(width: 8),
                           Text(
-                            'Get My 21 Days of Habit',
+                            'Get 21 Days Of Habit',
                             style: TextStyle(
                               fontFamily: AppFonts.sfProDisplay,
                               fontSize: 16,

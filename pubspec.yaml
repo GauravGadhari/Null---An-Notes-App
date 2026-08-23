@@ -41,7 +41,6 @@ flutter:
 
   assets:
     - assets/icon/
-    - assets/ecosystem/21days/
 
   fonts:
     # --- Apple SF Pro Family ---

@@ -373,9 +373,26 @@ class SettingsScreen extends StatelessWidget {
                                     ],
                                   ),
                                   clipBehavior: Clip.antiAlias,
-                                  child: Image.asset(
-                                    'assets/ecosystem/21days/icon.png',
+                                  child: Image.network(
+                                    'https://play-lh.googleusercontent.com/06RZZwjcaJDy_NtNYrJzlP7WgHSxoL7SuqdxGuPOdLBps2TKItVsoIy0z-ablDK3hKJ_C7FzHWbZv-2N01nebZQ=w240-h480-rw',
                                     fit: BoxFit.cover,
+                                    loadingBuilder: (context, child, progress) {
+                                      if (progress == null) return child;
+                                      return Container(
+                                        color: const Color(0xFF1C1C1E),
+                                        alignment: Alignment.center,
+                                        child: const CupertinoActivityIndicator(radius: 8),
+                                      );
+                                    },
+                                    errorBuilder: (context, error, stackTrace) => Container(
+                                      color: const Color(0xFF1C1C1E),
+                                      alignment: Alignment.center,
+                                      child: const Icon(
+                                        CupertinoIcons.calendar,
+                                        size: 20,
+                                        color: Color(0xFFEDEDED),
+                                      ),
+                                    ),
                                   ),
                                 ),
                                 const SizedBox(width: 14),
@@ -384,7 +401,7 @@ class SettingsScreen extends StatelessWidget {
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        'My 21 Days of Habit',
+                                        '21 Days Of Habit',
                                         style: TextStyle(
                                           fontFamily: AppFonts.sfProDisplay,
                                           fontSize: 16,

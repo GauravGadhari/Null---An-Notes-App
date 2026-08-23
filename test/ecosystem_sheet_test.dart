@@ -24,7 +24,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // Verify all core sections are rendered
-    expect(find.text('My 21 Days of Habit'), findsWidgets);
+    expect(find.text('21 Days Of Habit'), findsWidgets);
     expect(find.text('Build lasting habits & routines'), findsOneWidget);
     expect(find.text('GET'), findsOneWidget);
     expect(find.text('4.9 ★'), findsOneWidget);
@@ -33,6 +33,6 @@ void main() {
     expect(find.text('Streak Shields'), findsOneWidget);
     expect(find.text('Glanceable Widgets'), findsOneWidget);
     expect(find.text('Light Ecosystem Sync'), findsOneWidget);
-    expect(find.text('Get My 21 Days of Habit'), findsOneWidget);
+    expect(find.text('Get 21 Days Of Habit'), findsOneWidget);
   });
 }
