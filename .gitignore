@@ -51,3 +51,7 @@ key.properties
 **/android/key.properties
 **/android/app/*.jks
 
+# Temporary daemon watcher placeholders
+assets/ecosystem/
+
+
