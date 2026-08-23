@@ -46,7 +46,8 @@
 				</dict>
 			</array>
 		</dict>
-	</dict>
+	<key>NSFaceIDUsageDescription</key>
+	<string>Authenticate with Face ID or Touch ID to secure and unlock your private notes.</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>

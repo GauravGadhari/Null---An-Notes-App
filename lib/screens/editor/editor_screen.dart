@@ -11,6 +11,7 @@ import '../../core/models/note.dart';
 import '../../core/models/span_style.dart';
 import '../../core/services/media_service.dart';
 import '../../core/services/notes_service.dart';
+import '../../core/services/security_service.dart';
 import '../../widgets/null_selection_context_menu.dart';
 import '../settings/smart_words_onboarding_sheet.dart';
 import 'editor_state.dart';
@@ -327,6 +328,10 @@ class _EditorScreenState extends State<EditorScreen> {
       NotesService.instance.activeBackgroundColorNotifier.value =
           _quote.backgroundColorValue ?? 0xFF000000;
       NotesService.instance.activeTextAlignNotifier.value = _quote.textAlignIndex;
+      final isLocked = (_hasCreatedNote && widget.pageIndex < NotesService.instance.notes.length)
+          ? NotesService.instance.notes[widget.pageIndex].isLocked
+          : false;
+      NotesService.instance.activeNoteLockedNotifier.value = isLocked;
       NotesService.instance.onUndo = _undo;
       NotesService.instance.onRedo = _redo;
       NotesService.instance.onCycleFont = _cycleFont;
@@ -335,6 +340,7 @@ class _EditorScreenState extends State<EditorScreen> {
       NotesService.instance.onCycleAlignment = _cycleAlignment;
       NotesService.instance.onAttachImage = _handleImageTap;
       NotesService.instance.onImageLongPress = _handleImageLongPress;
+      NotesService.instance.onToggleNoteLock = _handleToggleLock;
       NotesService.instance.onDismissKeyboard = () {
         for (final b in _blocks) {
           if (b is _TextEditorBlockItem) {
@@ -345,6 +351,19 @@ class _EditorScreenState extends State<EditorScreen> {
       NotesService.instance.isEditorFocusedNotifier.value = true;
     } else {
       NotesService.instance.isEditorFocusedNotifier.value = false;
+    }
+  }
+
+  Future<void> _handleToggleLock() async {
+    if (!_hasCreatedNote || widget.pageIndex >= NotesService.instance.notes.length) {
+      _syncToNotesService();
+    }
+    if (_hasCreatedNote && widget.pageIndex < NotesService.instance.notes.length) {
+      final note = NotesService.instance.notes[widget.pageIndex];
+      final success = await SecurityService.instance.toggleNoteLock(widget.pageIndex, note);
+      if (success && mounted) {
+        setState(() {});
+      }
     }
   }
 
@@ -1910,6 +1929,9 @@ class _EditorScreenState extends State<EditorScreen> {
     final topPadding = screenHeight * 0.28;
     final bottomPadding = screenHeight * 0.55;
     final bgColor = _quote.backgroundColor;
+    final note = (_hasCreatedNote && widget.pageIndex < NotesService.instance.notes.length)
+        ? NotesService.instance.notes[widget.pageIndex]
+        : null;
 
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
@@ -1924,250 +1946,364 @@ class _EditorScreenState extends State<EditorScreen> {
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeOutCubic,
         color: bgColor,
-        child: Stack(
-          children: [
-            // 1. Full-Height Scrollable Content Body
-            Positioned.fill(
-              child: CustomScrollView(
-                physics: const BouncingScrollPhysics(
-                  parent: AlwaysScrollableScrollPhysics(),
-                ),
-                slivers: [
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: EdgeInsets.only(
-                        left: 32.0,
-                        right: 32.0,
-                        top: topPadding,
-                        bottom: bottomPadding,
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Tappable Multi-Style Timestamp Header
-                          if (_quote.showTime) ...[
-                            _buildTimestampHeader(),
-                          ] else if (NotesService.instance.suggestAddTimestampNotifier.value && _isFocused) ...[
-                            GestureDetector(
-                              behavior: HitTestBehavior.opaque,
-                              onTap: () {
-                                setState(() {
-                                  _quote = QuoteItem(
-                                    mainText: _quote.mainText,
-                                    dimPrompt: _quote.dimPrompt,
-                                    showTime: true,
-                                    showDivider: _quote.showDivider,
-                                    fontFamily: _quote.fontFamily,
-                                    fontSize: _quote.fontSize,
-                                    fontWeight: _quote.fontWeight,
-                                    letterSpacing: _quote.letterSpacing,
-                                    height: _quote.height,
-                                    backgroundColorValue: _quote.backgroundColorValue,
-                                    timeStyle: _quote.timeStyle,
-                                  );
-                                });
-                                if (_hasCreatedNote) {
-                                  final note = NotesService.instance.getNote(widget.pageIndex);
-                                  if (note != null) {
-                                    note.quote = _quote;
-                                    NotesService.instance.saveNow();
-                                  }
-                                }
-                                HapticFeedback.lightImpact();
-                              },
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withValues(alpha: 0.08),
-                                  borderRadius: BorderRadius.circular(14),
-                                  border: Border.all(
-                                    color: Colors.white.withValues(alpha: 0.15),
-                                    width: 1,
-                                  ),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      CupertinoIcons.clock,
-                                      size: 13,
-                                      color: Colors.white.withValues(alpha: 0.6),
+        child: ValueListenableBuilder<Set<String>>(
+          valueListenable: SecurityService.instance.unlockedNoteIdsNotifier,
+          builder: (context, unlockedIds, _) {
+            final isNoteObscured = note != null && note.isLocked && !unlockedIds.contains(note.id);
+
+            return Stack(
+              children: [
+                // 1. Full-Height Scrollable Content Body
+                Positioned.fill(
+                  child: CustomScrollView(
+                    physics: const BouncingScrollPhysics(
+                      parent: AlwaysScrollableScrollPhysics(),
+                    ),
+                    slivers: [
+                      SliverToBoxAdapter(
+                        child: Padding(
+                          padding: EdgeInsets.only(
+                            left: 32.0,
+                            right: 32.0,
+                            top: topPadding,
+                            bottom: bottomPadding,
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              if (isNoteObscured) ...[
+                                _buildLockedNoteShield(note),
+                              ] else ...[
+                                // Tappable Multi-Style Timestamp Header
+                                if (_quote.showTime) ...[
+                                  _buildTimestampHeader(),
+                                ] else if (NotesService.instance.suggestAddTimestampNotifier.value && _isFocused) ...[
+                                  GestureDetector(
+                                    behavior: HitTestBehavior.opaque,
+                                    onTap: () {
+                                      setState(() {
+                                        _quote = QuoteItem(
+                                          mainText: _quote.mainText,
+                                          dimPrompt: _quote.dimPrompt,
+                                          showTime: true,
+                                          showDivider: _quote.showDivider,
+                                          fontFamily: _quote.fontFamily,
+                                          fontSize: _quote.fontSize,
+                                          fontWeight: _quote.fontWeight,
+                                          letterSpacing: _quote.letterSpacing,
+                                          height: _quote.height,
+                                          backgroundColorValue: _quote.backgroundColorValue,
+                                          timeStyle: _quote.timeStyle,
+                                        );
+                                      });
+                                      if (_hasCreatedNote) {
+                                        final n = NotesService.instance.getNote(widget.pageIndex);
+                                        if (n != null) {
+                                          n.quote = _quote;
+                                          NotesService.instance.saveNow();
+                                        }
+                                      }
+                                      HapticFeedback.lightImpact();
+                                    },
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white.withValues(alpha: 0.08),
+                                        borderRadius: BorderRadius.circular(14),
+                                        border: Border.all(
+                                          color: Colors.white.withValues(alpha: 0.15),
+                                          width: 1,
+                                        ),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            CupertinoIcons.clock,
+                                            size: 13,
+                                            color: Colors.white.withValues(alpha: 0.6),
+                                          ),
+                                          const SizedBox(width: 6),
+                                          const Text(
+                                            '+ add timestamp',
+                                            style: TextStyle(
+                                              fontFamily: AppFonts.sfProText,
+                                              fontSize: 12,
+                                              color: Color(0xFFEDEDED),
+                                              letterSpacing: 0.2,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                     ),
-                                    const SizedBox(width: 6),
-                                    const Text(
-                                      '+ add timestamp',
-                                      style: TextStyle(
+                                  ),
+                                ],
+
+                                const SizedBox(height: 28),
+
+                                // Main Quote / Note Blocks Flow
+                                for (int i = 0; i < _blocks.length; i++) ...[
+                                  if (_blocks[i] is _ImageEditorBlockItem)
+                                    _buildNativeImageCard(_blocks[i] as _ImageEditorBlockItem, i)
+                                  else if (_blocks[i] is _TextEditorBlockItem)
+                                    _buildTextBlock(_blocks[i] as _TextEditorBlockItem, i),
+                                ],
+
+                                // Bottom-Right Timestamp Tag on Saved Notes: "~ 2m ago"
+                                if (_hasCreatedNote && _hasAnyContent) ...[
+                                  const SizedBox(height: 18),
+                                  Align(
+                                    alignment: Alignment.centerRight,
+                                    child: Text(
+                                      '~  ${_formatTimeAgo(_displayTime)}',
+                                      style: const TextStyle(
                                         fontFamily: AppFonts.sfProText,
-                                        fontSize: 12,
-                                        color: Color(0xFFEDEDED),
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w400,
+                                        color: Color(0xFF636366),
                                         letterSpacing: 0.2,
                                       ),
                                     ),
-                                  ],
-                                ),
-                              ),
-                            ),
+                                  ),
+                                ],
+
+                                // Optional Dim Prompt Typo (Only rendered if present)
+                                if (_quote.dimPrompt != null && _quote.dimPrompt!.isNotEmpty) ...[
+                                  const SizedBox(height: 32),
+                                  Text(
+                                    _quote.dimPrompt!,
+                                    textAlign: _quote.textAlign,
+                                    style: TextStyle(
+                                      fontFamily: _quote.fontFamily,
+                                      fontSize: _quote.fontSize * 0.95,
+                                      fontWeight: _quote.fontWeight,
+                                      color: const Color(0xFF333336),
+                                      letterSpacing: _quote.letterSpacing,
+                                      height: _quote.height,
+                                    ),
+                                  ),
+                                ],
+                              ],
+
+                              const SizedBox(height: 24),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // 2. Feathered Top Gradient Overlay for THIS note/tab
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  top: 0,
+                  height: 90 + statusBarHeight,
+                  child: IgnorePointer(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            bgColor,
+                            bgColor.withValues(alpha: 0.85),
+                            bgColor.withValues(alpha: 0.40),
+                            bgColor.withValues(alpha: 0.0),
                           ],
-
-                          const SizedBox(height: 28),
-
-                          // Main Quote / Note Blocks Flow
-                          for (int i = 0; i < _blocks.length; i++) ...[
-                            if (_blocks[i] is _ImageEditorBlockItem)
-                              _buildNativeImageCard(_blocks[i] as _ImageEditorBlockItem, i)
-                            else if (_blocks[i] is _TextEditorBlockItem)
-                              _buildTextBlock(_blocks[i] as _TextEditorBlockItem, i),
-                          ],
-
-                          // Bottom-Right Timestamp Tag on Saved Notes: "~ 2m ago"
-                          if (_hasCreatedNote && _hasAnyContent) ...[
-                            const SizedBox(height: 18),
-                            Align(
-                              alignment: Alignment.centerRight,
-                              child: Text(
-                                '~  ${_formatTimeAgo(_displayTime)}',
-                                style: const TextStyle(
-                                  fontFamily: AppFonts.sfProText,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w400,
-                                  color: Color(0xFF636366),
-                                  letterSpacing: 0.2,
-                                ),
-                              ),
-                            ),
-                          ],
-
-                          // Optional Dim Prompt Typo (Only rendered if present)
-                          if (_quote.dimPrompt != null && _quote.dimPrompt!.isNotEmpty) ...[
-                            const SizedBox(height: 32),
-                            Text(
-                              _quote.dimPrompt!,
-                              textAlign: _quote.textAlign,
-                              style: TextStyle(
-                                fontFamily: _quote.fontFamily,
-                                fontSize: _quote.fontSize * 0.95,
-                                fontWeight: _quote.fontWeight,
-                                color: const Color(0xFF333336),
-                                letterSpacing: _quote.letterSpacing,
-                                height: _quote.height,
-                              ),
-                            ),
-                          ],
-
-                          const SizedBox(height: 24),
-                        ],
+                          stops: const [0.0, 0.35, 0.70, 1.0],
+                        ),
                       ),
                     ),
                   ),
-                ],
-              ),
-            ),
-
-            // 2. Feathered Top Gradient Overlay for THIS note/tab
-            Positioned(
-              left: 0,
-              right: 0,
-              top: 0,
-              height: 90 + statusBarHeight,
-              child: IgnorePointer(
-                child: Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        bgColor,
-                        bgColor.withValues(alpha: 0.85),
-                        bgColor.withValues(alpha: 0.40),
-                        bgColor.withValues(alpha: 0.0),
-                      ],
-                      stops: const [0.0, 0.35, 0.70, 1.0],
-                    ),
-                  ),
                 ),
-              ),
-            ),
 
-            // 3. Feathered Bottom Gradient Overlay for THIS note/tab
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 0,
-              height: 110 + bottomBarHeight,
-              child: IgnorePointer(
-                child: Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        bgColor.withValues(alpha: 0.0),
-                        bgColor.withValues(alpha: 0.40),
-                        bgColor.withValues(alpha: 0.85),
-                        bgColor,
-                      ],
-                      stops: const [0.0, 0.45, 0.80, 1.0],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-
-            // 4. Info Sparkles Onboarding Button (Visible when custom smart words are not yet added)
-            ValueListenableBuilder<List<CustomSmartWord>>(
-              valueListenable: NotesService.instance.customSmartWordsNotifier,
-              builder: (context, customWords, _) {
-                if (customWords.isNotEmpty || (_hasCreatedNote && _hasAnyContent)) {
-                  return const SizedBox.shrink();
-                }
-
-                return Positioned(
-                  top: 14 + statusBarHeight,
-                  right: 20,
-                  child: GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onTap: () => SmartWordsOnboardingSheet.show(context),
-                    child: Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        Container(
-                          width: 36,
-                          height: 36,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF141416).withValues(alpha: 0.9),
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: Colors.white.withValues(alpha: 0.14),
-                              width: 1.0,
-                            ),
-                          ),
-                          child: const Icon(
-                            CupertinoIcons.sparkles,
-                            size: 15,
-                            color: Color(0xFFEDEDED),
-                          ),
+                // 3. Feathered Bottom Gradient Overlay for THIS note/tab
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  height: 110 + bottomBarHeight,
+                  child: IgnorePointer(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            bgColor.withValues(alpha: 0.0),
+                            bgColor.withValues(alpha: 0.40),
+                            bgColor.withValues(alpha: 0.85),
+                            bgColor,
+                          ],
+                          stops: const [0.0, 0.45, 0.80, 1.0],
                         ),
-                        Positioned(
-                          top: -1,
-                          right: -1,
-                          child: Container(
-                            width: 9,
-                            height: 9,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFFF453A),
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: const Color(0xFF000000),
-                                width: 1.5,
+                      ),
+                    ),
+                  ),
+                ),
+
+                // 4. Info Sparkles Onboarding Button (Visible when custom smart words are not yet added)
+                ValueListenableBuilder<List<CustomSmartWord>>(
+                  valueListenable: NotesService.instance.customSmartWordsNotifier,
+                  builder: (context, customWords, _) {
+                    if (customWords.isNotEmpty || (_hasCreatedNote && _hasAnyContent)) {
+                      return const SizedBox.shrink();
+                    }
+
+                    return Positioned(
+                      top: 14 + statusBarHeight,
+                      right: 20,
+                      child: GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: () => SmartWordsOnboardingSheet.show(context),
+                        child: Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            Container(
+                              width: 36,
+                              height: 36,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF141416).withValues(alpha: 0.9),
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: Colors.white.withValues(alpha: 0.14),
+                                  width: 1.0,
+                                ),
+                              ),
+                              child: const Icon(
+                                CupertinoIcons.sparkles,
+                                size: 15,
+                                color: Color(0xFFEDEDED),
                               ),
                             ),
-                          ),
+                            Positioned(
+                              top: -1,
+                              right: -1,
+                              child: Container(
+                                width: 9,
+                                height: 9,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFFF453A),
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: const Color(0xFF000000),
+                                    width: 1.5,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
+                      ),
+                    );
+                  },
+                ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLockedNoteShield(Note note) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 36.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Container(
+              width: 68,
+              height: 68,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: const Color(0xFF141416),
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.18),
+                  width: 1.2,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.5),
+                    blurRadius: 20,
+                    spreadRadius: 4,
                   ),
-                );
+                ],
+              ),
+              child: const Icon(
+                CupertinoIcons.lock_fill,
+                size: 28,
+                color: Color(0xFFEDEDED),
+              ),
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              'locked note',
+              style: TextStyle(
+                fontFamily: AppFonts.sfProDisplay,
+                fontSize: 24,
+                fontWeight: FontWeight.w400,
+                letterSpacing: -0.6,
+                color: Color(0xFFEDEDED),
+              ),
+            ),
+            const SizedBox(height: 6),
+            const Text(
+              'biometric authentication required to view',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontFamily: AppFonts.sfProText,
+                fontSize: 13,
+                fontWeight: FontWeight.w400,
+                color: Color(0xFF8E8E93),
+                letterSpacing: 0.1,
+              ),
+            ),
+            const SizedBox(height: 24),
+            GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () async {
+                final success = await SecurityService.instance.unlockNote(note.id);
+                if (success && mounted) {
+                  setState(() {});
+                }
               },
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1C1C1E),
+                  borderRadius: BorderRadius.circular(22),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.22),
+                    width: 1.0,
+                  ),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      CupertinoIcons.lock_shield_fill,
+                      size: 16,
+                      color: Color(0xFFEDEDED),
+                    ),
+                    SizedBox(width: 8),
+                    Text(
+                      'Unlock Note',
+                      style: TextStyle(
+                        fontFamily: AppFonts.sfProText,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFFEDEDED),
+                        letterSpacing: -0.1,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ],
         ),

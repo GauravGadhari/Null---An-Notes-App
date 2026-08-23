@@ -7,7 +7,7 @@ import '../core/fonts/app_fonts.dart';
 /// Seamlessly morphs between:
 /// 1. Circular glowing ring (32px)
 /// 2. Rectangular page indicator container (72px - 240px)
-/// 3. Floating bottom toolbar container (368px x 54px) when input is focused.
+/// 3. Floating bottom toolbar container (392px x 54px) when input is focused.
 class NullBottomDock extends StatelessWidget {
   final double morphProgress; // 0.0 = Circle, 1.0 = Fully Expanded Indicator Rectangle
   final double toolbarProgress; // 0.0 = Indicator/Circle, 1.0 = Floating Toolbar
@@ -22,6 +22,7 @@ class NullBottomDock extends StatelessWidget {
   final String activeFontFamily;
   final int activeBackgroundColor;
   final int activeTextAlignIndex;
+  final bool isNoteLocked;
 
   // Toolbar action callbacks
   final VoidCallback? onUndo;
@@ -31,6 +32,7 @@ class NullBottomDock extends StatelessWidget {
   final VoidCallback? onAlignmentTap;
   final VoidCallback? onImageTap;
   final VoidCallback? onImageLongPress;
+  final VoidCallback? onLockTap;
   final VoidCallback? onBackgroundTap;
   final VoidCallback? onDismissKeyboard;
 
@@ -46,6 +48,7 @@ class NullBottomDock extends StatelessWidget {
     this.activeFontFamily = AppFonts.sfProDisplay,
     this.activeBackgroundColor = 0xFF000000,
     this.activeTextAlignIndex = 0,
+    this.isNoteLocked = false,
     this.onPageSelected,
     this.onTap,
     this.onUndo,
@@ -55,6 +58,7 @@ class NullBottomDock extends StatelessWidget {
     this.onAlignmentTap,
     this.onImageTap,
     this.onImageLongPress,
+    this.onLockTap,
     this.onBackgroundTap,
     this.onDismissKeyboard,
   });
@@ -122,7 +126,6 @@ class NullBottomDock extends StatelessWidget {
     // Previous tab indicators fade out swiftly at the start of morph
     final double indicatorOpacity = ((1.0 - (tp / 0.22)).clamp(0.0, 1.0)) * morphProgress.clamp(0.0, 1.0);
 
-    // 1. Calculate Tab Indicator Geometry
     // 1. Calculate Tab Indicator Geometry (Smooth sliding window for > 6 pages)
     final visibleDots = math.max(1, pageCount);
     final targetIndicatorWidth = visibleDots <= 6
@@ -130,8 +133,8 @@ class NullBottomDock extends StatelessWidget {
         : 148.0;
     final indicatorWidth = baseSize + morphProgress.clamp(0.0, 1.0) * (targetIndicatorWidth - baseSize);
 
-    // 2. Calculate Toolbar Geometry (360px x 54px pill)
-    const double targetToolbarWidth = 360.0;
+    // 2. Calculate Toolbar Geometry (392px x 54px pill)
+    const double targetToolbarWidth = 392.0;
     const double targetToolbarHeight = 54.0;
 
     final width = (1.0 - shapeT) * indicatorWidth + shapeT * targetToolbarWidth;
@@ -158,134 +161,113 @@ class NullBottomDock extends StatelessWidget {
             if (shapeT < 0.99)
               BoxShadow(
                 color: Colors.white.withValues(alpha: glowOpacity * (1.0 - shapeT)),
-                blurRadius: baseSize * 0.35 * (1.0 - shapeT),
-                spreadRadius: 0.5 * (1.0 - shapeT),
-              ),
-            // Clean dark elevation shadow in toolbar mode
-            if (shapeT > 0.01)
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.55 * shapeT),
-                blurRadius: 16 * shapeT,
-                offset: Offset(0, 4 * shapeT),
+                blurRadius: 16.0,
+                spreadRadius: 2.0,
               ),
           ],
         ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(borderRadius),
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              // --- A. Dynamic Sliding Page Indicator Dots ---
-              if (indicatorOpacity > 0.01)
-                Opacity(
-                  opacity: indicatorOpacity,
-                  child: ClipRect(
-                    child: OverflowBox(
-                      minWidth: 0,
-                      maxWidth: math.max(width, targetIndicatorWidth),
-                      minHeight: 0,
-                      maxHeight: height,
-                      alignment: Alignment.center,
-                      child: _buildSlidingDotIndicator(
-                        totalDots: visibleDots,
-                        currentPage: currentPage,
-                        containerWidth: targetIndicatorWidth,
-                        onPageSelected: onPageSelected,
-                      ),
-                    ),
-                  ),
+        clipBehavior: Clip.antiAlias,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            // 1. Sliding Dot Indicators
+            if (indicatorOpacity > 0.01)
+              Opacity(
+                opacity: indicatorOpacity,
+                child: _buildSlidingDotIndicator(
+                  totalDots: pageCount,
+                  currentPage: currentPage,
+                  containerWidth: indicatorWidth,
+                  onPageSelected: onPageSelected,
                 ),
+              ),
 
-              // --- B. Floating Toolbar Items (Smoothly appears after shape completes / disappears first on close) ---
-              if (itemsOpacity > 0.01)
-                Opacity(
-                  opacity: itemsOpacity,
-                  child: Transform.scale(
-                    scale: itemsScale,
-                    child: ClipRect(
-                      child: OverflowBox(
-                        minWidth: 0,
-                        maxWidth: math.max(width, targetToolbarWidth),
-                        minHeight: 0,
-                        maxHeight: height,
-                        alignment: Alignment.center,
-                        child: SizedBox(
-                          width: targetToolbarWidth,
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: [
-                              // 1. Undo
-                              _ToolbarButton(
-                                icon: Icons.undo_rounded,
-                                onTap: onUndo,
-                              ),
-
-                              // 2. Redo
-                              _ToolbarButton(
-                                icon: Icons.redo_rounded,
-                                onTap: onRedo,
-                              ),
-
-                              // Divider
-                              Container(
-                                width: 1.0,
-                                height: 16.0,
-                                color: Colors.white.withValues(alpha: 0.18),
-                              ),
-
-                              // 3. Typo / Font Family Display Button (Rendered in its own typeface)
-                              _ToolbarFontButton(
-                                fontName: _getFontDisplayName(activeFontFamily),
-                                fontFamily: activeFontFamily,
-                                onTap: onFontTap,
-                              ),
-
-                              // 4. Font Size Toggle
-                              _ToolbarButton(
-                                icon: Icons.format_size_rounded,
-                                onTap: onSizeTap,
-                              ),
-
-                              // 5. Text Alignment Cycle (Left -> Center -> Right)
-                              _ToolbarButton(
-                                icon: _getAlignmentIcon(activeTextAlignIndex),
-                                onTap: onAlignmentTap,
-                              ),
-
-                              // 6. Attach Image (Tap: Recent Action, Hold: Action Sheet)
-                              _ToolbarButton(
-                                icon: CupertinoIcons.photo,
-                                onTap: onImageTap,
-                                onLongPress: onImageLongPress,
-                              ),
-
-                              // 7. Background Color Swatch
-                              _ToolbarBackgroundButton(
-                                activeColorValue: activeBackgroundColor,
-                                onTap: onBackgroundTap,
-                              ),
-
-                              // Divider
-                              Container(
-                                width: 1.0,
-                                height: 16.0,
-                                color: Colors.white.withValues(alpha: 0.18),
-                              ),
-
-                              // 8. Dismiss Keyboard
-                              _ToolbarButton(
-                                icon: Icons.keyboard_hide_rounded,
-                                onTap: onDismissKeyboard,
-                              ),
-                            ],
+            // 2. Floating Toolbar Items
+            if (itemsOpacity > 0.01)
+              Opacity(
+                opacity: itemsOpacity,
+                child: Transform.scale(
+                  scale: itemsScale,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      physics: const BouncingScrollPhysics(),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // 1. Undo
+                          _ToolbarButton(
+                            icon: Icons.undo_rounded,
+                            onTap: onUndo,
                           ),
-                        ),
+
+                          // 2. Redo
+                          _ToolbarButton(
+                            icon: Icons.redo_rounded,
+                            onTap: onRedo,
+                          ),
+
+                          // 3. Dynamic Font Pill
+                          _ToolbarFontButton(
+                            fontName: _getFontDisplayName(activeFontFamily),
+                            fontFamily: activeFontFamily,
+                            onTap: onFontTap,
+                          ),
+
+                          // 4. Font Size Toggle
+                          _ToolbarButton(
+                            icon: Icons.format_size_rounded,
+                            onTap: onSizeTap,
+                          ),
+
+                          // 5. Text Alignment Cycle (Left -> Center -> Right)
+                          _ToolbarButton(
+                            icon: _getAlignmentIcon(activeTextAlignIndex),
+                            onTap: onAlignmentTap,
+                          ),
+
+                          // 6. Attach Image (Tap: Recent Action, Hold: Action Sheet)
+                          _ToolbarButton(
+                            icon: CupertinoIcons.photo,
+                            onTap: onImageTap,
+                            onLongPress: onImageLongPress,
+                          ),
+
+                          // 7. Lock / Unlock Note Toggle
+                          _ToolbarButton(
+                            icon: isNoteLocked ? CupertinoIcons.lock_fill : CupertinoIcons.lock_open,
+                            isActive: isNoteLocked,
+                            activeColor: const Color(0xFFFFD60A),
+                            onTap: onLockTap,
+                          ),
+
+                          // 8. Background Color Swatch
+                          _ToolbarBackgroundButton(
+                            activeColorValue: activeBackgroundColor,
+                            onTap: onBackgroundTap,
+                          ),
+
+                          // Divider
+                          Container(
+                            width: 1.0,
+                            height: 16.0,
+                            color: Colors.white.withValues(alpha: 0.18),
+                          ),
+
+                          // 9. Dismiss Keyboard
+                          _ToolbarButton(
+                            icon: Icons.keyboard_hide_rounded,
+                            onTap: onDismissKeyboard,
+                          ),
+                        ],
                       ),
                     ),
                   ),
                 ),
-            ],
-          ),
+              ),
+          ],
         ),
       ),
     );
@@ -340,7 +322,6 @@ class NullBottomDock extends StatelessWidget {
     // Dynamic Sliding Window for many dots (Instagram / Apple style)
     const double dotSpacing = 16.0;
     final double centerOffset = containerWidth / 2.0;
-    // Calculate the translation shift so currentPage is positioned at centerOffset
     final double scrollOffset = centerOffset - (currentPage * dotSpacing) - (dotSpacing / 2.0);
 
     return SizedBox(
@@ -360,33 +341,27 @@ class NullBottomDock extends StatelessWidget {
                 children: List.generate(totalDots, (index) {
                   final distance = (currentPage - index).abs();
 
-                  // Compute dynamic scale and opacity based on distance from current active page
                   double dotWidth;
                   const double dotHeight = 4.0;
                   double dotOpacity;
 
                   if (distance <= 0.5) {
-                    // Active note
                     final activeFactor = 1.0 - (distance / 0.5);
                     dotWidth = 5.0 + activeFactor * 10.0;
                     dotOpacity = 0.5 + activeFactor * 0.5;
                   } else if (distance <= 1.5) {
-                    // 1st neighbor
                     final f = 1.0 - ((distance - 0.5) / 1.0);
                     dotWidth = 4.2 + f * 0.8;
                     dotOpacity = 0.35 + f * 0.25;
                   } else if (distance <= 2.5) {
-                    // 2nd neighbor
                     final f = 1.0 - ((distance - 1.5) / 1.0);
                     dotWidth = 3.0 + f * 1.2;
                     dotOpacity = 0.18 + f * 0.17;
                   } else if (distance <= 3.5) {
-                    // Outer taper micro-dot
                     final f = 1.0 - ((distance - 2.5) / 1.0);
                     dotWidth = 1.5 + f * 1.5;
                     dotOpacity = 0.05 + f * 0.13;
                   } else {
-                    // Beyond viewport
                     dotWidth = 0.0;
                     dotOpacity = 0.0;
                   }
@@ -435,11 +410,15 @@ class _ToolbarButton extends StatelessWidget {
   final IconData icon;
   final VoidCallback? onTap;
   final VoidCallback? onLongPress;
+  final bool isActive;
+  final Color? activeColor;
 
   const _ToolbarButton({
     required this.icon,
     this.onTap,
     this.onLongPress,
+    this.isActive = false,
+    this.activeColor,
   });
 
   @override
@@ -455,7 +434,7 @@ class _ToolbarButton extends StatelessWidget {
         child: Icon(
           icon,
           size: 21,
-          color: const Color(0xFFEDEDED),
+          color: isActive ? (activeColor ?? const Color(0xFFFFD60A)) : const Color(0xFFEDEDED),
         ),
       ),
     );

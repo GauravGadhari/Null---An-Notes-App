@@ -1,10 +1,12 @@
 import 'dart:async';
 import 'dart:math' as math;
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'core/fonts/app_fonts.dart';
 import 'core/services/notes_service.dart';
+import 'core/services/security_service.dart';
 import 'screens/editor/editor_screen.dart';
 import 'screens/editor/editor_state.dart';
 import 'screens/export/export_studio_screen.dart';
@@ -16,6 +18,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Hive.initFlutter();
   await NotesService.instance.init();
+  await SecurityService.instance.init();
 
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
@@ -102,6 +105,9 @@ class _NullUniversalShellState extends State<NullUniversalShell>
 
     // Automatically trigger smooth entrance wake animation on app open after 300ms delay
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (SecurityService.instance.isAppLockEnabled && !SecurityService.instance.isAppUnlocked) {
+        SecurityService.instance.unlockApp();
+      }
       if (mounted && _state == EditorState.sleep) {
         Future.delayed(const Duration(milliseconds: 300), () {
           if (mounted && _state == EditorState.sleep) {
@@ -217,6 +223,11 @@ class _NullUniversalShellState extends State<NullUniversalShell>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
       NotesService.instance.saveNow();
+      SecurityService.instance.lockApp();
+    } else if (state == AppLifecycleState.resumed) {
+      if (SecurityService.instance.isAppLockEnabled && !SecurityService.instance.isAppUnlocked) {
+        SecurityService.instance.unlockApp();
+      }
     }
   }
 
@@ -411,7 +422,14 @@ class _NullUniversalShellState extends State<NullUniversalShell>
       },
       child: Scaffold(
         backgroundColor: const Color(0xFF000000),
-        body: NotificationListener<ScrollNotification>(
+        body: ValueListenableBuilder<bool>(
+          valueListenable: SecurityService.instance.isAppUnlockedNotifier,
+          builder: (context, isAppUnlocked, _) {
+            if (!isAppUnlocked && SecurityService.instance.isAppLockEnabled) {
+              return _buildAppLockOverlay();
+            }
+
+            return NotificationListener<ScrollNotification>(
         onNotification: (notification) {
           if (_state == EditorState.awake && !_isSleepingAnim) {
             // Unfocus active editor when horizontal tab swipe begins
@@ -671,6 +689,7 @@ class _NullUniversalShellState extends State<NullUniversalShell>
                               NotesService.instance.activeEditorFontNotifier,
                               NotesService.instance.activeBackgroundColorNotifier,
                               NotesService.instance.activeTextAlignNotifier,
+                              NotesService.instance.activeNoteLockedNotifier,
                             ]),
                             builder: (context, _) {
                               return NullBottomDock(
@@ -684,6 +703,7 @@ class _NullUniversalShellState extends State<NullUniversalShell>
                                 activeFontFamily: NotesService.instance.activeEditorFontNotifier.value,
                                 activeBackgroundColor: NotesService.instance.activeBackgroundColorNotifier.value,
                                 activeTextAlignIndex: NotesService.instance.activeTextAlignNotifier.value,
+                                isNoteLocked: NotesService.instance.activeNoteLockedNotifier.value,
                                 onPageSelected: (index) {
                                   _pageController.animateToPage(
                                     index,
@@ -699,6 +719,7 @@ class _NullUniversalShellState extends State<NullUniversalShell>
                                 onAlignmentTap: () => NotesService.instance.onCycleAlignment?.call(),
                                 onImageTap: () => NotesService.instance.onAttachImage?.call(),
                                 onImageLongPress: () => NotesService.instance.onImageLongPress?.call(),
+                                onLockTap: () => NotesService.instance.onToggleNoteLock?.call(),
                                 onBackgroundTap: () => NotesService.instance.onCycleBackground?.call(),
                                 onDismissKeyboard: () => NotesService.instance.onDismissKeyboard?.call(),
                               );
@@ -818,13 +839,116 @@ class _NullUniversalShellState extends State<NullUniversalShell>
                         ),
                       ),
                     ),
-                ],
-              );
-            },
+                  ],
+                );
+              },
+            ),
+          ),
+        );
+      },
+    ),
+  ),
+);
+  }
+
+  Widget _buildAppLockOverlay() {
+    return Container(
+      color: const Color(0xFF000000),
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 32.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: const Color(0xFF141416),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.22),
+                    width: 1.4,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.white.withValues(alpha: 0.12),
+                      blurRadius: 24,
+                      spreadRadius: 2,
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  CupertinoIcons.lock_shield_fill,
+                  size: 36,
+                  color: Color(0xFFEDEDED),
+                ),
+              ),
+              const SizedBox(height: 28),
+              const Text(
+                'null',
+                style: TextStyle(
+                  fontFamily: AppFonts.sfProDisplay,
+                  fontSize: 38,
+                  fontWeight: FontWeight.w300,
+                  letterSpacing: -1.0,
+                  color: Color(0xFFEDEDED),
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'biometric lock active',
+                style: TextStyle(
+                  fontFamily: AppFonts.sfProText,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w400,
+                  color: Color(0xFF8E8E93),
+                  letterSpacing: 0.2,
+                ),
+              ),
+              const SizedBox(height: 36),
+              GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () {
+                  SecurityService.instance.unlockApp();
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 14),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1C1C1E),
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.25),
+                      width: 1.0,
+                    ),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        CupertinoIcons.lock_open_fill,
+                        size: 18,
+                        color: Color(0xFFEDEDED),
+                      ),
+                      SizedBox(width: 10),
+                      Text(
+                        'Unlock with Biometrics',
+                        style: TextStyle(
+                          fontFamily: AppFonts.sfProText,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFFEDEDED),
+                          letterSpacing: -0.2,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 }

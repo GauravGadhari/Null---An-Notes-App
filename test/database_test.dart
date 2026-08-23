@@ -192,4 +192,30 @@ void main() {
     expect(note.text, 'Top heading\n\nBottom footer');
     expect(note.images, ['/storage/legacy.jpg']);
   });
+
+  test('Note isLocked property serialization and deserialization roundtrip', () {
+    final lockedNote = Note(
+      id: 'locked_1',
+      text: 'Confidential thoughts',
+      createdAt: DateTime.now(),
+      quote: const QuoteItem(mainText: 'secret'),
+      isLocked: true,
+    );
+
+    final json = lockedNote.toJson();
+    expect(json['isLocked'], isTrue);
+
+    final restored = Note.fromJson(json);
+    expect(restored.isLocked, isTrue);
+
+    final unlockedJson = {
+      'id': 'unlocked_1',
+      'text': 'Public thoughts',
+      'createdAt': DateTime.now().toIso8601String(),
+      'quote': {'mainText': 'public'},
+      'isLocked': false,
+    };
+    final restoredUnlocked = Note.fromJson(unlockedJson);
+    expect(restoredUnlocked.isLocked, isFalse);
+  });
 }

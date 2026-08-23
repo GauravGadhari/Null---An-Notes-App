@@ -212,6 +212,7 @@ class Note {
   List<SpanStyle> spans;
   List<String> images;
   List<NoteBlock> blocks;
+  bool isLocked;
 
   Note({
     required this.id,
@@ -221,6 +222,7 @@ class Note {
     List<SpanStyle>? spans,
     List<String>? images,
     List<NoteBlock>? blocks,
+    this.isLocked = false,
   })  : spans = spans ?? [],
         images = images ?? [],
         blocks = blocks ?? [];
@@ -233,6 +235,7 @@ class Note {
         'spans': spans.map((s) => s.toJson()).toList(),
         'images': images,
         'blocks': blocks.map((b) => b.toJson()).toList(),
+        'isLocked': isLocked,
       };
 
   factory Note.fromJson(Map<String, dynamic> json) {
@@ -346,6 +349,7 @@ class Note {
       spans: rawSpans,
       images: cleanImages.isNotEmpty ? cleanImages : rawImages,
       blocks: noteBlocks,
+      isLocked: (json['isLocked'] as bool?) ?? (json['is_locked'] as bool?) ?? false,
     );
   }
 }

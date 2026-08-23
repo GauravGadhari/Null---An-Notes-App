@@ -385,6 +385,7 @@ class NotesService {
   final ValueNotifier<String> activeEditorFontNotifier = ValueNotifier<String>('SFProDisplay');
   final ValueNotifier<int> activeBackgroundColorNotifier = ValueNotifier<int>(0xFF000000);
   final ValueNotifier<int> activeTextAlignNotifier = ValueNotifier<int>(0); // 0: Left, 1: Center, 2: Right
+  final ValueNotifier<bool> activeNoteLockedNotifier = ValueNotifier<bool>(false);
   VoidCallback? onUndo;
   VoidCallback? onRedo;
   VoidCallback? onCycleFont;
@@ -393,6 +394,7 @@ class NotesService {
   VoidCallback? onCycleAlignment;
   VoidCallback? onAttachImage;
   VoidCallback? onImageLongPress;
+  VoidCallback? onToggleNoteLock;
   VoidCallback? onExport;
   VoidCallback? onDismissKeyboard;
 
@@ -450,6 +452,16 @@ class NotesService {
       note.text = text;
       note.images = List.from(images);
       _scheduleSave();
+    }
+  }
+
+  void updateNoteLock(int index, bool isLocked) {
+    if (index >= 0 && index < notesNotifier.value.length) {
+      final note = notesNotifier.value[index];
+      note.isLocked = isLocked;
+      activeNoteLockedNotifier.value = isLocked;
+      _scheduleSave();
+      notesNotifier.value = List.from(notesNotifier.value);
     }
   }
 
