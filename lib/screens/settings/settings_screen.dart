@@ -373,13 +373,9 @@ class SettingsScreen extends StatelessWidget {
                                     ],
                                   ),
                                   clipBehavior: Clip.antiAlias,
-                                  child: Image.network(
-                                    'https://play-lh.googleusercontent.com/06RZZwjcaJDy_NtNYrJzlP7WgHSxoL7SuqdxGuPOdLBps2TKItVsoIy0z-ablDK3hKJ_C7FzHWbZv-2N01nebZQ=w240-h480',
+                                  child: Image.asset(
+                                    'assets/ecosystem/21days/icon.png',
                                     fit: BoxFit.cover,
-                                    errorBuilder: (context, error, stackTrace) => Image.asset(
-                                      'assets/ecosystem/21days/icon.png',
-                                      fit: BoxFit.cover,
-                                    ),
                                   ),
                                 ),
                                 const SizedBox(width: 14),
