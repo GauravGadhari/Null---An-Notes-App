@@ -10,6 +10,7 @@ void show21DaysAppStoreSheet(BuildContext context) {
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
+    useSafeArea: true,
     backgroundColor: Colors.transparent,
     barrierColor: Colors.black.withValues(alpha: 0.75),
     builder: (context) => const _AppStoreProductSheet(),
@@ -106,11 +107,12 @@ class _AppStoreProductSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final screenHeight = MediaQuery.of(context).size.height;
-    final maxSheetHeight = screenHeight * 0.88;
+    final screenHeight = MediaQuery.sizeOf(context).height;
+    final sheetHeight = screenHeight * 0.86;
 
     return Container(
-      constraints: BoxConstraints(maxHeight: maxSheetHeight),
+      height: sheetHeight,
+      width: double.infinity,
       decoration: BoxDecoration(
         color: const Color(0xFF121214),
         borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
@@ -138,336 +140,325 @@ class _AppStoreProductSheet extends StatelessWidget {
         ],
       ),
       child: Column(
-        mainAxisSize: MainAxisSize.min,
         children: [
           // 1. Top Apple Drag Handle
           const SizedBox(height: 12),
-          Container(
-            width: 38,
-            height: 5,
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.28),
-              borderRadius: BorderRadius.circular(3),
+          Center(
+            child: Container(
+              width: 38,
+              height: 5,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.28),
+                borderRadius: BorderRadius.circular(3),
+              ),
             ),
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 14),
 
           // 2. Scrollable App Store Content Body
           Expanded(
-            child: CustomScrollView(
+            child: SingleChildScrollView(
               physics: const BouncingScrollPhysics(),
-              slivers: [
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 22.0),
-                    child: Column(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 22.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // --- Apple App Store Header (Icon + Titles + GET Action) ---
+                    Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // --- Apple App Store Header (Icon + Titles + GET Action) ---
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // 74x74 Rounded Squircle Icon
-                            Container(
-                              width: 74,
-                              height: 74,
+                        // 74x74 Rounded Squircle Icon
+                        Container(
+                          width: 74,
+                          height: 74,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF1C1C1E),
+                            borderRadius: BorderRadius.circular(18),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.20),
+                              width: 1.2,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.5),
+                                blurRadius: 14,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          clipBehavior: Clip.antiAlias,
+                          child: Image.network(
+                            _iconUrl,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) => Image.asset(
+                              'assets/ecosystem/21days/icon.png',
+                              fit: BoxFit.cover,
+                            ),
+                            loadingBuilder: (context, child, progress) {
+                              if (progress == null) return child;
+                              return Image.asset(
+                                'assets/ecosystem/21days/icon.png',
+                                fit: BoxFit.cover,
+                              );
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+
+                        // Titles + Get Button
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'My 21 Days of Habit',
+                                style: TextStyle(
+                                  fontFamily: AppFonts.sfProDisplay,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFFEDEDED),
+                                  letterSpacing: -0.4,
+                                ),
+                              ),
+                              const SizedBox(height: 3),
+                              const Text(
+                                'Build lasting habits & routines',
+                                style: TextStyle(
+                                  fontFamily: AppFonts.sfProText,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w400,
+                                  color: Color(0xFF8E8E93),
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              const Text(
+                                'Light Ecosystem',
+                                style: TextStyle(
+                                  fontFamily: AppFonts.sfProText,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w500,
+                                  color: Color(0xFF636366),
+                                  letterSpacing: 0.2,
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+
+                              // Action Row: Apple-Style "GET" Pill + Share
+                              Row(
+                                children: [
+                                  GestureDetector(
+                                    behavior: HitTestBehavior.opaque,
+                                    onTap: () => _launchStore(context),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 22,
+                                        vertical: 7,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFEDEDED),
+                                        borderRadius: BorderRadius.circular(20),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.white.withValues(alpha: 0.15),
+                                            blurRadius: 10,
+                                          ),
+                                        ],
+                                      ),
+                                      child: const Text(
+                                        'GET',
+                                        style: TextStyle(
+                                          fontFamily: AppFonts.sfProDisplay,
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w700,
+                                          color: Color(0xFF000000),
+                                          letterSpacing: 0.4,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 14),
+                                  GestureDetector(
+                                    behavior: HitTestBehavior.opaque,
+                                    onTap: () => _launchStore(context),
+                                    child: Container(
+                                      width: 32,
+                                      height: 32,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        color: Colors.white.withValues(alpha: 0.08),
+                                      ),
+                                      alignment: Alignment.center,
+                                      child: const Icon(
+                                        CupertinoIcons.share,
+                                        size: 15,
+                                        color: Color(0xFFEDEDED),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 24),
+                    _buildDivider(),
+                    const SizedBox(height: 18),
+
+                    // --- Apple App Store Metric Ribbon ---
+                    _buildAppStoreMetricsRibbon(),
+
+                    const SizedBox(height: 18),
+                    _buildDivider(),
+                    const SizedBox(height: 24),
+
+                    // --- App Store Screenshots Section ---
+                    const Text(
+                      'PREVIEW',
+                      style: TextStyle(
+                        fontFamily: AppFonts.sfProText,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF636366),
+                        letterSpacing: 1.0,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Horizontal Screenshots Carousel
+                    SizedBox(
+                      height: 280,
+                      child: ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        physics: const BouncingScrollPhysics(),
+                        itemCount: _screenshotUrls.length,
+                        separatorBuilder: (context, index) => const SizedBox(width: 14),
+                        itemBuilder: (context, index) {
+                          final networkUrl = _screenshotUrls[index];
+                          final fallbackAsset = index < _fallbackAssetScreenshots.length
+                              ? _fallbackAssetScreenshots[index]
+                              : null;
+
+                          return GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            onTap: () => _openFullscreenScreenshot(
+                              context,
+                              networkUrl,
+                              fallbackAsset,
+                            ),
+                            child: Container(
+                              width: 136,
                               decoration: BoxDecoration(
                                 color: const Color(0xFF1C1C1E),
                                 borderRadius: BorderRadius.circular(18),
                                 border: Border.all(
-                                  color: Colors.white.withValues(alpha: 0.20),
-                                  width: 1.2,
+                                  color: Colors.white.withValues(alpha: 0.16),
+                                  width: 1.0,
                                 ),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.black.withValues(alpha: 0.5),
-                                    blurRadius: 14,
+                                    color: Colors.black.withValues(alpha: 0.4),
+                                    blurRadius: 12,
                                     offset: const Offset(0, 4),
                                   ),
                                 ],
                               ),
                               clipBehavior: Clip.antiAlias,
                               child: Image.network(
-                                _iconUrl,
+                                networkUrl,
                                 fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) => Image.asset(
-                                  'assets/ecosystem/21days/icon.png',
-                                  fit: BoxFit.cover,
-                                ),
-                                loadingBuilder: (context, child, progress) {
-                                  if (progress == null) return child;
+                                errorBuilder: (context, error, stackTrace) {
+                                  if (fallbackAsset != null) {
+                                    return Image.asset(
+                                      fallbackAsset,
+                                      fit: BoxFit.cover,
+                                    );
+                                  }
                                   return Container(
                                     color: const Color(0xFF1C1C1E),
                                     alignment: Alignment.center,
-                                    child: const CupertinoActivityIndicator(radius: 10),
+                                    child: const Icon(
+                                      CupertinoIcons.photo,
+                                      size: 24,
+                                      color: Color(0xFF636366),
+                                    ),
+                                  );
+                                },
+                                loadingBuilder: (context, child, progress) {
+                                  if (progress == null) return child;
+                                  if (fallbackAsset != null) {
+                                    return Image.asset(
+                                      fallbackAsset,
+                                      fit: BoxFit.cover,
+                                    );
+                                  }
+                                  return Container(
+                                    color: const Color(0xFF1C1C1E),
+                                    alignment: Alignment.center,
+                                    child: const CupertinoActivityIndicator(radius: 12),
                                   );
                                 },
                               ),
                             ),
-                            const SizedBox(width: 16),
-
-                            // Titles + Get Button
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    'My 21 Days of Habit',
-                                    style: TextStyle(
-                                      fontFamily: AppFonts.sfProDisplay,
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.w700,
-                                      color: Color(0xFFEDEDED),
-                                      letterSpacing: -0.4,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 3),
-                                  const Text(
-                                    'Build lasting habits & routines',
-                                    style: TextStyle(
-                                      fontFamily: AppFonts.sfProText,
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w400,
-                                      color: Color(0xFF8E8E93),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  const Text(
-                                    'Light Ecosystem',
-                                    style: TextStyle(
-                                      fontFamily: AppFonts.sfProText,
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w500,
-                                      color: Color(0xFF636366),
-                                      letterSpacing: 0.2,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 12),
-
-                                  // Action Row: Apple-Style "GET" Pill + Share
-                                  Row(
-                                    children: [
-                                      GestureDetector(
-                                        behavior: HitTestBehavior.opaque,
-                                        onTap: () => _launchStore(context),
-                                        child: Container(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 22,
-                                            vertical: 7,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color: const Color(0xFFEDEDED),
-                                            borderRadius: BorderRadius.circular(20),
-                                            boxShadow: [
-                                              BoxShadow(
-                                                color: Colors.white.withValues(alpha: 0.15),
-                                                blurRadius: 10,
-                                              ),
-                                            ],
-                                          ),
-                                          child: const Text(
-                                            'GET',
-                                            style: TextStyle(
-                                              fontFamily: AppFonts.sfProDisplay,
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.w700,
-                                              color: Color(0xFF000000),
-                                              letterSpacing: 0.4,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 14),
-                                      GestureDetector(
-                                        behavior: HitTestBehavior.opaque,
-                                        onTap: () => _launchStore(context),
-                                        child: Container(
-                                          width: 32,
-                                          height: 32,
-                                          decoration: BoxDecoration(
-                                            shape: BoxShape.circle,
-                                            color: Colors.white.withValues(alpha: 0.08),
-                                          ),
-                                          alignment: Alignment.center,
-                                          child: const Icon(
-                                            CupertinoIcons.share,
-                                            size: 15,
-                                            color: Color(0xFFEDEDED),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-
-                        const SizedBox(height: 24),
-                        _buildDivider(),
-                        const SizedBox(height: 18),
-
-                        // --- Apple App Store Metric Ribbon ---
-                        _buildAppStoreMetricsRibbon(),
-
-                        const SizedBox(height: 18),
-                        _buildDivider(),
-                        const SizedBox(height: 24),
-
-                        // --- App Store Screenshots Section ---
-                        const Text(
-                          'PREVIEW',
-                          style: TextStyle(
-                            fontFamily: AppFonts.sfProText,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            color: Color(0xFF636366),
-                            letterSpacing: 1.0,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                      ],
+                          );
+                        },
+                      ),
                     ),
-                  ),
-                ),
 
-                // Horizontal Screenshots Carousel
-                SliverToBoxAdapter(
-                  child: SizedBox(
-                    height: 280,
-                    child: ListView.separated(
-                      padding: const EdgeInsets.symmetric(horizontal: 22.0),
-                      scrollDirection: Axis.horizontal,
-                      physics: const BouncingScrollPhysics(),
-                      itemCount: _screenshotUrls.length,
-                      separatorBuilder: (context, index) => const SizedBox(width: 14),
-                      itemBuilder: (context, index) {
-                        final networkUrl = _screenshotUrls[index];
-                        final fallbackAsset = index < _fallbackAssetScreenshots.length
-                            ? _fallbackAssetScreenshots[index]
-                            : null;
+                    const SizedBox(height: 28),
+                    _buildDivider(),
+                    const SizedBox(height: 20),
 
-                        return GestureDetector(
-                          behavior: HitTestBehavior.opaque,
-                          onTap: () => _openFullscreenScreenshot(
-                            context,
-                            networkUrl,
-                            fallbackAsset,
-                          ),
-                          child: Container(
-                            width: 140,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF1C1C1E),
-                              borderRadius: BorderRadius.circular(18),
-                              border: Border.all(
-                                color: Colors.white.withValues(alpha: 0.16),
-                                width: 1.0,
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.4),
-                                  blurRadius: 12,
-                                  offset: const Offset(0, 4),
-                                ),
-                              ],
-                            ),
-                            clipBehavior: Clip.antiAlias,
-                            child: Image.network(
-                              networkUrl,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) {
-                                if (fallbackAsset != null) {
-                                  return Image.asset(
-                                    fallbackAsset,
-                                    fit: BoxFit.cover,
-                                  );
-                                }
-                                return Container(
-                                  color: const Color(0xFF1C1C1E),
-                                  alignment: Alignment.center,
-                                  child: const Icon(
-                                    CupertinoIcons.photo,
-                                    size: 24,
-                                    color: Color(0xFF636366),
-                                  ),
-                                );
-                              },
-                              loadingBuilder: (context, child, progress) {
-                                if (progress == null) return child;
-                                return Container(
-                                  color: const Color(0xFF1C1C1E),
-                                  alignment: Alignment.center,
-                                  child: const CupertinoActivityIndicator(radius: 12),
-                                );
-                              },
-                            ),
-                          ),
-                        );
-                      },
+                    // --- Description & Highlights ---
+                    const Text(
+                      'Description',
+                      style: TextStyle(
+                        fontFamily: AppFonts.sfProDisplay,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFFEDEDED),
+                        letterSpacing: -0.3,
+                      ),
                     ),
-                  ),
-                ),
-
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 22.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const SizedBox(height: 28),
-                        _buildDivider(),
-                        const SizedBox(height: 20),
-
-                        // --- Description & Highlights ---
-                        const Text(
-                          'Description',
-                          style: TextStyle(
-                            fontFamily: AppFonts.sfProDisplay,
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
-                            color: Color(0xFFEDEDED),
-                            letterSpacing: -0.3,
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        const Text(
-                          'Science proves it takes 21 days to form a neural pathway. My 21 Days of Habit combines ultra-clean visual progress, streak recovery shields, and zero-distraction focus to turn your ambitions into daily discipline.',
-                          style: TextStyle(
-                            fontFamily: AppFonts.sfProText,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w400,
-                            color: Color(0xFFA0A0A5),
-                            height: 1.45,
-                            letterSpacing: -0.1,
-                          ),
-                        ),
-                        const SizedBox(height: 18),
-
-                        _buildFeaturePill(
-                          icon: CupertinoIcons.shield_lefthalf_fill,
-                          title: 'Streak Shields',
-                          description: 'Protect hard-earned streaks when life gets busy',
-                        ),
-                        const SizedBox(height: 10),
-                        _buildFeaturePill(
-                          icon: CupertinoIcons.square_grid_2x2_fill,
-                          title: 'Glanceable Widgets',
-                          description: 'Track and check habits directly from your Home Screen',
-                        ),
-                        const SizedBox(height: 10),
-                        _buildFeaturePill(
-                          icon: CupertinoIcons.sparkles,
-                          title: 'Light Ecosystem Sync',
-                          description: 'Synchronize seamlessly across Light apps with cloud backup',
-                        ),
-
-                        const SizedBox(height: 36),
-                      ],
+                    const SizedBox(height: 10),
+                    const Text(
+                      'Science proves it takes 21 days to form a neural pathway. My 21 Days of Habit combines ultra-clean visual progress, streak recovery shields, and zero-distraction focus to turn your ambitions into daily discipline.',
+                      style: TextStyle(
+                        fontFamily: AppFonts.sfProText,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w400,
+                        color: Color(0xFFA0A0A5),
+                        height: 1.45,
+                        letterSpacing: -0.1,
+                      ),
                     ),
-                  ),
+                    const SizedBox(height: 18),
+
+                    _buildFeaturePill(
+                      icon: CupertinoIcons.shield_lefthalf_fill,
+                      title: 'Streak Shields',
+                      description: 'Protect hard-earned streaks when life gets busy',
+                    ),
+                    const SizedBox(height: 10),
+                    _buildFeaturePill(
+                      icon: CupertinoIcons.square_grid_2x2_fill,
+                      title: 'Glanceable Widgets',
+                      description: 'Track and check habits directly from your Home Screen',
+                    ),
+                    const SizedBox(height: 10),
+                    _buildFeaturePill(
+                      icon: CupertinoIcons.sparkles,
+                      title: 'Light Ecosystem Sync',
+                      description: 'Synchronize seamlessly across Light apps with cloud backup',
+                    ),
+
+                    const SizedBox(height: 24),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
 
