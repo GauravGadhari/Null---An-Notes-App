@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../core/fonts/app_fonts.dart';
 
@@ -20,12 +21,15 @@ class NullBottomDock extends StatelessWidget {
 
   final String activeFontFamily;
   final int activeBackgroundColor;
+  final int activeTextAlignIndex;
 
   // Toolbar action callbacks
   final VoidCallback? onUndo;
   final VoidCallback? onRedo;
   final VoidCallback? onFontTap;
   final VoidCallback? onSizeTap;
+  final VoidCallback? onAlignmentTap;
+  final VoidCallback? onImageTap;
   final VoidCallback? onBackgroundTap;
   final VoidCallback? onDismissKeyboard;
 
@@ -40,15 +44,30 @@ class NullBottomDock extends StatelessWidget {
     this.glowOpacity = 0.22,
     this.activeFontFamily = AppFonts.sfProDisplay,
     this.activeBackgroundColor = 0xFF000000,
+    this.activeTextAlignIndex = 0,
     this.onPageSelected,
     this.onTap,
     this.onUndo,
     this.onRedo,
     this.onFontTap,
     this.onSizeTap,
+    this.onAlignmentTap,
+    this.onImageTap,
     this.onBackgroundTap,
     this.onDismissKeyboard,
   });
+
+  IconData _getAlignmentIcon(int index) {
+    switch (index) {
+      case 1:
+        return Icons.format_align_center_rounded;
+      case 2:
+        return Icons.format_align_right_rounded;
+      case 0:
+      default:
+        return Icons.format_align_left_rounded;
+    }
+  }
 
   String _getFontDisplayName(String family) {
     switch (family) {
@@ -109,8 +128,8 @@ class NullBottomDock extends StatelessWidget {
         : 148.0;
     final indicatorWidth = baseSize + morphProgress.clamp(0.0, 1.0) * (targetIndicatorWidth - baseSize);
 
-    // 2. Calculate Toolbar Geometry (330px x 54px pill)
-    const double targetToolbarWidth = 330.0;
+    // 2. Calculate Toolbar Geometry (360px x 54px pill)
+    const double targetToolbarWidth = 360.0;
     const double targetToolbarHeight = 54.0;
 
     final width = (1.0 - shapeT) * indicatorWidth + shapeT * targetToolbarWidth;
@@ -225,7 +244,19 @@ class NullBottomDock extends StatelessWidget {
                                 onTap: onSizeTap,
                               ),
 
-                              // 5. Background Color Swatch
+                              // 5. Text Alignment Cycle (Left -> Center -> Right)
+                              _ToolbarButton(
+                                icon: _getAlignmentIcon(activeTextAlignIndex),
+                                onTap: onAlignmentTap,
+                              ),
+
+                              // 6. Attach Image
+                              _ToolbarButton(
+                                icon: CupertinoIcons.photo,
+                                onTap: onImageTap,
+                              ),
+
+                              // 7. Background Color Swatch
                               _ToolbarBackgroundButton(
                                 activeColorValue: activeBackgroundColor,
                                 onTap: onBackgroundTap,
@@ -238,7 +269,7 @@ class NullBottomDock extends StatelessWidget {
                                 color: Colors.white.withValues(alpha: 0.18),
                               ),
 
-                              // 6. Dismiss Keyboard
+                              // 8. Dismiss Keyboard
                               _ToolbarButton(
                                 icon: Icons.keyboard_hide_rounded,
                                 onTap: onDismissKeyboard,

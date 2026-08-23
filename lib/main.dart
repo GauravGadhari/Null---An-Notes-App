@@ -670,6 +670,7 @@ class _NullUniversalShellState extends State<NullUniversalShell>
                             listenable: Listenable.merge([
                               NotesService.instance.activeEditorFontNotifier,
                               NotesService.instance.activeBackgroundColorNotifier,
+                              NotesService.instance.activeTextAlignNotifier,
                             ]),
                             builder: (context, _) {
                               return NullBottomDock(
@@ -682,6 +683,7 @@ class _NullUniversalShellState extends State<NullUniversalShell>
                                 glowOpacity: ringOpacity,
                                 activeFontFamily: NotesService.instance.activeEditorFontNotifier.value,
                                 activeBackgroundColor: NotesService.instance.activeBackgroundColorNotifier.value,
+                                activeTextAlignIndex: NotesService.instance.activeTextAlignNotifier.value,
                                 onPageSelected: (index) {
                                   _pageController.animateToPage(
                                     index,
@@ -694,6 +696,8 @@ class _NullUniversalShellState extends State<NullUniversalShell>
                                 onRedo: () => NotesService.instance.onRedo?.call(),
                                 onFontTap: () => NotesService.instance.onCycleFont?.call(),
                                 onSizeTap: () => NotesService.instance.onCycleFontSize?.call(),
+                                onAlignmentTap: () => NotesService.instance.onCycleAlignment?.call(),
+                                onImageTap: () => NotesService.instance.onAttachImage?.call(),
                                 onBackgroundTap: () => NotesService.instance.onCycleBackground?.call(),
                                 onDismissKeyboard: () => NotesService.instance.onDismissKeyboard?.call(),
                               );

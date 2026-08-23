@@ -374,11 +374,14 @@ class NotesService {
   final ValueNotifier<bool> isEditorFocusedNotifier = ValueNotifier<bool>(false);
   final ValueNotifier<String> activeEditorFontNotifier = ValueNotifier<String>('SFProDisplay');
   final ValueNotifier<int> activeBackgroundColorNotifier = ValueNotifier<int>(0xFF000000);
+  final ValueNotifier<int> activeTextAlignNotifier = ValueNotifier<int>(0); // 0: Left, 1: Center, 2: Right
   VoidCallback? onUndo;
   VoidCallback? onRedo;
   VoidCallback? onCycleFont;
   VoidCallback? onCycleFontSize;
   VoidCallback? onCycleBackground;
+  VoidCallback? onCycleAlignment;
+  VoidCallback? onAttachImage;
   VoidCallback? onExport;
   VoidCallback? onDismissKeyboard;
 
@@ -422,6 +425,13 @@ class NotesService {
     }
   }
 
+  void updateNoteImages(int index, List<String> images) {
+    if (index >= 0 && index < notesNotifier.value.length) {
+      notesNotifier.value[index].images = List.from(images);
+      _scheduleSave();
+    }
+  }
+
   void updateNoteQuote(int index, QuoteItem quote) {
     if (index >= 0 && index < notesNotifier.value.length) {
       notesNotifier.value[index].quote = quote;
@@ -433,6 +443,7 @@ class NotesService {
     required String text,
     required QuoteItem quote,
     List<SpanStyle>? spans,
+    List<String>? images,
   }) {
     final newNote = Note(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
@@ -440,6 +451,7 @@ class NotesService {
       createdAt: DateTime.now(),
       quote: quote,
       spans: spans,
+      images: images,
     );
     final list = List<Note>.from(notesNotifier.value)..add(newNote);
     notesNotifier.value = list;

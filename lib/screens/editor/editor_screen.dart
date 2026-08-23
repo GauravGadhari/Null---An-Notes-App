@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -7,6 +8,7 @@ import '../../core/fonts/app_fonts.dart';
 import '../../core/models/custom_smart_word.dart';
 import '../../core/models/note.dart';
 import '../../core/models/span_style.dart';
+import '../../core/services/media_service.dart';
 import '../../core/services/notes_service.dart';
 import '../../widgets/null_selection_context_menu.dart';
 import '../settings/smart_words_onboarding_sheet.dart';
@@ -32,13 +34,14 @@ class _EditorScreenState extends State<EditorScreen> {
   late DateTime _displayTime;
   Timer? _timer;
   late QuoteItem _quote;
+  List<String> _images = [];
 
   late final NullRichTextController _textController;
   final FocusNode _focusNode = FocusNode();
   bool _isFocused = false;
   bool _hasCreatedNote = false;
 
-  // Unified Undo/Redo History Stack (Captures Text + Word Spans + Base Styles)
+  // Unified Undo/Redo History Stack (Captures Text + Word Spans + Images + Base Styles)
   final List<_EditorSnapshot> _undoStack = [];
   final List<_EditorSnapshot> _redoStack = [];
   bool _isApplyingHistory = false;
@@ -76,6 +79,7 @@ class _EditorScreenState extends State<EditorScreen> {
       final note = notes[widget.pageIndex];
       _displayTime = note.createdAt;
       _quote = note.quote;
+      _images = List.from(note.images);
       _hasCreatedNote = true;
       _textController = NullRichTextController(
         text: note.text,
@@ -86,6 +90,7 @@ class _EditorScreenState extends State<EditorScreen> {
       // Brand New Blank Editor Page
       _displayTime = DateTime.now();
       _quote = NotesService.instance.activeDraftQuote;
+      _images = [];
       _hasCreatedNote = false;
       _textController = NullRichTextController(
         onSpansChanged: _onSpansChanged,
@@ -124,7 +129,7 @@ class _EditorScreenState extends State<EditorScreen> {
     final currentSelection = _textController.selection;
 
     if (_undoStack.isNotEmpty &&
-        _undoStack.last.matches(currentText, currentSpans, _quote)) {
+        _undoStack.last.matches(currentText, currentSpans, _images, _quote)) {
       return;
     }
 
@@ -132,6 +137,7 @@ class _EditorScreenState extends State<EditorScreen> {
       text: currentText,
       selection: currentSelection,
       spans: List.from(currentSpans),
+      images: List.from(_images),
       quote: _quote,
     ));
 
@@ -166,6 +172,7 @@ class _EditorScreenState extends State<EditorScreen> {
   void _restoreSnapshot(_EditorSnapshot snapshot) {
     setState(() {
       _quote = snapshot.quote;
+      _images = List.from(snapshot.images);
     });
 
     _textController.value = TextEditingValue(
@@ -177,6 +184,7 @@ class _EditorScreenState extends State<EditorScreen> {
     if (_hasCreatedNote) {
       NotesService.instance.updateNoteText(widget.pageIndex, snapshot.text);
       NotesService.instance.updateNoteSpans(widget.pageIndex, snapshot.spans);
+      NotesService.instance.updateNoteImages(widget.pageIndex, snapshot.images);
       final note = NotesService.instance.getNote(widget.pageIndex);
       if (note != null) {
         note.quote = snapshot.quote;
@@ -213,16 +221,140 @@ class _EditorScreenState extends State<EditorScreen> {
       _updateActiveToolbarFont();
       NotesService.instance.activeBackgroundColorNotifier.value =
           _quote.backgroundColorValue ?? 0xFF000000;
+      NotesService.instance.activeTextAlignNotifier.value = _quote.textAlignIndex;
       NotesService.instance.onUndo = _undo;
       NotesService.instance.onRedo = _redo;
       NotesService.instance.onCycleFont = _cycleFont;
       NotesService.instance.onCycleFontSize = _cycleFontSize;
       NotesService.instance.onCycleBackground = _cycleBackground;
+      NotesService.instance.onCycleAlignment = _cycleAlignment;
+      NotesService.instance.onAttachImage = _attachImage;
       NotesService.instance.onDismissKeyboard = () => _focusNode.unfocus();
       NotesService.instance.isEditorFocusedNotifier.value = true;
     } else {
       NotesService.instance.isEditorFocusedNotifier.value = false;
     }
+  }
+
+  void _cycleAlignment() {
+    final currentAlign = _quote.textAlignIndex;
+    final nextAlign = (currentAlign + 1) % 3; // 0: Left, 1: Center, 2: Right
+
+    setState(() {
+      _quote = _quote.copyWith(textAlignIndex: nextAlign);
+    });
+
+    NotesService.instance.activeTextAlignNotifier.value = nextAlign;
+
+    if (_hasCreatedNote) {
+      NotesService.instance.updateNoteQuote(widget.pageIndex, _quote);
+    }
+    _recordSnapshot();
+    HapticFeedback.lightImpact();
+  }
+
+  Future<void> _attachImage() async {
+    HapticFeedback.lightImpact();
+    await showCupertinoModalPopup<void>(
+      context: context,
+      builder: (ctx) => CupertinoActionSheet(
+        actions: [
+          CupertinoActionSheetAction(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              final path = await MediaService.instance.pickAndPersistImageFromGallery();
+              if (path != null && mounted) {
+                _addImage(path);
+              }
+            },
+            child: const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(CupertinoIcons.photo_on_rectangle, size: 20),
+                SizedBox(width: 10),
+                Text('Photo Library'),
+              ],
+            ),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              final path = await MediaService.instance.pickAndPersistImageFromCamera();
+              if (path != null && mounted) {
+                _addImage(path);
+              }
+            },
+            child: const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(CupertinoIcons.camera, size: 20),
+                SizedBox(width: 10),
+                Text('Take Photo'),
+              ],
+            ),
+          ),
+        ],
+        cancelButton: CupertinoActionSheetAction(
+          isDestructiveAction: false,
+          onPressed: () => Navigator.pop(ctx),
+          child: const Text('Cancel'),
+        ),
+      ),
+    );
+  }
+
+  void _addImage(String path) {
+    setState(() {
+      _images.add(path);
+    });
+    if (_hasCreatedNote) {
+      NotesService.instance.updateNoteImages(widget.pageIndex, _images);
+    } else {
+      _hasCreatedNote = true;
+      _timer?.cancel();
+      NotesService.instance.activeDraftQuoteNotifier.removeListener(_onDraftQuoteRefreshed);
+      NotesService.instance.createNote(
+        text: _textController.text,
+        quote: _quote,
+        spans: _textController.spans,
+        images: _images,
+      );
+      NotesService.instance.refreshActiveDraftQuote();
+    }
+    _recordSnapshot();
+    HapticFeedback.mediumImpact();
+  }
+
+  void _removeImage(int index) {
+    if (index < 0 || index >= _images.length) return;
+    HapticFeedback.lightImpact();
+    setState(() {
+      _images.removeAt(index);
+    });
+    if (_hasCreatedNote) {
+      NotesService.instance.updateNoteImages(widget.pageIndex, _images);
+    }
+    _recordSnapshot();
+  }
+
+  void _openFullscreenImage(String path, int index) {
+    HapticFeedback.lightImpact();
+    Navigator.push(
+      context,
+      PageRouteBuilder(
+        opaque: false,
+        barrierDismissible: true,
+        pageBuilder: (context, animation, secondaryAnimation) {
+          return _FullscreenImageViewer(
+            imagePath: path,
+            onDelete: () {
+              Navigator.pop(context);
+              _removeImage(index);
+            },
+          );
+        },
+      ),
+    );
   }
 
   void _cycleBackground() {
@@ -385,6 +517,7 @@ class _EditorScreenState extends State<EditorScreen> {
           text: text,
           quote: _quote,
           spans: _textController.spans,
+          images: _images,
         );
         // Spawn new draft quote for the next page
         NotesService.instance.refreshActiveDraftQuote();
@@ -1633,10 +1766,14 @@ class _EditorScreenState extends State<EditorScreen> {
 
                           const SizedBox(height: 28),
 
+                          // Image Attachments List
+                          _buildImageAttachments(),
+
                           // Main Quote / Note Body with In-Between Dim Placeholder
                           TextField(
                             controller: _textController,
                             focusNode: _focusNode,
+                            textAlign: _quote.textAlign,
                             maxLines: null,
                             keyboardType: TextInputType.multiline,
                             scrollPhysics: const NeverScrollableScrollPhysics(),
@@ -1705,6 +1842,7 @@ class _EditorScreenState extends State<EditorScreen> {
                             const SizedBox(height: 32),
                             Text(
                               _quote.dimPrompt!,
+                              textAlign: _quote.textAlign,
                               style: TextStyle(
                                 fontFamily: _quote.fontFamily,
                                 fontSize: _quote.fontSize * 0.95,
@@ -1836,27 +1974,117 @@ class _EditorScreenState extends State<EditorScreen> {
       ),
     );
   }
+
+  Widget _buildImageAttachments() {
+    if (_images.isEmpty) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 24.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: List.generate(_images.length, (index) {
+          final path = _images[index];
+          final file = File(path);
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 14.0),
+            child: Stack(
+              children: [
+                GestureDetector(
+                  onTap: () => _openFullscreenImage(path, index),
+                  child: Container(
+                    width: double.infinity,
+                    constraints: const BoxConstraints(maxHeight: 380),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.12),
+                        width: 1.0,
+                      ),
+                      color: const Color(0xFF141416),
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: file.existsSync()
+                        ? Image.file(
+                            file,
+                            fit: BoxFit.cover,
+                            width: double.infinity,
+                          )
+                        : const SizedBox(
+                            height: 120,
+                            child: Center(
+                              child: Icon(
+                                CupertinoIcons.photo,
+                                color: Color(0xFF636366),
+                                size: 32,
+                              ),
+                            ),
+                          ),
+                  ),
+                ),
+                Positioned(
+                  top: 10,
+                  right: 10,
+                  child: GestureDetector(
+                    onTap: () => _removeImage(index),
+                    child: Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.70),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.20),
+                          width: 1.0,
+                        ),
+                      ),
+                      child: const Icon(
+                        CupertinoIcons.xmark,
+                        size: 14,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }),
+      ),
+    );
+  }
 }
 
 class _EditorSnapshot {
   final String text;
   final TextSelection selection;
   final List<SpanStyle> spans;
+  final List<String> images;
   final QuoteItem quote;
 
   _EditorSnapshot({
     required this.text,
     required this.selection,
     required this.spans,
+    required this.images,
     required this.quote,
   });
 
-  bool matches(String currentText, List<SpanStyle> currentSpans, QuoteItem currentQuote) {
+  bool matches(
+    String currentText,
+    List<SpanStyle> currentSpans,
+    List<String> currentImages,
+    QuoteItem currentQuote,
+  ) {
     if (text != currentText) return false;
     if (quote.fontFamily != currentQuote.fontFamily ||
         quote.fontSize != currentQuote.fontSize ||
-        quote.backgroundColorValue != currentQuote.backgroundColorValue) {
+        quote.backgroundColorValue != currentQuote.backgroundColorValue ||
+        quote.textAlignIndex != currentQuote.textAlignIndex) {
       return false;
+    }
+    if (images.length != currentImages.length) return false;
+    for (int i = 0; i < images.length; i++) {
+      if (images[i] != currentImages[i]) return false;
     }
     if (spans.length != currentSpans.length) return false;
     for (int i = 0; i < spans.length; i++) {
@@ -1875,5 +2103,89 @@ class _EditorSnapshot {
       }
     }
     return true;
+  }
+}
+
+class _FullscreenImageViewer extends StatelessWidget {
+  final String imagePath;
+  final VoidCallback onDelete;
+
+  const _FullscreenImageViewer({
+    required this.imagePath,
+    required this.onDelete,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final file = File(imagePath);
+    return Scaffold(
+      backgroundColor: Colors.black.withValues(alpha: 0.96),
+      body: SafeArea(
+        child: Stack(
+          children: [
+            Center(
+              child: InteractiveViewer(
+                minScale: 0.8,
+                maxScale: 4.0,
+                child: file.existsSync()
+                    ? Image.file(file, fit: BoxFit.contain)
+                    : const Icon(CupertinoIcons.photo, color: Colors.white24, size: 64),
+              ),
+            ),
+            // Top Bar with Close and Delete buttons
+            Positioned(
+              top: 16,
+              left: 16,
+              right: 16,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1C1C1E).withValues(alpha: 0.80),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.15),
+                          width: 1.0,
+                        ),
+                      ),
+                      child: const Icon(
+                        CupertinoIcons.xmark,
+                        size: 18,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: onDelete,
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1C1C1E).withValues(alpha: 0.80),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.15),
+                          width: 1.0,
+                        ),
+                      ),
+                      child: const Icon(
+                        CupertinoIcons.trash,
+                        size: 18,
+                        color: Color(0xFFFF453A),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

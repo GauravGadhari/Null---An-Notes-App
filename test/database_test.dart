@@ -77,4 +77,44 @@ void main() {
     expect(span.isItalic, isTrue);
     expect(span.isUnderline, isTrue);
   });
+
+  test('QuoteItem with textAlignIndex serialization roundtrip', () {
+    const centerQuote = QuoteItem(
+      mainText: 'centered thought',
+      textAlignIndex: 1, // Center
+    );
+    expect(centerQuote.textAlign, TextAlign.center);
+
+    final json = centerQuote.toJson();
+    final restored = QuoteItem.fromJson(json);
+    expect(restored.textAlignIndex, 1);
+    expect(restored.textAlign, TextAlign.center);
+
+    const rightQuote = QuoteItem(
+      mainText: 'right aligned',
+      textAlignIndex: 2, // Right
+    );
+    expect(rightQuote.textAlign, TextAlign.right);
+    expect(QuoteItem.fromJson(rightQuote.toJson()).textAlign, TextAlign.right);
+  });
+
+  test('Note with attached image paths serialization roundtrip', () {
+    final note = Note(
+      id: 'note_img_1',
+      text: 'visual memory',
+      createdAt: DateTime.now(),
+      quote: const QuoteItem(mainText: 'photo note'),
+      images: [
+        '/data/user/0/null_media/null_img_1.jpg',
+        '/data/user/0/null_media/null_img_2.jpg',
+      ],
+    );
+
+    final json = note.toJson();
+    final restored = Note.fromJson(json);
+
+    expect(restored.images.length, 2);
+    expect(restored.images[0], '/data/user/0/null_media/null_img_1.jpg');
+    expect(restored.images[1], '/data/user/0/null_media/null_img_2.jpg');
+  });
 }

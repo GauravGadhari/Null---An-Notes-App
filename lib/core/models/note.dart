@@ -18,6 +18,7 @@ class QuoteItem {
   final String? timeFont;
   final double timeScale;
   final int? timeColorValue;
+  final int textAlignIndex; // 0: Left, 1: Center, 2: Right, 3: Justify
 
   static const List<int> backgroundPalette = [
     0xFF000000, // Pure OLED Obsidian (Default)
@@ -45,7 +46,62 @@ class QuoteItem {
     this.timeFont,
     this.timeScale = 1.0,
     this.timeColorValue,
+    this.textAlignIndex = 0,
   });
+
+  TextAlign get textAlign {
+    switch (textAlignIndex) {
+      case 1:
+        return TextAlign.center;
+      case 2:
+        return TextAlign.right;
+      case 3:
+        return TextAlign.justify;
+      case 0:
+      default:
+        return TextAlign.left;
+    }
+  }
+
+  QuoteItem copyWith({
+    String? mainText,
+    String? dimPrompt,
+    bool? showTime,
+    bool? showDivider,
+    String? fontFamily,
+    double? fontSize,
+    FontWeight? fontWeight,
+    double? letterSpacing,
+    double? height,
+    int? backgroundColorValue,
+    int? timeStyle,
+    bool? timeBold,
+    bool? timeItalic,
+    String? timeFont,
+    double? timeScale,
+    int? timeColorValue,
+    int? textAlignIndex,
+  }) {
+    return QuoteItem(
+      mainText: mainText ?? this.mainText,
+      dimPrompt: dimPrompt ?? this.dimPrompt,
+      showTime: showTime ?? this.showTime,
+      showDivider: showDivider ?? this.showDivider,
+      fontFamily: fontFamily ?? this.fontFamily,
+      fontSize: fontSize ?? this.fontSize,
+      fontWeight: fontWeight ?? this.fontWeight,
+      letterSpacing: letterSpacing ?? this.letterSpacing,
+      height: height ?? this.height,
+      backgroundColorValue: backgroundColorValue ?? this.backgroundColorValue,
+      timeStyle: timeStyle ?? this.timeStyle,
+      timeBold: timeBold ?? this.timeBold,
+      timeItalic: timeItalic ?? this.timeItalic,
+      timeFont: timeFont ?? this.timeFont,
+      timeScale: timeScale ?? this.timeScale,
+      timeColorValue: timeColorValue ?? this.timeColorValue,
+      textAlignIndex: textAlignIndex ?? this.textAlignIndex,
+    );
+  }
 
   Map<String, dynamic> toJson() => {
         'mainText': mainText,
@@ -64,6 +120,7 @@ class QuoteItem {
         'timeFont': timeFont,
         'timeScale': timeScale,
         'timeColor': timeColorValue,
+        'textAlignIndex': textAlignIndex,
       };
 
   factory QuoteItem.fromJson(Map<String, dynamic> json) => QuoteItem(
@@ -90,6 +147,7 @@ class QuoteItem {
         timeFont: json['timeFont'] as String?,
         timeScale: (json['timeScale'] as num?)?.toDouble() ?? 1.0,
         timeColorValue: json['timeColor'] as int?,
+        textAlignIndex: json['textAlignIndex'] as int? ?? 0,
       );
 
   Color get backgroundColor =>
@@ -102,6 +160,7 @@ class Note {
   DateTime createdAt;
   QuoteItem quote;
   List<SpanStyle> spans;
+  List<String> images;
 
   Note({
     required this.id,
@@ -109,7 +168,9 @@ class Note {
     required this.createdAt,
     required this.quote,
     List<SpanStyle>? spans,
-  }) : spans = spans ?? [];
+    List<String>? images,
+  })  : spans = spans ?? [],
+        images = images ?? [];
 
   Map<String, dynamic> toJson() => {
         'id': id,
@@ -117,6 +178,7 @@ class Note {
         'createdAt': createdAt.toIso8601String(),
         'quote': quote.toJson(),
         'spans': spans.map((s) => s.toJson()).toList(),
+        'images': images,
       };
 
   factory Note.fromJson(Map<String, dynamic> json) {
@@ -140,6 +202,10 @@ class Note {
       quote: quoteItem,
       spans: (json['spans'] as List<dynamic>?)
               ?.map((e) => SpanStyle.fromJson(Map<String, dynamic>.from(e as Map)))
+              .toList() ??
+          [],
+      images: (json['images'] as List<dynamic>?)
+              ?.map((e) => e.toString())
               .toList() ??
           [],
     );
