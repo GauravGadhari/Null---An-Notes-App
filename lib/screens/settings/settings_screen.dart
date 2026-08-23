@@ -6,6 +6,7 @@ import '../../core/fonts/app_fonts.dart';
 import '../../core/models/custom_smart_word.dart';
 import '../../core/services/notes_service.dart';
 import '../../core/services/security_service.dart';
+import 'ecosystem_app_store_sheet.dart';
 import 'smart_words_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -329,7 +330,111 @@ class SettingsScreen extends StatelessWidget {
 
                   const SizedBox(height: 36),
 
-                  // ── SECTION 3: DEVELOPER GROUP ──
+                  // ── SECTION 4: LIGHT ECOSYSTEM APPS ──
+                  _buildSectionHeader('LIGHT ECOSYSTEM'),
+                  const SizedBox(height: 10),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF141416).withValues(alpha: 0.90),
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.12),
+                        width: 1.0,
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onTap: () {
+                            HapticFeedback.lightImpact();
+                            show21DaysAppStoreSheet(context);
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 44,
+                                  height: 44,
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF1C1C1E),
+                                    borderRadius: BorderRadius.circular(11),
+                                    border: Border.all(
+                                      color: Colors.white.withValues(alpha: 0.15),
+                                      width: 1.0,
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withValues(alpha: 0.4),
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
+                                  ),
+                                  clipBehavior: Clip.antiAlias,
+                                  child: Image.network(
+                                    'https://play-lh.googleusercontent.com/06RZZwjcaJDy_NtNYrJzlP7WgHSxoL7SuqdxGuPOdLBps2TKItVsoIy0z-ablDK3hKJ_C7FzHWbZv-2N01nebZQ=w240-h480',
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) => Image.asset(
+                                      'assets/ecosystem/21days/icon.png',
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 14),
+                                const Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'My 21 Days of Habit',
+                                        style: TextStyle(
+                                          fontFamily: AppFonts.sfProDisplay,
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w600,
+                                          color: Color(0xFFEDEDED),
+                                          letterSpacing: -0.2,
+                                        ),
+                                      ),
+                                      SizedBox(height: 3),
+                                      Text(
+                                        'Build lasting routines & streak mastery',
+                                        style: TextStyle(
+                                          fontFamily: AppFonts.sfProText,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w400,
+                                          color: Color(0xFF8E8E93),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Container(
+                                  width: 32,
+                                  height: 32,
+                                  alignment: Alignment.center,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: Colors.white.withValues(alpha: 0.08),
+                                  ),
+                                  child: const Icon(
+                                    CupertinoIcons.info,
+                                    size: 16,
+                                    color: Color(0xFFEDEDED),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 36),
+
+                  // ── SECTION 5: DEVELOPER GROUP ──
                   _buildSectionHeader('DEVELOPER'),
                   const SizedBox(height: 10),
                   Container(
