@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:null_notes/core/models/note.dart';
 import 'package:null_notes/core/models/span_style.dart';
+import 'package:null_notes/core/services/notes_service.dart';
+import 'package:null_notes/core/services/security_service.dart';
 
 void main() {
   test('QuoteItem serialization and deserialization roundtrip', () {
@@ -217,5 +219,36 @@ void main() {
     };
     final restoredUnlocked = Note.fromJson(unlockedJson);
     expect(restoredUnlocked.isLocked, isFalse);
+  });
+
+  test('NotesService deleteNote and deleteNoteById removes note and cleans up security', () {
+    final noteA = Note(
+      id: 'test_del_a',
+      text: 'First note',
+      createdAt: DateTime.now(),
+      quote: const QuoteItem(mainText: 'one'),
+    );
+    final noteB = Note(
+      id: 'test_del_b',
+      text: 'Second note',
+      createdAt: DateTime.now(),
+      quote: const QuoteItem(mainText: 'two'),
+    );
+
+    NotesService.instance.notesNotifier.value = [noteA, noteB];
+    SecurityService.instance.unlockedNoteIdsNotifier.value = {'test_del_a', 'test_del_b'};
+
+    // Delete first note by index
+    final deletedA = NotesService.instance.deleteNote(0);
+    expect(deletedA?.id, 'test_del_a');
+    expect(NotesService.instance.count, 1);
+    expect(NotesService.instance.notes.first.id, 'test_del_b');
+    expect(SecurityService.instance.unlockedNoteIdsNotifier.value.contains('test_del_a'), isFalse);
+
+    // Delete second note by ID
+    final deletedB = NotesService.instance.deleteNoteById('test_del_b');
+    expect(deletedB?.id, 'test_del_b');
+    expect(NotesService.instance.count, 0);
+    expect(SecurityService.instance.unlockedNoteIdsNotifier.value.contains('test_del_b'), isFalse);
   });
 }

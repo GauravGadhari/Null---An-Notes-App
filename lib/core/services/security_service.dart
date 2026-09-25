@@ -111,6 +111,13 @@ class SecurityService {
     }
   }
 
+  void forgetUnlockedNote(String noteId) {
+    if (unlockedNoteIdsNotifier.value.contains(noteId)) {
+      final updated = Set<String>.from(unlockedNoteIdsNotifier.value)..remove(noteId);
+      unlockedNoteIdsNotifier.value = updated;
+    }
+  }
+
   bool isNoteUnlocked(Note note) {
     if (!note.isLocked) return true;
     return unlockedNoteIdsNotifier.value.contains(note.id);

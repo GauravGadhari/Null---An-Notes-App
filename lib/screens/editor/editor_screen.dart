@@ -341,6 +341,7 @@ class _EditorScreenState extends State<EditorScreen> {
       NotesService.instance.onAttachImage = _handleImageTap;
       NotesService.instance.onImageLongPress = _handleImageLongPress;
       NotesService.instance.onToggleNoteLock = _handleToggleLock;
+      NotesService.instance.onDeleteNote = _handleDeleteNote;
       NotesService.instance.onDismissKeyboard = () {
         for (final b in _blocks) {
           if (b is _TextEditorBlockItem) {
@@ -352,6 +353,121 @@ class _EditorScreenState extends State<EditorScreen> {
     } else {
       NotesService.instance.isEditorFocusedNotifier.value = false;
     }
+  }
+
+  void _handleDeleteNote() {
+    HapticFeedback.lightImpact();
+    if (!_hasCreatedNote || widget.pageIndex >= NotesService.instance.notes.length) {
+      if (!_hasAnyContent) {
+        NotesService.instance.onDismissKeyboard?.call();
+        FocusManager.instance.primaryFocus?.unfocus();
+        return;
+      }
+      showCupertinoModalPopup(
+        context: context,
+        builder: (ctx) => CupertinoActionSheet(
+          title: const Text(
+            'Clear Draft Note',
+            style: TextStyle(
+              fontFamily: AppFonts.sfProDisplay,
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF8E8E93),
+            ),
+          ),
+          message: const Text(
+            'All unsaved content in this draft will be cleared.',
+            style: TextStyle(
+              fontFamily: AppFonts.sfProText,
+              fontSize: 13,
+              color: Color(0xFF636366),
+            ),
+          ),
+          actions: [
+            CupertinoActionSheetAction(
+              isDestructiveAction: true,
+              onPressed: () {
+                Navigator.pop(ctx);
+                _clearDraft();
+              },
+              child: const Text('Clear Note'),
+            ),
+          ],
+          cancelButton: CupertinoActionSheetAction(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+        ),
+      );
+      return;
+    }
+
+    showCupertinoModalPopup(
+      context: context,
+      builder: (ctx) => CupertinoActionSheet(
+        title: const Text(
+          'Delete Note',
+          style: TextStyle(
+            fontFamily: AppFonts.sfProDisplay,
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF8E8E93),
+          ),
+        ),
+        message: const Text(
+          'This note will be permanently deleted.',
+          style: TextStyle(
+            fontFamily: AppFonts.sfProText,
+            fontSize: 13,
+            color: Color(0xFF636366),
+          ),
+        ),
+        actions: [
+          CupertinoActionSheetAction(
+            isDestructiveAction: true,
+            onPressed: () {
+              Navigator.pop(ctx);
+              _performDelete();
+            },
+            child: const Text('Delete Note'),
+          ),
+        ],
+        cancelButton: CupertinoActionSheetAction(
+          onPressed: () => Navigator.pop(ctx),
+          child: const Text('Cancel'),
+        ),
+      ),
+    );
+  }
+
+  void _performDelete() {
+    HapticFeedback.heavyImpact();
+    NotesService.instance.onDismissKeyboard?.call();
+    FocusManager.instance.primaryFocus?.unfocus();
+
+    if (_hasCreatedNote && widget.pageIndex < NotesService.instance.notes.length) {
+      NotesService.instance.deleteNote(widget.pageIndex);
+    }
+  }
+
+  void _clearDraft() {
+    HapticFeedback.mediumImpact();
+    NotesService.instance.onDismissKeyboard?.call();
+    FocusManager.instance.primaryFocus?.unfocus();
+
+    setState(() {
+      for (final b in _blocks) {
+        if (b is _TextEditorBlockItem) {
+          b.controller.text = '';
+          b.controller.spans = [];
+        }
+      }
+      _blocks = [_createTextBlock(text: '', spans: [])];
+      _undoStack.clear();
+      _redoStack.clear();
+      _recordSnapshot();
+    });
+    NotesService.instance.refreshActiveDraftQuote();
   }
 
   Future<void> _handleToggleLock() async {

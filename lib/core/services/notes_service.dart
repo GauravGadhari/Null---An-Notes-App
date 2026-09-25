@@ -6,6 +6,7 @@ import '../fonts/app_fonts.dart';
 import '../models/custom_smart_word.dart';
 import '../models/note.dart';
 import '../models/span_style.dart';
+import 'security_service.dart';
 
 class NotesService {
   static final NotesService instance = NotesService._();
@@ -396,6 +397,7 @@ class NotesService {
   VoidCallback? onImageLongPress;
   VoidCallback? onToggleNoteLock;
   VoidCallback? onExport;
+  VoidCallback? onDeleteNote;
   VoidCallback? onDismissKeyboard;
 
   final Map<int, VoidCallback> _focusCallbacks = {};
@@ -492,5 +494,25 @@ class NotesService {
     notesNotifier.value = list;
     saveNow(); // Immediate binary flush on creation
     return newNote;
+  }
+
+  Note? deleteNote(int index) {
+    if (index >= 0 && index < notesNotifier.value.length) {
+      final list = List<Note>.from(notesNotifier.value);
+      final removed = list.removeAt(index);
+      SecurityService.instance.forgetUnlockedNote(removed.id);
+      notesNotifier.value = list;
+      saveNow();
+      return removed;
+    }
+    return null;
+  }
+
+  Note? deleteNoteById(String id) {
+    final index = notesNotifier.value.indexWhere((n) => n.id == id);
+    if (index != -1) {
+      return deleteNote(index);
+    }
+    return null;
   }
 }

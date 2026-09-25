@@ -242,6 +242,13 @@ class _NullUniversalShellState extends State<NullUniversalShell>
 
   void _onNotesChanged() {
     if (mounted) {
+      final totalNotes = NotesService.instance.count;
+      final current = _currentPage.round();
+      if (current > totalNotes) {
+        if (_pageController.hasClients) {
+          _pageController.jumpToPage(totalNotes);
+        }
+      }
       setState(() {});
     }
   }
@@ -493,9 +500,17 @@ class _NullUniversalShellState extends State<NullUniversalShell>
                   }
                 },
                 itemBuilder: (context, index) {
-                  if (index <= totalNotes) {
+                  if (index < totalNotes) {
+                    final note = NotesService.instance.getNote(index);
                     return EditorScreen(
-                      key: ValueKey('editor_page_$index'),
+                      key: ValueKey('editor_note_${note?.id ?? index}'),
+                      pageIndex: index,
+                      state: _state,
+                      onSleepRequested: _putToSleep,
+                    );
+                  } else if (index == totalNotes) {
+                    return EditorScreen(
+                      key: const ValueKey('editor_draft_page'),
                       pageIndex: index,
                       state: _state,
                       onSleepRequested: _putToSleep,
@@ -855,10 +870,46 @@ class _NullUniversalShellState extends State<NullUniversalShell>
                               ),
 
                               // 2. Share / Export Studio Button
+                              Padding(
+                                padding: const EdgeInsets.only(right: 10.0),
+                                child: GestureDetector(
+                                  behavior: HitTestBehavior.opaque,
+                                  onTap: () {
+                                    _openExportStudio();
+                                  },
+                                  child: Container(
+                                    width: 38,
+                                    height: 38,
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF141416).withValues(alpha: 0.85),
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: Colors.white.withValues(alpha: 0.18),
+                                        width: 1.2,
+                                      ),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withValues(alpha: 0.4),
+                                          blurRadius: 10,
+                                          offset: const Offset(0, 2),
+                                        ),
+                                      ],
+                                    ),
+                                    alignment: Alignment.center,
+                                    child: const Icon(
+                                      Icons.ios_share_rounded,
+                                      color: Color(0xFFEDEDED),
+                                      size: 19,
+                                    ),
+                                  ),
+                                ),
+                              ),
+
+                              // 3. Delete Note Button
                               GestureDetector(
                                 behavior: HitTestBehavior.opaque,
                                 onTap: () {
-                                  _openExportStudio();
+                                  NotesService.instance.onDeleteNote?.call();
                                 },
                                 child: Container(
                                   width: 38,
@@ -880,9 +931,9 @@ class _NullUniversalShellState extends State<NullUniversalShell>
                                   ),
                                   alignment: Alignment.center,
                                   child: const Icon(
-                                    Icons.ios_share_rounded,
+                                    CupertinoIcons.trash,
                                     color: Color(0xFFEDEDED),
-                                    size: 19,
+                                    size: 18,
                                   ),
                                 ),
                               ),
